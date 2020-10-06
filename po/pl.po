@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-06 23:47+0200\n"
+"POT-Creation-Date: 2020-10-07 00:08+0200\n"
 "PO-Revision-Date: 2017-07-25 11:30+0000\n"
 "Last-Translator: No Ne, 2019\n"
 "Language-Team: Polish (https://www.transifex.com/xfce/teams/16840/pl/)\n"
@@ -31,6 +31,70 @@ msgstr "Wtyczka przykładowa"
 
 #: ../panel-plugin/alarm.desktop.in.h:2
 msgid "Set up timer and clock based alarms"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:1
+msgid "togglebutton"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:2
+msgid "New alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:3
+msgid "Start one-off timer"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:4
+msgid "One-off"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:5
+msgid "Edit selected alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:6
+msgid "Edit alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:7
+msgid "Remove selected alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:8
+msgid "Remove alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:9
+msgid "Run selected alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:10
+msgid "Run"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:11
+msgid "Reset selected running alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:12
+msgid "Reset"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:13
+msgid "Pause selected alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:14
+msgid "Pause"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:15
+msgid "Stop selected alarm"
+msgstr ""
+
+#: ../panel-plugin/alarm.glade.h:16
+msgid "Stop"
 msgstr ""
 
 #~ msgid "Sample"
