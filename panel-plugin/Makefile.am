@@ -39,8 +39,8 @@ libalarm_la_LIBADD = \
 # .desktop file
 #
 desktopdir = $(datadir)/xfce4/panel/plugins
-desktop_in_files = alarm.desktop.in.in
-desktop_DATA = $(desktop_in_files:.desktop.in.in=.desktop)
+desktop_in_files = alarm.desktop.in
+desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
 @INTLTOOL_DESKTOP_RULE@
 
 BUILT_SOURCES = \
