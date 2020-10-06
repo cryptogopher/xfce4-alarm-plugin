@@ -35,23 +35,6 @@ GType alarm_plugin_get_type(void) G_GNUC_CONST;
 
 void alarm_plugin_register_type(XfcePanelTypeModule *type_module);
 
-/* plugin structure */
-typedef struct
-{
-    XfcePanelPlugin *plugin;
-
-    /* panel widgets */
-    GtkWidget       *ebox;
-    GtkWidget       *hvbox;
-    GtkWidget       *label;
-
-    /* sample settings */
-    gchar           *setting1;
-    gint             setting2;
-    gboolean         setting3;
-}
-SamplePlugin;
-
 G_END_DECLS
 
 #endif /* !__XFCE_ALARM_PLUGIN_H__ */
