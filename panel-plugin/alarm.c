@@ -24,16 +24,16 @@
 #include <libxfce4util/libxfce4util.h>
 #include <libxfce4panel/libxfce4panel.h>
 
-#include "alert.h"
-#include "alert-dialog_ui.h"
+#include "alarm.h"
+#include "alarm_ui.h"
 
 
-struct _AlertPluginClass
+struct _AlarmPluginClass
 {
   XfcePanelPluginClass parent;
 };
 
-struct _AlertPlugin
+struct _AlarmPlugin
 {
   XfcePanelPlugin parent;
 
@@ -42,7 +42,7 @@ struct _AlertPlugin
 
 
 /* define the plugin */
-XFCE_PANEL_DEFINE_PLUGIN(AlertPlugin, alert_plugin)
+XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
 
 
 void

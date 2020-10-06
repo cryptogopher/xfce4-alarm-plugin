@@ -1,57 +1,62 @@
 AM_CPPFLAGS = \
 	-I$(top_srcdir) \
-	-DG_LOG_DOMAIN=\"xfce4-sample-plugin\" \
+	-DG_LOG_DOMAIN=\"xfce4-alarm-plugin\" \
 	-DPACKAGE_LOCALE_DIR=\"$(localedir)\" \
 	$(PLATFORM_CPPFLAGS)
 
-#
-# Sample plugin
-#
+plugindir = $(libdir)/xfce4/panel/plugins
+
 plugin_LTLIBRARIES = \
-	libsample.la
+	libalarm.la
 
-plugindir = \
-	$(libdir)/xfce4/panel/plugins
+libalarm_built_sources = \
+	alarm_ui.h
 
-libsample_la_SOURCES = \
-	sample.c \
-	sample.h \
-	sample-dialogs.c \
-	sample-dialogs.h
+libalarm_la_SOURCES = \
+	$(libalarm_built_sources) \
+	alarm.c \
+	alarm.h
 
-libsample_la_CFLAGS = \
+libalarm_la_CFLAGS = \
 	$(LIBXFCE4UTIL_CFLAGS) \
 	$(LIBXFCE4UI_CFLAGS) \
 	$(LIBXFCE4PANEL_CFLAGS) \
 	$(PLATFORM_CFLAGS)
 
-libsample_la_LDFLAGS = \
+libalarm_la_LDFLAGS = \
        -avoid-version \
        -module \
        -no-undefined \
        -export-symbols-regex '^xfce_panel_module_(preinit|init|construct)' \
        $(PLATFORM_LDFLAGS)
 
-libsample_la_LIBADD = \
+libalarm_la_LIBADD = \
 	$(LIBXFCE4UTIL_LIBS) \
 	$(LIBXFCE4UI_LIBS) \
 	$(LIBXFCE4PANEL_LIBS)
 
 #
-# Desktop file
+# .desktop file
 #
-desktopdir =								\
-	$(datadir)/xfce4/panel/plugins
-
-desktop_DATA =								\
-	sample.desktop
-
+desktopdir = $(datadir)/xfce4/panel/plugins
+desktop_in_files = alarm.desktop.in.in
+desktop_DATA = $(desktop_in_files:.desktop.in.in=.desktop)
 @INTLTOOL_DESKTOP_RULE@
 
-EXTRA_DIST =								\
-	sample.desktop.in
+BUILT_SOURCES = \
+	$(libalarm_built_sources)
 
-CLEANFILES =								\
+EXTRA_DIST = \
+	alarm.glade \
+	$(desktop_in_files)
+
+DISTCLEANFILES = \
+	$(libalarm_built_sources) \
 	$(desktop_DATA)
 
+CLEANFILES = \
+	$(desktop_DATA)
+
+alarm_ui.h: alarm.glade
+	$(AM_V_GEN) xdt-csource --static --strip-comments --strip-content --name=directorymenu_dialog_ui $< >$@
 # vi:set ts=8 sw=8 noet ai nocindent syntax=automake:
