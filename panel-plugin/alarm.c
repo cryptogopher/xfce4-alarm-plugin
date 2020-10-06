@@ -41,92 +41,81 @@ struct _AlarmPlugin
 };
 
 
-/* define the plugin */
-XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
-
-
-void
-sample_save (XfcePanelPlugin *plugin,
-             SamplePlugin    *sample)
+static void
+panel_orientation_changed(XfcePanelPlugin *panel_plugin, GtkOrientation orientation)
 {
-  XfceRc *rc;
-  gchar  *file;
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
+  GtkWidget *box = gtk_bin_get_child(GTK_BIN(plugin->panel_button));
 
-  /* get the config file location */
-  file = xfce_panel_plugin_save_location (plugin, TRUE);
-
-  if (G_UNLIKELY (file == NULL))
-    {
-       DBG ("Failed to open config file");
-       return;
-    }
-
-  /* open the config file, read/write */
-  rc = xfce_rc_simple_open (file, FALSE);
-  g_free (file);
-
-  if (G_LIKELY (rc != NULL))
-    {
-      /* save the settings */
-      DBG(".");
-      if (sample->setting1)
-        xfce_rc_write_entry    (rc, "setting1", sample->setting1);
-
-      xfce_rc_write_int_entry  (rc, "setting2", sample->setting2);
-      xfce_rc_write_bool_entry (rc, "setting3", sample->setting3);
-
-      /* close the rc file */
-      xfce_rc_close (rc);
-    }
+  gtk_orientable_set_orientation(GTK_ORIENTABLE(box), orientation);
 }
 
+static void
+panel_button_toggled(GtkWidget *panel_button, AlarmPlugin *plugin)
+{
+  if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(panel_button)))
+    return;
+
+  //xfce_panel_plugin_block_autohide(XFCE_PANEL_PLUGIN(plugin), TRUE);
+}
 
 
 static void
-sample_read (SamplePlugin *sample)
+alarm_plugin_construct (XfcePanelPlugin *panel_plugin)
 {
-  XfceRc      *rc;
-  gchar       *file;
-  const gchar *value;
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
 
-  /* get the plugin config file location */
-  file = xfce_panel_plugin_save_location (sample->plugin, TRUE);
+  xfce_textdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR, "UTF-8");
 
-  if (G_LIKELY (file != NULL))
-    {
-      /* open the config file, readonly */
-      rc = xfce_rc_simple_open (file, TRUE);
+  xfce_panel_plugin_menu_show_configure (panel_plugin);
 
-      /* cleanup */
-      g_free (file);
+  xfce_panel_plugin_set_small (panel_plugin, TRUE);
 
-      if (G_LIKELY (rc != NULL))
-        {
-          /* read the settings */
-          value = xfce_rc_read_entry (rc, "setting1", DEFAULT_SETTING1);
-          sample->setting1 = g_strdup (value);
-
-          sample->setting2 = xfce_rc_read_int_entry (rc, "setting2", DEFAULT_SETTING2);
-          sample->setting3 = xfce_rc_read_bool_entry (rc, "setting3", DEFAULT_SETTING3);
-
-          /* cleanup */
-          xfce_rc_close (rc);
-
-          /* leave the function, everything went well */
-          return;
-        }
-    }
-
-  /* something went wrong, apply default values */
-  DBG ("Applying default settings");
-
-  sample->setting1 = g_strdup (DEFAULT_SETTING1);
-  sample->setting2 = DEFAULT_SETTING2;
-  sample->setting3 = DEFAULT_SETTING3;
+  gtk_widget_show(plugin->panel_button);
 }
 
 
+/* define the plugin */
+XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
 
+static void
+alarm_plugin_class_init(AlarmPluginClass *klass)
+{
+  XfcePanelPluginClass *plugin_class;
+  //GObjectClass *gobject_class;
+
+  //gobject_class = G_OBJECT_CLASS (klass);
+  //gobject_class->get_property = directory_menu_plugin_get_property;
+  //gobject_class->set_property = directory_menu_plugin_set_property;
+
+  plugin_class = XFCE_PANEL_PLUGIN_CLASS(klass);
+  plugin_class->construct = alarm_plugin_construct;
+  //plugin_class->free_data = directory_menu_plugin_free_data;
+  //plugin_class->size_changed = directory_menu_plugin_size_changed;
+  plugin_class->orientation_changed = panel_orientation_changed;
+  //plugin_class->configure_plugin = directory_menu_plugin_configure_plugin;
+  //plugin_class->remote_event = directory_menu_plugin_remote_event;
+}
+
+static void
+alarm_plugin_init(AlarmPlugin *plugin)
+{
+  GtkWidget *widget;
+
+  plugin->panel_button = xfce_panel_create_toggle_button();
+  xfce_panel_plugin_add_action_widget(XFCE_PANEL_PLUGIN(plugin), plugin->panel_button);
+  gtk_container_add(GTK_CONTAINER(plugin), plugin->panel_button);
+  gtk_widget_set_name(plugin->panel_button, "alarm-button");
+  g_signal_connect(G_OBJECT(plugin->panel_button), "toggled",
+                   G_CALLBACK(panel_button_toggled), plugin);
+
+  // TODO: check if orientation-changed signal is emitted on init and update if not
+  widget = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_container_add(GTK_CONTAINER(plugin->panel_button), widget);
+  gtk_box_pack_start(GTK_BOX(widget), gtk_progress_bar_new(), TRUE, FALSE, 0);
+}
+
+/*
 static SamplePlugin *
 sample_new (XfcePanelPlugin *plugin)
 {
@@ -134,19 +123,19 @@ sample_new (XfcePanelPlugin *plugin)
   GtkOrientation  orientation;
   GtkWidget      *label;
 
-  /* allocate memory for the plugin structure */
+  // allocate memory for the plugin structure
   sample = g_slice_new0 (SamplePlugin);
 
-  /* pointer to plugin */
+  // pointer to plugin
   sample->plugin = plugin;
 
-  /* read the user settings */
+  // read the user settings
   sample_read (sample);
 
-  /* get the current orientation */
+  // get the current orientation
   orientation = xfce_panel_plugin_get_orientation (plugin);
 
-  /* create some panel widgets */
+  // create some panel widgets
   sample->ebox = gtk_event_box_new ();
   gtk_widget_show (sample->ebox);
 
@@ -154,7 +143,7 @@ sample_new (XfcePanelPlugin *plugin)
   gtk_widget_show (sample->hvbox);
   gtk_container_add (GTK_CONTAINER (sample->ebox), sample->hvbox);
 
-  /* some sample widgets */
+  // some sample widgets
   label = gtk_label_new (_("Sample"));
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (sample->hvbox), label, FALSE, FALSE, 0);
@@ -174,19 +163,19 @@ sample_free (XfcePanelPlugin *plugin,
 {
   GtkWidget *dialog;
 
-  /* check if the dialog is still open. if so, destroy it */
+  // check if the dialog is still open. if so, destroy it
   dialog = g_object_get_data (G_OBJECT (plugin), "dialog");
   if (G_UNLIKELY (dialog != NULL))
     gtk_widget_destroy (dialog);
 
-  /* destroy the panel widgets */
+  // destroy the panel widgets
   gtk_widget_destroy (sample->hvbox);
 
-  /* cleanup the settings */
+  // cleanup the settings
   if (G_LIKELY (sample->setting1 != NULL))
     g_free (sample->setting1);
 
-  /* free the plugin structure */
+  // free the plugin structure
   g_slice_free (SamplePlugin, sample);
 }
 
@@ -197,7 +186,7 @@ sample_orientation_changed (XfcePanelPlugin *plugin,
                             GtkOrientation   orientation,
                             SamplePlugin    *sample)
 {
-  /* change the orientation of the box */
+  // change the orientation of the box
   gtk_orientable_set_orientation(GTK_ORIENTABLE(sample->hvbox), orientation);
 }
 
@@ -210,58 +199,16 @@ sample_size_changed (XfcePanelPlugin *plugin,
 {
   GtkOrientation orientation;
 
-  /* get the orientation of the plugin */
+  // get the orientation of the plugin
   orientation = xfce_panel_plugin_get_orientation (plugin);
 
-  /* set the widget size */
+  // set the widget size
   if (orientation == GTK_ORIENTATION_HORIZONTAL)
     gtk_widget_set_size_request (GTK_WIDGET (plugin), -1, size);
   else
     gtk_widget_set_size_request (GTK_WIDGET (plugin), size, -1);
 
-  /* we handled the orientation */
+  // we handled the orientation
   return TRUE;
 }
-
-
-
-static void
-sample_construct (XfcePanelPlugin *plugin)
-{
-  SamplePlugin *sample;
-
-  /* setup transation domain */
-  xfce_textdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR, "UTF-8");
-
-  /* create the plugin */
-  sample = sample_new (plugin);
-
-  /* add the ebox to the panel */
-  gtk_container_add (GTK_CONTAINER (plugin), sample->ebox);
-
-  /* show the panel's right-click menu on this ebox */
-  xfce_panel_plugin_add_action_widget (plugin, sample->ebox);
-
-  /* connect plugin signals */
-  g_signal_connect (G_OBJECT (plugin), "free-data",
-                    G_CALLBACK (sample_free), sample);
-
-  g_signal_connect (G_OBJECT (plugin), "save",
-                    G_CALLBACK (sample_save), sample);
-
-  g_signal_connect (G_OBJECT (plugin), "size-changed",
-                    G_CALLBACK (sample_size_changed), sample);
-
-  g_signal_connect (G_OBJECT (plugin), "orientation-changed",
-                    G_CALLBACK (sample_orientation_changed), sample);
-
-  /* show the configure menu item and connect signal */
-  xfce_panel_plugin_menu_show_configure (plugin);
-  g_signal_connect (G_OBJECT (plugin), "configure-plugin",
-                    G_CALLBACK (sample_configure), sample);
-
-  /* show the about menu item and connect signal */
-  xfce_panel_plugin_menu_show_about (plugin);
-  g_signal_connect (G_OBJECT (plugin), "about",
-                    G_CALLBACK (sample_about), NULL);
-}
+*/
