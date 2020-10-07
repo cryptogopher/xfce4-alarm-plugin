@@ -21,6 +21,7 @@
 #endif
 
 #include <libxfce4panel/xfce-panel-plugin.h>
+#include <libxfce4ui/libxfce4ui.h>
 #include <libxfce4util/libxfce4util.h>
 
 #include "alarm.h"
@@ -62,23 +63,46 @@ static void
 plugin_configure(XfcePanelPlugin *panel_plugin)
 {
   GtkBuilder *builder;
-  GObject *dialog;
+  GError *error = NULL;
+  GObject *dialog = NULL;
 
-  builder = gtk_builder_new_from_string(plugin_configure_dialog_ui,
-                                        plugin_configure_dialog_ui_length);
-  if ((dialog = gtk_builder_get_object(builder, "properties-dialog")))
+  g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
+
+  /* Hack to make sure GtkBuilder knows about the XfceTitledDialog object
+   * https://wiki.xfce.org/releng/4.8/roadmap/libxfce4ui
+   * http://bugzilla.gnome.org/show_bug.cgi?id=588238 */
+  if (xfce_titled_dialog_get_type() == 0) return;
+
+  builder = gtk_builder_new();
+  if (gtk_builder_add_from_string(builder, plugin_configure_dialog_ui,
+                                   plugin_configure_dialog_ui_length, &error))
   {
-    /* Callback double casting to avoid GCC warning -Wcast-function-type
-     * https://gitlab.gnome.org/GNOME/gnome-terminal/-/issues/96 */
-    g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), builder);
-    xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
-
-    xfce_panel_plugin_block_menu(panel_plugin);
-    g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
-                      panel_plugin);
+    dialog = gtk_builder_get_object(builder, "properties-dialog");
+    if (dialog == NULL)
+      g_set_error_literal(&error, 0, 0, "Resource named \"properties-dialog\" missing");
   }
 
-  g_object_unref(G_OBJECT(builder));
+  if (error != NULL)
+  {
+    g_critical("Failed to construct the builder for plugin %s-%d: %s.",
+               xfce_panel_plugin_get_name (panel_plugin),
+               xfce_panel_plugin_get_unique_id (panel_plugin),
+               error->message);
+    g_error_free(error);
+    g_object_unref(G_OBJECT(builder));
+    return;
+  }
+
+  /* Callback double casting to avoid GCC warning -Wcast-function-type
+   * https://gitlab.gnome.org/GNOME/gnome-terminal/-/issues/96 */
+  g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), builder);
+  xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
+
+  xfce_panel_plugin_block_menu(panel_plugin);
+  g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
+                    panel_plugin);
+
+  gtk_widget_show(GTK_WIDGET(dialog));
 }
 
 
