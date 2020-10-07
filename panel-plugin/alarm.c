@@ -21,9 +21,7 @@
 #endif
 
 #include <libxfce4panel/xfce-panel-plugin.h>
-//#include <gtk/gtk.h>
-//#include <libxfce4util/libxfce4util.h>
-//#include <libxfce4panel/libxfce4panel.h>
+#include <libxfce4util/libxfce4util.h>
 
 #include "alarm.h"
 #include "alarm_ui.h"
@@ -48,8 +46,8 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
 
   xfce_textdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR, "UTF-8");
-  xfce_panel_plugin_menu_show_configure (panel_plugin);
-  xfce_panel_plugin_set_small (panel_plugin, TRUE);
+  xfce_panel_plugin_menu_show_configure(panel_plugin);
+  xfce_panel_plugin_set_small(panel_plugin, TRUE);
 
   gtk_widget_show(plugin->panel_button);
 }
@@ -82,9 +80,26 @@ static void
 panel_orientation_changed(XfcePanelPlugin *panel_plugin, GtkOrientation orientation)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
-  GtkWidget *box = gtk_bin_get_child(GTK_BIN(plugin->panel_button));
+  GList *progress_bar_iter;
+  GtkWidget *progress_bar, *box = gtk_bin_get_child(GTK_BIN(plugin->panel_button));
 
   gtk_orientable_set_orientation(GTK_ORIENTABLE(box), orientation);
+
+  progress_bar_iter = gtk_container_get_children(GTK_CONTAINER(box));
+  while (progress_bar_iter)
+  {
+    progress_bar = GTK_WIDGET(progress_bar_iter->data);
+    if (orientation == GTK_ORIENTATION_HORIZONTAL)
+    {
+      gtk_orientable_set_orientation(GTK_ORIENTABLE(progress_bar), GTK_ORIENTATION_VERTICAL);
+      gtk_progress_bar_set_inverted(GTK_PROGRESS_BAR(progress_bar), TRUE);
+    } else {
+      gtk_orientable_set_orientation(GTK_ORIENTABLE(progress_bar), GTK_ORIENTATION_HORIZONTAL);
+      gtk_progress_bar_set_inverted(GTK_PROGRESS_BAR(progress_bar), FALSE);
+    }
+    progress_bar_iter = progress_bar_iter->next;
+  }
+  g_list_free(g_steal_pointer(&progress_bar_iter));
 
   panel_size_changed(panel_plugin, xfce_panel_plugin_get_size(panel_plugin));
 }
@@ -125,7 +140,8 @@ alarm_plugin_class_init(AlarmPluginClass *klass)
 static void
 alarm_plugin_init(AlarmPlugin *plugin)
 {
-  GtkWidget *widget;
+  XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
+  GtkWidget *box;
 
   plugin->panel_button = xfce_panel_create_toggle_button();
   xfce_panel_plugin_add_action_widget(XFCE_PANEL_PLUGIN(plugin), plugin->panel_button);
@@ -134,9 +150,12 @@ alarm_plugin_init(AlarmPlugin *plugin)
   g_signal_connect(G_OBJECT(plugin->panel_button), "toggled",
                    G_CALLBACK(panel_button_toggled), plugin);
 
-  // TODO: check if orientation-changed signal is emitted on init
-  // and call orientation_changed if necessary
-  widget = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_container_add(GTK_CONTAINER(plugin->panel_button), widget);
-  gtk_box_pack_start(GTK_BOX(widget), gtk_progress_bar_new(), TRUE, FALSE, 0);
+  box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_container_add(GTK_CONTAINER(plugin->panel_button), box);
+
+  // Add blank progress bar insted of icon
+  gtk_box_pack_start(GTK_BOX(box), gtk_progress_bar_new(), TRUE, FALSE, 0);
+
+  panel_orientation_changed(panel_plugin, xfce_panel_plugin_get_orientation(panel_plugin));
+  gtk_widget_show_all(box);
 }
