@@ -24,7 +24,7 @@
 #include <libxfce4util/libxfce4util.h>
 
 #include "alarm.h"
-#include "alarm_ui.h"
+#include "plugin-configure-dialog_ui.h"
 
 
 struct _AlarmPluginClass
@@ -61,6 +61,24 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
 static void
 plugin_configure(XfcePanelPlugin *panel_plugin)
 {
+  GtkBuilder *builder;
+  GObject *dialog;
+
+  builder = gtk_builder_new_from_string(plugin_configure_dialog_ui,
+                                        plugin_configure_dialog_ui_length);
+  if ((dialog = gtk_builder_get_object(builder, "properties-dialog")))
+  {
+    /* Callback double casting to avoid GCC warning -Wcast-function-type
+     * https://gitlab.gnome.org/GNOME/gnome-terminal/-/issues/96 */
+    g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), builder);
+    xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
+
+    xfce_panel_plugin_block_menu(panel_plugin);
+    g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
+                      panel_plugin);
+  }
+
+  g_object_unref(G_OBJECT(builder));
 }
 
 
@@ -121,14 +139,12 @@ XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
 static void
 alarm_plugin_class_init(AlarmPluginClass *klass)
 {
-  XfcePanelPluginClass *plugin_class;
-  //GObjectClass *gobject_class;
+  //GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+  XfcePanelPluginClass *plugin_class = XFCE_PANEL_PLUGIN_CLASS(klass);
 
-  //gobject_class = G_OBJECT_CLASS (klass);
   //gobject_class->get_property = directory_menu_plugin_get_property;
   //gobject_class->set_property = directory_menu_plugin_set_property;
 
-  plugin_class = XFCE_PANEL_PLUGIN_CLASS(klass);
   plugin_class->construct = plugin_construct;
   plugin_class->free_data = plugin_free_data;
   plugin_class->configure_plugin = plugin_configure;
