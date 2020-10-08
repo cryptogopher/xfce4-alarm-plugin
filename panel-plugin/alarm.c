@@ -38,6 +38,31 @@ struct _AlarmPlugin
   XfcePanelPlugin parent;
 
   GtkWidget *panel_button;
+  GtkListStore *alarms;
+};
+
+enum
+{
+  ALARM_TIMER,
+  ALARM_CLOCK,
+  ALARM_COUNT
+};
+
+enum
+{
+  COL_TYPE,
+  COL_TIME,
+  COL_NAME,
+  COL_COLOR,
+  COL_COUNT
+};
+
+GType alarm_column_types[COL_COUNT] =
+{
+  G_TYPE_INT,
+  G_TYPE_OBJECT, // GDateTime
+  G_TYPE_STRING,
+  G_TYPE_OBJECT // GdkRGBA
 };
 
 
@@ -160,7 +185,6 @@ panel_button_toggled(GtkWidget *panel_button, AlarmPlugin *plugin)
 
 
 
-/* define the plugin */
 XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
 
 static void
@@ -186,17 +210,20 @@ alarm_plugin_init(AlarmPlugin *plugin)
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   GtkWidget *box;
 
+  // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();
-  xfce_panel_plugin_add_action_widget(XFCE_PANEL_PLUGIN(plugin), plugin->panel_button);
   gtk_container_add(GTK_CONTAINER(plugin), plugin->panel_button);
+  xfce_panel_plugin_add_action_widget(XFCE_PANEL_PLUGIN(plugin), plugin->panel_button);
   gtk_widget_set_name(plugin->panel_button, "alarm-button");
   g_signal_connect(G_OBJECT(plugin->panel_button), "toggled",
                    G_CALLBACK(panel_button_toggled), plugin);
 
+  // Container for progress bars
   box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_container_add(GTK_CONTAINER(plugin->panel_button), box);
 
-  // Add blank progress bar insted of icon
+  // Blank progress bar insted of icon
+  // TODO: change to insert icon when no active progress bars
   gtk_box_pack_start(GTK_BOX(box), gtk_progress_bar_new(), TRUE, FALSE, 0);
 
   panel_orientation_changed(panel_plugin, xfce_panel_plugin_get_orientation(panel_plugin));
