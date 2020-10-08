@@ -5,6 +5,8 @@
   <requires lib="libxfce4ui-2" version="4.12"/>
   <object class="XfceTitledDialog" id="properties-dialog">
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">Alarm</property>
+    <property name="icon_name">alarm-clock</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox">

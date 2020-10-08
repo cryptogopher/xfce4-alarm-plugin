@@ -96,11 +96,14 @@ plugin_configure(XfcePanelPlugin *panel_plugin)
   /* Callback double casting to avoid GCC warning -Wcast-function-type
    * https://gitlab.gnome.org/GNOME/gnome-terminal/-/issues/96 */
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), builder);
+
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
 
   xfce_panel_plugin_block_menu(panel_plugin);
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
                     panel_plugin);
+
+  gtk_builder_connect_signals(builder, NULL);
 
   gtk_widget_show(GTK_WIDGET(dialog));
 }

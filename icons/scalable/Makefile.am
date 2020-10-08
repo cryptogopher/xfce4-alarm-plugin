@@ -1,10 +1,12 @@
 # $Id$
 
 iconsdir = $(datadir)/icons/hicolor/scalable/apps
-icons_DATA =								\
-	xfce4-sample-plugin.svg
+icons_DATA = \
+	alarm-clock.svg \
+	alarm-clock-triggered.svg \
+	alarm-timer.svg
 
-EXTRA_DIST =								\
+EXTRA_DIST = \
 	$(icons_DATA)
 
 # vi:set ts=8 sw=8 noet ai nocindent syntax=automake:
