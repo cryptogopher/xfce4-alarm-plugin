@@ -3,6 +3,11 @@
 <interface>
   <requires lib="gtk+" version="3.22"/>
   <requires lib="libxfce4ui-2" version="4.12"/>
+  <object class="GtkImage" id="window-close-image">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">window-close</property>
+  </object>
   <object class="XfceTitledDialog" id="properties-dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Alarm</property>
@@ -19,11 +24,12 @@
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="close">
-                <property name="label">gtk-close</property>
+                <property name="label" translatable="yes">_Close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
+                <property name="image">window-close-image</property>
+                <property name="use_underline">True</property>
                 <signal name="clicked" handler="gtk_widget_destroy" object="properties-dialog" swapped="yes"/>
               </object>
               <packing>
@@ -173,11 +179,55 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTreeView">
+          <object class="GtkScrolledWindow">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <child internal-child="selection">
-              <object class="GtkTreeSelection"/>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTreeView">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection"/>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="type">
+                    <property name="sizing">fixed</property>
+                    <property name="title" translatable="yes">Type</property>
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="type-renderer"/>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="color">
+                    <property name="sizing">fixed</property>
+                    <property name="title" translatable="yes">Color</property>
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="color-renderer"/>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="time">
+                    <property name="sizing">autosize</property>
+                    <property name="title" translatable="yes">Time</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="text-renderer"/>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="name">
+                    <property name="sizing">autosize</property>
+                    <property name="title" translatable="yes">Name</property>
+                    <property name="expand">True</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="name-renderer"/>
+                    </child>
+                  </object>
+                </child>
+              </object>
             </child>
           </object>
           <packing>
