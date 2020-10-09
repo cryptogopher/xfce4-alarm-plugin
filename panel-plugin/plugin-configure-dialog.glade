@@ -196,6 +196,9 @@
                     <property name="title" translatable="yes">Type</property>
                     <child>
                       <object class="GtkCellRendererPixbuf" id="type-renderer"/>
+                      <attributes>
+                        <attribute name="icon-name">1</attribute>
+                      </attributes>
                     </child>
                   </object>
                 </child>
@@ -205,6 +208,9 @@
                     <property name="title" translatable="yes">Color</property>
                     <child>
                       <object class="GtkCellRendererPixbuf" id="color-renderer"/>
+                      <attributes>
+                        <attribute name="cell-background-rgba">5</attribute>
+                      </attributes>
                     </child>
                   </object>
                 </child>
@@ -214,6 +220,9 @@
                     <property name="title" translatable="yes">Time</property>
                     <child>
                       <object class="GtkCellRendererText" id="text-renderer"/>
+                      <attributes>
+                        <attribute name="text">3</attribute>
+                      </attributes>
                     </child>
                   </object>
                 </child>
@@ -224,6 +233,9 @@
                     <property name="expand">True</property>
                     <child>
                       <object class="GtkCellRendererText" id="name-renderer"/>
+                      <attributes>
+                        <attribute name="text">4</attribute>
+                      </attributes>
                     </child>
                   </object>
                 </child>

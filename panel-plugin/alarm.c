@@ -54,10 +54,12 @@ const gchar *alarm_type_icons[ALARM_COUNT] =
   "alarm-clock"
 };
 
-enum
+enum AlarmColumns
 {
   COL_TYPE,
+  COL_TYPE_ICON_NAME,
   COL_TIME,
+  COL_TIME_DISPLAY,
   COL_NAME,
   COL_COLOR,
   COL_COUNT
@@ -221,7 +223,9 @@ alarm_plugin_init(AlarmPlugin *plugin)
 
   plugin->alarms = gtk_list_store_new(COL_COUNT,
                                       G_TYPE_INT,
+                                      G_TYPE_STRING,
                                       G_TYPE_DATE_TIME,
+                                      G_TYPE_STRING,
                                       G_TYPE_STRING,
                                       GDK_TYPE_RGBA);
 
