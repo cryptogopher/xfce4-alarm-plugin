@@ -16,13 +16,13 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __XFCE_ALARM_PLUGIN_H__
-#define __XFCE_ALARM_PLUGIN_H__
+#ifndef __ALARM_PLUGIN_H__
+#define __ALARM_PLUGIN_H__
 
 G_BEGIN_DECLS
 
 typedef struct _AlarmPluginClass AlarmPluginClass;
-typedef struct _AlarmPlugin      AlarmPlugin;
+typedef struct _AlarmPlugin AlarmPlugin;
 
 #define XFCE_TYPE_ALARM_PLUGIN (alarm_plugin_get_type ())
 #define XFCE_ALARM_PLUGIN(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XFCE_TYPE_ALARM_PLUGIN, AlarmPlugin))
@@ -37,4 +37,4 @@ void alarm_plugin_register_type(XfcePanelTypeModule *type_module);
 
 G_END_DECLS
 
-#endif /* !__XFCE_ALARM_PLUGIN_H__ */
+#endif /* !__ALARM_PLUGIN_H__ */

@@ -25,7 +25,7 @@
 #include <libxfce4util/libxfce4util.h>
 
 #include "alarm.h"
-#include "plugin-configure-dialog_ui.h"
+#include "alarm_ui.h"
 
 
 struct _AlarmPluginClass
@@ -54,6 +54,7 @@ const gchar *alarm_type_icons[ALARM_COUNT] =
   "alarm-clock"
 };
 
+// Don't change order - column numbers are used in .glade
 enum AlarmColumns
 {
   COL_TYPE,
@@ -101,8 +102,7 @@ plugin_configure(XfcePanelPlugin *panel_plugin)
   if (xfce_titled_dialog_get_type() == 0) return;
 
   builder = gtk_builder_new();
-  if (gtk_builder_add_from_string(builder, plugin_configure_dialog_ui,
-                                   plugin_configure_dialog_ui_length, &error))
+  if (gtk_builder_add_from_string(builder, alarm_ui, alarm_ui_length, &error))
   {
     dialog = gtk_builder_get_object(builder, "properties-dialog");
     if (dialog == NULL)

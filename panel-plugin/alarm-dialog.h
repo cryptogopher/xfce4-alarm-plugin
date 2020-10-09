@@ -1,6 +1,5 @@
-/*  $Id$
- *
- *  Copyright (C) 2012 John Doo <john@foo.org>
+/*
+ *  Copyright (C) 2020 cryptogopher
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,18 +16,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __SAMPLE_DIALOGS_H__
-#define __SAMPLE_DIALOGS_H__
+#ifndef __ALARM_DIALOG_H__
+#define __ALARM_DIALOG_H__
 
-G_BEGIN_DECLS
+#include "alarm.h"
 
-void
-sample_configure    (XfcePanelPlugin *plugin,
-                     SamplePlugin    *sample);
+void show_alarm_dialog(AlarmPlugin *plugin);
 
-void
-sample_about        (XfcePanelPlugin *plugin);
-
-G_END_DECLS
-
-#endif
+#endif /* !__ALARM_DIALOG_H__ */
