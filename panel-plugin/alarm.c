@@ -48,6 +48,12 @@ enum
   ALARM_COUNT
 };
 
+const gchar *alarm_type_icons[ALARM_COUNT] =
+{
+  "alarm-timer",
+  "alarm-clock"
+};
+
 enum
 {
   COL_TYPE,
@@ -57,13 +63,6 @@ enum
   COL_COUNT
 };
 
-GType alarm_column_types[COL_COUNT] =
-{
-  G_TYPE_INT,
-  G_TYPE_OBJECT, // GDateTime
-  G_TYPE_STRING,
-  G_TYPE_OBJECT // GdkRGBA
-};
 
 
 static void
@@ -81,17 +80,18 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
 static void
 plugin_free_data(XfcePanelPlugin *panel_plugin)
 {
-  //AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
+
+  g_free(plugin->alarms);
 }
 
 static void
 plugin_configure(XfcePanelPlugin *panel_plugin)
 {
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GError *error = NULL;
-  GObject *dialog = NULL;
-
-  g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
+  GObject *dialog = NULL, *object;
 
   /* Hack to make sure GtkBuilder knows about the XfceTitledDialog object
    * https://wiki.xfce.org/releng/4.8/roadmap/libxfce4ui
@@ -128,6 +128,10 @@ plugin_configure(XfcePanelPlugin *panel_plugin)
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
                     panel_plugin);
 
+  object = gtk_builder_get_object(builder, "alarm-list");
+  g_return_if_fail(GTK_IS_TREE_VIEW(object));
+  gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(plugin->alarms));
+
   gtk_builder_connect_signals(builder, NULL);
 
   gtk_widget_show(GTK_WIDGET(dialog));
@@ -137,6 +141,8 @@ plugin_configure(XfcePanelPlugin *panel_plugin)
 static gboolean
 panel_size_changed(XfcePanelPlugin *panel_plugin, gint size)
 {
+  // NOTE: no panel_plugin type check
+
   size /= xfce_panel_plugin_get_nrows(panel_plugin);
   if (xfce_panel_plugin_get_orientation(panel_plugin) == GTK_ORIENTATION_HORIZONTAL)
     gtk_widget_set_size_request(GTK_WIDGET(panel_plugin), -1, size);
@@ -177,6 +183,9 @@ panel_orientation_changed(XfcePanelPlugin *panel_plugin, GtkOrientation orientat
 static void
 panel_button_toggled(GtkWidget *panel_button, AlarmPlugin *plugin)
 {
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+  g_return_if_fail(GTK_IS_TOGGLE_BUTTON(panel_button));
+
   if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(panel_button)))
     return;
 
@@ -209,6 +218,12 @@ alarm_plugin_init(AlarmPlugin *plugin)
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   GtkWidget *box;
+
+  plugin->alarms = gtk_list_store_new(COL_COUNT,
+                                      G_TYPE_INT,
+                                      G_TYPE_DATE_TIME,
+                                      G_TYPE_STRING,
+                                      GDK_TYPE_RGBA);
 
   // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();
