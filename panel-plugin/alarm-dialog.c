@@ -19,6 +19,7 @@
 #include <libxfce4panel/xfce-panel-plugin.h>
 
 #include "alarm-dialog.h"
+#include "alarm-dialog_ui.h"
 
 void show_alarm_dialog(AlarmPlugin *plugin)
 {

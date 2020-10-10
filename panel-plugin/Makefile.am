@@ -10,7 +10,8 @@ plugin_LTLIBRARIES = \
 	libalarm.la
 
 libalarm_built_sources = \
-	alarm_ui.h
+	properties-dialog_ui.h \
+	alarm-dialog_ui.h
 
 libalarm_la_SOURCES = \
 	$(libalarm_built_sources) \
@@ -49,7 +50,8 @@ BUILT_SOURCES = \
 	$(libalarm_built_sources)
 
 EXTRA_DIST = \
-	alarm.glade \
+	properties-dialog.glade \
+	alarm-dialog.glade \
 	$(desktop_in_files)
 
 DISTCLEANFILES = \
@@ -59,6 +61,8 @@ DISTCLEANFILES = \
 CLEANFILES = \
 	$(desktop_DATA)
 
-alarm_ui.h: alarm.glade
-	$(AM_V_GEN) xdt-csource --static --strip-comments --strip-content --name=alarm_ui $< >$@
+properties-dialog_ui.h: properties-dialog.glade
+	$(AM_V_GEN) xdt-csource --static --strip-comments --strip-content --name=properties_dialog_ui $< >$@
+alarm-dialog_ui.h: alarm-dialog.glade
+	$(AM_V_GEN) xdt-csource --static --strip-comments --strip-content --name=alarm_dialog_ui $< >$@
 # vi:set ts=8 sw=8 noet ai nocindent syntax=automake:

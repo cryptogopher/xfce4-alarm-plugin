@@ -25,7 +25,7 @@
 #include <libxfce4util/libxfce4util.h>
 
 #include "alarm.h"
-#include "alarm_ui.h"
+#include "properties-dialog_ui.h"
 
 
 struct _AlarmPluginClass
@@ -33,12 +33,13 @@ struct _AlarmPluginClass
   XfcePanelPluginClass parent;
 };
 
+// Only store things that have lifetime of the plugin here
 struct _AlarmPlugin
 {
   XfcePanelPlugin parent;
 
-  GtkWidget *panel_button;
   GtkListStore *alarms;
+  GtkWidget *panel_button;
 };
 
 enum
@@ -67,6 +68,33 @@ enum AlarmColumns
 };
 
 
+GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
+                              const gchar* buffer, gsize buffer_length)
+{
+  GtkBuilder *builder;
+  GError *error = NULL;
+
+  g_return_val_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin), NULL);
+
+  /* Hack to make sure GtkBuilder knows about the XfceTitledDialog object
+   * https://wiki.xfce.org/releng/4.8/roadmap/libxfce4ui
+   * http://bugzilla.gnome.org/show_bug.cgi?id=588238 */
+  if (xfce_titled_dialog_get_type() == 0) return NULL;
+
+  builder = gtk_builder_new();
+  if (!gtk_builder_add_from_string(builder, buffer, buffer_length, &error))
+  {
+    g_critical("Failed to construct the builder for plugin %s-%d: %s.",
+               xfce_panel_plugin_get_name (panel_plugin),
+               xfce_panel_plugin_get_unique_id (panel_plugin),
+               error->message);
+    g_error_free(error);
+    g_object_unref(builder);
+  }
+
+  return builder;
+}
+
 
 static void
 plugin_construct(XfcePanelPlugin *panel_plugin)
@@ -88,42 +116,22 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
   g_free(plugin->alarms);
 }
 
+
 static void
-plugin_configure(XfcePanelPlugin *panel_plugin)
+show_properties_dialog(XfcePanelPlugin *panel_plugin)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
-  GError *error = NULL;
-  GObject *dialog = NULL, *object;
+  GObject *dialog, *object;
 
-  /* Hack to make sure GtkBuilder knows about the XfceTitledDialog object
-   * https://wiki.xfce.org/releng/4.8/roadmap/libxfce4ui
-   * http://bugzilla.gnome.org/show_bug.cgi?id=588238 */
-  if (xfce_titled_dialog_get_type() == 0) return;
+  builder = alarm_builder_new(panel_plugin, properties_dialog_ui, properties_dialog_ui_length);
+  g_return_if_fail(GTK_IS_BUILDER(builder));
 
-  builder = gtk_builder_new();
-  if (gtk_builder_add_from_string(builder, alarm_ui, alarm_ui_length, &error))
-  {
-    dialog = gtk_builder_get_object(builder, "properties-dialog");
-    if (dialog == NULL)
-      g_set_error_literal(&error, 0, 0, "Resource named \"properties-dialog\" missing");
-  }
-
-  if (error != NULL)
-  {
-    g_critical("Failed to construct the builder for plugin %s-%d: %s.",
-               xfce_panel_plugin_get_name (panel_plugin),
-               xfce_panel_plugin_get_unique_id (panel_plugin),
-               error->message);
-    g_error_free(error);
-    g_object_unref(G_OBJECT(builder));
-    return;
-  }
-
+  dialog = gtk_builder_get_object(builder, "properties-dialog");
+  g_return_if_fail(GTK_IS_DIALOG(dialog));
   /* Callback double casting to avoid GCC warning -Wcast-function-type
    * https://gitlab.gnome.org/GNOME/gnome-terminal/-/issues/96 */
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), builder);
-
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
 
   xfce_panel_plugin_block_menu(panel_plugin);
@@ -209,7 +217,7 @@ alarm_plugin_class_init(AlarmPluginClass *klass)
 
   plugin_class->construct = plugin_construct;
   plugin_class->free_data = plugin_free_data;
-  plugin_class->configure_plugin = plugin_configure;
+  plugin_class->configure_plugin = show_properties_dialog;
   plugin_class->size_changed = panel_size_changed;
   plugin_class->orientation_changed = panel_orientation_changed;
   //plugin_class->remote_event = plugin_remote_event;
@@ -244,7 +252,7 @@ alarm_plugin_init(AlarmPlugin *plugin)
   // Blank progress bar insted of icon
   // TODO: change to insert icon when no active progress bars
   gtk_box_pack_start(GTK_BOX(box), gtk_progress_bar_new(), TRUE, FALSE, 0);
-
   panel_orientation_changed(panel_plugin, xfce_panel_plugin_get_orientation(panel_plugin));
+
   gtk_widget_show_all(box);
 }

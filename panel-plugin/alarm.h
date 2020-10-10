@@ -35,6 +35,9 @@ GType alarm_plugin_get_type(void) G_GNUC_CONST;
 
 void alarm_plugin_register_type(XfcePanelTypeModule *type_module);
 
+GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
+                              const gchar* buffer, gsize buffer_length);
+
 G_END_DECLS
 
 #endif /* !__ALARM_PLUGIN_H__ */
