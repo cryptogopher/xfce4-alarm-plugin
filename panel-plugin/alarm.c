@@ -38,16 +38,31 @@ struct _AlarmPlugin
 {
   XfcePanelPlugin parent;
 
-  GtkListStore *alarms;
+  GSList *alarms;
   GtkWidget *panel_button;
 };
 
-enum
+typedef enum
 {
   ALARM_TIMER,
   ALARM_CLOCK,
   ALARM_COUNT
+}
+AlarmType;
+
+struct _Alarm
+{
+  AlarmType type;
+  GDateTime *time;
+  gchar *name;
+  GdkRGBA color;
 };
+
+static void alarm_free_func(gpointer data)
+{
+  Alarm *alarm = (Alarm*) data;
+  g_clear_pointer(&alarm->time, g_date_time_unref);
+}
 
 const gchar *alarm_type_icons[ALARM_COUNT] =
 {
@@ -58,10 +73,8 @@ const gchar *alarm_type_icons[ALARM_COUNT] =
 // Don't change order - column numbers are used in .glade
 enum AlarmColumns
 {
-  COL_TYPE,
-  COL_TYPE_ICON_NAME,
+  COL_ICON_NAME,
   COL_TIME,
-  COL_TIME_DISPLAY,
   COL_NAME,
   COL_COLOR,
   COL_COUNT
@@ -113,7 +126,7 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
 
-  g_free(plugin->alarms);
+  g_slist_free_full(g_steal_pointer(&plugin->alarms), alarm_free_func);
 }
 
 
@@ -123,6 +136,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GObject *dialog, *object;
+  GtkListStore *list_store;
 
   builder = alarm_builder_new(panel_plugin, properties_dialog_ui, properties_dialog_ui_length);
   g_return_if_fail(GTK_IS_BUILDER(builder));
@@ -138,9 +152,15 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
                     panel_plugin);
 
+  list_store = gtk_list_store_new(COL_COUNT,
+                                  G_TYPE_STRING,
+                                  G_TYPE_STRING,
+                                  G_TYPE_STRING,
+                                  GDK_TYPE_RGBA);
   object = gtk_builder_get_object(builder, "alarm-list");
   g_return_if_fail(GTK_IS_TREE_VIEW(object));
-  gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(plugin->alarms));
+  gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(list_store));
+  g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), list_store);
 
   gtk_builder_connect_signals(builder, NULL);
 
@@ -229,13 +249,7 @@ alarm_plugin_init(AlarmPlugin *plugin)
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   GtkWidget *box;
 
-  plugin->alarms = gtk_list_store_new(COL_COUNT,
-                                      G_TYPE_INT,
-                                      G_TYPE_STRING,
-                                      G_TYPE_DATE_TIME,
-                                      G_TYPE_STRING,
-                                      G_TYPE_STRING,
-                                      GDK_TYPE_RGBA);
+  plugin->alarms = NULL;
 
   // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();

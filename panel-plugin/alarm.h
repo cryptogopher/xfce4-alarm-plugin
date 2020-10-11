@@ -23,6 +23,7 @@ G_BEGIN_DECLS
 
 typedef struct _AlarmPluginClass AlarmPluginClass;
 typedef struct _AlarmPlugin AlarmPlugin;
+typedef struct _Alarm Alarm;
 
 #define XFCE_TYPE_ALARM_PLUGIN (alarm_plugin_get_type ())
 #define XFCE_ALARM_PLUGIN(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XFCE_TYPE_ALARM_PLUGIN, AlarmPlugin))

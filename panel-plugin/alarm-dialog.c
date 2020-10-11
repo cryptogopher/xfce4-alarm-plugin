@@ -23,6 +23,13 @@
 
 void show_alarm_dialog(AlarmPlugin *plugin)
 {
+  GtkBuilder *builder;
+
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+
+  builder = alarm_builder_new(XFCE_PANEL_PLUGIN(plugin),
+                              alarm_dialog_ui, alarm_dialog_ui_length);
+  g_return_if_fail(GTK_IS_BUILDER(builder));
   //GtkWidget *dialog;
 
   /* block the plugin menu */
