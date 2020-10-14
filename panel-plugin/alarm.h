@@ -25,6 +25,23 @@ typedef struct _AlarmPluginClass AlarmPluginClass;
 typedef struct _AlarmPlugin AlarmPlugin;
 typedef struct _Alarm Alarm;
 
+typedef enum
+{
+  ALARM_TIMER,
+  ALARM_CLOCK,
+  ALARM_COUNT
+}
+AlarmType;
+
+struct _Alarm
+{
+  AlarmType type;
+  GDateTime *time;
+  gchar *name;
+  GdkRGBA color;
+};
+
+
 #define XFCE_TYPE_ALARM_PLUGIN (alarm_plugin_get_type ())
 #define XFCE_ALARM_PLUGIN(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XFCE_TYPE_ALARM_PLUGIN, AlarmPlugin))
 #define XFCE_ALARM_PLUGIN_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), XFCE_TYPE_ALARM_PLUGIN, AlarmPluginClass))
@@ -33,7 +50,6 @@ typedef struct _Alarm Alarm;
 #define XFCE_ALARM_PLUGIN_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), XFCE_TYPE_ALARM_PLUGIN, AlarmPluginClass))
 
 GType alarm_plugin_get_type(void) G_GNUC_CONST;
-
 void alarm_plugin_register_type(XfcePanelTypeModule *type_module);
 
 GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,

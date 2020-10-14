@@ -12,9 +12,32 @@
     <property name="can_focus">False</property>
     <property name="icon_name">gtk-cancel</property>
   </object>
+  <object class="GtkAdjustment" id="hours-adjustment">
+    <property name="upper">23</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">1</property>
+  </object>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-media-play</property>
+  </object>
+  <object class="GtkAdjustment" id="minutes-adjustment">
+    <property name="upper">59</property>
+    <property name="value">15</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="seconds-adjustment">
+    <property name="upper">59</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">1</property>
+  </object>
   <object class="GtkDialog" id="alarm-dialog">
     <property name="can_focus">False</property>
     <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkBox">
@@ -138,8 +161,11 @@
                         <property name="tooltip_text" translatable="yes">Hours</property>
                         <property name="valign">center</property>
                         <property name="text" translatable="yes">0</property>
+                        <property name="adjustment">hours-adjustment</property>
                         <property name="climb_rate">1</property>
+                        <property name="snap_to_ticks">True</property>
                         <property name="numeric">True</property>
+                        <property name="wrap">True</property>
                       </object>
                       <packing>
                         <property name="expand">True</property>
@@ -166,8 +192,12 @@
                         <property name="tooltip_text" translatable="yes">Minutes</property>
                         <property name="valign">center</property>
                         <property name="text" translatable="yes">0</property>
+                        <property name="input_purpose">digits</property>
+                        <property name="adjustment">minutes-adjustment</property>
                         <property name="climb_rate">1</property>
+                        <property name="snap_to_ticks">True</property>
                         <property name="numeric">True</property>
+                        <property name="wrap">True</property>
                       </object>
                       <packing>
                         <property name="expand">True</property>
@@ -194,8 +224,11 @@
                         <property name="tooltip_text" translatable="yes">Seconds</property>
                         <property name="valign">center</property>
                         <property name="text" translatable="yes">0</property>
+                        <property name="adjustment">seconds-adjustment</property>
                         <property name="climb_rate">1</property>
+                        <property name="snap_to_ticks">True</property>
                         <property name="numeric">True</property>
+                        <property name="wrap">True</property>
                       </object>
                       <packing>
                         <property name="expand">True</property>
@@ -233,6 +266,7 @@
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Display progress bar inside plugin's panel area</property>
                         <property name="valign">center</property>
+                        <property name="active">True</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -952,6 +986,10 @@
         </child>
       </object>
     </child>
+    <action-widgets>
+      <action-widget response="-6">cancel</action-widget>
+      <action-widget response="-10">save</action-widget>
+    </action-widgets>
     <child type="titlebar">
       <placeholder/>
     </child>
@@ -972,10 +1010,5 @@
       <widget name="label8"/>
       <widget name="radiobutton4"/>
     </widgets>
-  </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-media-play</property>
   </object>
 </interface>

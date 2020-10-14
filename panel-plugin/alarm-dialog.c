@@ -21,42 +21,47 @@
 #include "alarm-dialog.h"
 #include "alarm-dialog_ui.h"
 
-void show_alarm_dialog(AlarmPlugin *plugin)
+static void
+alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
+{
+}
+
+static void
+alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
+{
+}
+
+void
+show_alarm_dialog(GtkWidget *parent, AlarmPlugin *plugin, Alarm **alarm)
 {
   GtkBuilder *builder;
+  GObject *dialog;
 
+  g_return_if_fail(GTK_IS_WINDOW(parent));
   g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+  g_return_if_fail(alarm != NULL);
 
   builder = alarm_builder_new(XFCE_PANEL_PLUGIN(plugin),
                               alarm_dialog_ui, alarm_dialog_ui_length);
   g_return_if_fail(GTK_IS_BUILDER(builder));
-  //GtkWidget *dialog;
 
-  /* block the plugin menu */
-  //xfce_panel_plugin_block_menu (plugin);
+  dialog = gtk_builder_get_object(builder, "alarm-dialog");
+  g_return_if_fail(GTK_IS_DIALOG(dialog));
+  xfce_panel_plugin_take_window(XFCE_PANEL_PLUGIN(plugin), GTK_WINDOW(dialog));
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 
-  /* create the dialog */
-  //dialog = xfce_titled_dialog_new_with_buttons (_("Sample Plugin"),
-    //                                            GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (plugin))),
-      //                                          GTK_DIALOG_DESTROY_WITH_PARENT,
-        //                                        "gtk-help", GTK_RESPONSE_HELP,
-          //                                      "gtk-close", GTK_RESPONSE_OK,
-            //                                    NULL);
+  //gtk_builder_connect_signals(builder, NULL);
 
-  /* center dialog on the screen */
-  //gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  if (*alarm)
+    alarm_to_dialog(*alarm, builder);
 
-  /* set dialog icon */
-  //gtk_window_set_icon_name (GTK_WINDOW (dialog), "xfce4-settings");
+  if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_APPLY)
+  {
+    if (*alarm == NULL)
+      *alarm = g_slice_new0(Alarm);
 
-  /* link the dialog to the plugin, so we can destroy it when the plugin
-   * is closed, but the dialog is still open */
-  //g_object_set_data (G_OBJECT (plugin), "dialog", dialog);
+    alarm_from_dialog(*alarm, builder);
+  }
 
-  /* connect the response signal to the dialog */
-  //g_signal_connect (G_OBJECT (dialog), "response",
-  //                  G_CALLBACK(sample_configure_response), sample);
-
-  /* show the entire dialog */
-  //gtk_widget_show (dialog);
+  g_object_unref(builder);
 }

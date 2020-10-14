@@ -21,6 +21,6 @@
 
 #include "alarm.h"
 
-void show_alarm_dialog(AlarmPlugin *plugin);
+void show_alarm_dialog(GtkWidget *parent, AlarmPlugin *plugin, Alarm **alarm);
 
 #endif /* !__ALARM_DIALOG_H__ */

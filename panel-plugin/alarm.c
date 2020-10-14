@@ -25,6 +25,7 @@
 #include <libxfce4util/libxfce4util.h>
 
 #include "alarm.h"
+#include "alarm-dialog.h"
 #include "properties-dialog_ui.h"
 
 
@@ -42,26 +43,12 @@ struct _AlarmPlugin
   GtkWidget *panel_button;
 };
 
-typedef enum
-{
-  ALARM_TIMER,
-  ALARM_CLOCK,
-  ALARM_COUNT
-}
-AlarmType;
-
-struct _Alarm
-{
-  AlarmType type;
-  GDateTime *time;
-  gchar *name;
-  GdkRGBA color;
-};
 
 static void alarm_free_func(gpointer data)
 {
   Alarm *alarm = (Alarm*) data;
   g_clear_pointer(&alarm->time, g_date_time_unref);
+  g_slice_free(Alarm, alarm);
 }
 
 const gchar *alarm_type_icons[ALARM_COUNT] =
@@ -109,26 +96,22 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
 }
 
 
+// Properties dialog signal handlers
 static void
-plugin_construct(XfcePanelPlugin *panel_plugin)
+new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
 {
-  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
+  GtkWidget *parent;
+  Alarm *alarm = NULL;
 
-  xfce_textdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR, "UTF-8");
-  xfce_panel_plugin_menu_show_configure(panel_plugin);
-  xfce_panel_plugin_set_small(panel_plugin, TRUE);
+  g_return_if_fail(GTK_IS_TOOL_BUTTON(add_button));
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
 
-  gtk_widget_show(plugin->panel_button);
+  parent = gtk_widget_get_toplevel(GTK_WIDGET(add_button));
+  show_alarm_dialog(parent, plugin, &alarm);
+  if (alarm)
+    plugin->alarms = g_slist_append(plugin->alarms, alarm);
+  // TODO: add to tree view
 }
-
-static void
-plugin_free_data(XfcePanelPlugin *panel_plugin)
-{
-  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
-
-  g_slist_free_full(g_steal_pointer(&plugin->alarms), alarm_free_func);
-}
-
 
 static void
 show_properties_dialog(XfcePanelPlugin *panel_plugin)
@@ -136,7 +119,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GObject *dialog, *object;
-  GtkListStore *list_store;
+  GtkListStore *store;
 
   builder = alarm_builder_new(panel_plugin, properties_dialog_ui, properties_dialog_ui_length);
   g_return_if_fail(GTK_IS_BUILDER(builder));
@@ -152,22 +135,24 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
                     panel_plugin);
 
-  list_store = gtk_list_store_new(COL_COUNT,
-                                  G_TYPE_STRING,
-                                  G_TYPE_STRING,
-                                  G_TYPE_STRING,
-                                  GDK_TYPE_RGBA);
+  store = gtk_list_store_new(COL_COUNT,
+                             G_TYPE_STRING,
+                             G_TYPE_STRING,
+                             G_TYPE_STRING,
+                             GDK_TYPE_RGBA);
   object = gtk_builder_get_object(builder, "alarm-list");
   g_return_if_fail(GTK_IS_TREE_VIEW(object));
-  gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(list_store));
-  g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), list_store);
+  gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(store));
+  g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), store);
 
-  gtk_builder_connect_signals(builder, NULL);
+  gtk_builder_add_callback_symbol(builder, "new_alarm", G_CALLBACK(new_alarm));
+  gtk_builder_connect_signals(builder, plugin);
 
   gtk_widget_show(GTK_WIDGET(dialog));
 }
 
 
+// Panel signal handlers
 static gboolean
 panel_size_changed(XfcePanelPlugin *panel_plugin, gint size)
 {
@@ -225,6 +210,27 @@ panel_button_toggled(GtkWidget *panel_button, AlarmPlugin *plugin)
 
 
 XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
+
+static void
+plugin_construct(XfcePanelPlugin *panel_plugin)
+{
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
+
+  xfce_textdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR, "UTF-8");
+  xfce_panel_plugin_menu_show_configure(panel_plugin);
+  xfce_panel_plugin_set_small(panel_plugin, TRUE);
+
+  gtk_widget_show(plugin->panel_button);
+}
+
+static void
+plugin_free_data(XfcePanelPlugin *panel_plugin)
+{
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
+
+  g_slist_free_full(g_steal_pointer(&plugin->alarms), alarm_free_func);
+}
+
 
 static void
 alarm_plugin_class_init(AlarmPluginClass *klass)
