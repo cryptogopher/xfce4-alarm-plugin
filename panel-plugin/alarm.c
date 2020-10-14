@@ -107,7 +107,7 @@ new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
   g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
 
   parent = gtk_widget_get_toplevel(GTK_WIDGET(add_button));
-  show_alarm_dialog(parent, plugin, &alarm);
+  show_alarm_dialog(parent, XFCE_PANEL_PLUGIN(plugin), &alarm);
   if (alarm)
     plugin->alarms = g_slist_append(plugin->alarms, alarm);
   // TODO: add to tree view
@@ -121,7 +121,8 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   GObject *dialog, *object;
   GtkListStore *store;
 
-  builder = alarm_builder_new(panel_plugin, properties_dialog_ui, properties_dialog_ui_length);
+  builder = alarm_builder_new(panel_plugin, properties_dialog_ui,
+                              properties_dialog_ui_length);
   g_return_if_fail(GTK_IS_BUILDER(builder));
 
   dialog = gtk_builder_get_object(builder, "properties-dialog");

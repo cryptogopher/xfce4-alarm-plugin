@@ -35,6 +35,7 @@
   </object>
   <object class="GtkDialog" id="alarm-dialog">
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">Alarm</property>
     <property name="resizable">False</property>
     <property name="modal">True</property>
     <property name="destroy_with_parent">True</property>
@@ -90,7 +91,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="homogeneous">True</property>
-            <property name="stack">timeout-properties</property>
+            <property name="stack">recurrence</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -112,7 +113,7 @@
                 <property name="column_spacing">8</property>
                 <property name="row_homogeneous">True</property>
                 <child>
-                  <object class="GtkLabel" id="label1">
+                  <object class="GtkLabel" id="name-label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
@@ -125,7 +126,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry">
+                  <object class="GtkEntry" id="name">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="hexpand">True</property>
@@ -137,7 +138,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label2">
+                  <object class="GtkLabel" id="time-label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Countdown time for timer. Time of alarm for alarm clock.</property>
@@ -155,7 +156,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkSpinButton">
+                      <object class="GtkSpinButton" id="hours">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Hours</property>
@@ -186,7 +187,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSpinButton">
+                      <object class="GtkSpinButton" id="minutes">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Minutes</property>
@@ -218,7 +219,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSpinButton">
+                      <object class="GtkSpinButton" id="seconds">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Seconds</property>
@@ -243,7 +244,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label3">
+                  <object class="GtkLabel" id="progress-label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
@@ -261,7 +262,7 @@
                     <property name="can_focus">False</property>
                     <property name="spacing">16</property>
                     <child>
-                      <object class="GtkSwitch">
+                      <object class="GtkSwitch" id="progress">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Display progress bar inside plugin's panel area</property>
@@ -275,7 +276,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkColorButton">
+                      <object class="GtkColorButton" id="color">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -296,7 +297,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label4">
+                  <object class="GtkLabel" id="autostart-label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
@@ -331,7 +332,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkStack" id="timeout-properties">
+          <object class="GtkStack" id="recurrence">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="vhomogeneous">False</property>
@@ -407,6 +408,7 @@
                 </child>
               </object>
               <packing>
+                <property name="name">timer</property>
                 <property name="title" translatable="yes">Timer</property>
                 <property name="icon_name">alarm-timer</property>
               </packing>
@@ -570,7 +572,7 @@
                 </child>
               </object>
               <packing>
-                <property name="name">page1</property>
+                <property name="name">clock</property>
                 <property name="title" translatable="yes">Clock</property>
                 <property name="icon_name">alarm-clock</property>
                 <property name="position">1</property>
@@ -996,10 +998,10 @@
   </object>
   <object class="GtkSizeGroup">
     <widgets>
-      <widget name="label1"/>
-      <widget name="label2"/>
-      <widget name="label3"/>
-      <widget name="label4"/>
+      <widget name="name-label"/>
+      <widget name="time-label"/>
+      <widget name="progress-label"/>
+      <widget name="autostart-label"/>
       <widget name="label9"/>
       <widget name="radiobutton1"/>
       <widget name="radiobutton2"/>

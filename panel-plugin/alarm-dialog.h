@@ -21,6 +21,6 @@
 
 #include "alarm.h"
 
-void show_alarm_dialog(GtkWidget *parent, AlarmPlugin *plugin, Alarm **alarm);
+void show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm);
 
 #endif /* !__ALARM_DIALOG_H__ */

@@ -36,8 +36,9 @@ AlarmType;
 struct _Alarm
 {
   AlarmType type;
-  GDateTime *time;
   gchar *name;
+  GDateTime *time;
+  gboolean show_progress;
   GdkRGBA color;
 };
 
