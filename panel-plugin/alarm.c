@@ -47,7 +47,9 @@ struct _AlarmPlugin
 static void alarm_free_func(gpointer data)
 {
   Alarm *alarm = (Alarm*) data;
-  g_clear_pointer(&alarm->time, g_date_time_unref);
+
+  g_free(alarm->name);
+  g_date_time_unref(alarm->time);
   g_slice_free(Alarm, alarm);
 }
 
@@ -96,12 +98,20 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
 }
 
 
-// Properties dialog signal handlers
+// Properties dialog
+static void
+alarm_to_tree_iter(Alarm *alarm, GtkTreeIter *tree_iter)
+{
+}
+
 static void
 new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
 {
   GtkWidget *parent;
   Alarm *alarm = NULL;
+  GtkBuilder *builder;
+  GObject *store;
+  GtkTreeIter tree_iter;
 
   g_return_if_fail(GTK_IS_TOOL_BUTTON(add_button));
   g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
@@ -110,7 +120,15 @@ new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
   show_alarm_dialog(parent, XFCE_PANEL_PLUGIN(plugin), &alarm);
   if (alarm)
     plugin->alarms = g_slist_append(plugin->alarms, alarm);
+  else
+    return;
+
   // TODO: add to tree view
+  builder = g_object_get_data(G_OBJECT(parent), "builder");
+  store = gtk_builder_get_object(builder, "alarm-list");
+  g_return_if_fail(GTK_IS_LIST_STORE(store));
+  gtk_list_store_append(GTK_LIST_STORE(store), &tree_iter);
+  alarm_to_tree_iter(alarm, &tree_iter);
 }
 
 static void
@@ -129,7 +147,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   g_return_if_fail(GTK_IS_DIALOG(dialog));
   /* Callback double casting to avoid GCC warning -Wcast-function-type
    * https://gitlab.gnome.org/GNOME/gnome-terminal/-/issues/96 */
-  g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), builder);
+  g_object_set_data_full(dialog, "builder", builder, g_object_unref);
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
 
   xfce_panel_plugin_block_menu(panel_plugin);
@@ -153,7 +171,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
 }
 
 
-// Panel signal handlers
+// Panel callbacks
 static gboolean
 panel_size_changed(XfcePanelPlugin *panel_plugin, gint size)
 {
@@ -209,7 +227,7 @@ panel_button_toggled(GtkWidget *panel_button, AlarmPlugin *plugin)
 }
 
 
-
+// Plugin definition
 XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
 
 static void

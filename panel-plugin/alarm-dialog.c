@@ -37,35 +37,35 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   g_return_if_fail(GTK_IS_BUILDER(builder));
 
   object = gtk_builder_get_object(builder, "name");
-  g_return_if_fail(GTK_ENTRY(object));
+  g_return_if_fail(GTK_IS_ENTRY(object));
   //g_clear_pointer(&alarm->name, g_free);
   g_free(alarm->name);
   alarm->name = g_strdup(gtk_entry_get_text(GTK_ENTRY(object)));
 
   object = gtk_builder_get_object(builder, "hours");
-  g_return_if_fail(GTK_SPIN_BUTTON(object));
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
   hours = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
   object = gtk_builder_get_object(builder, "minutes");
-  g_return_if_fail(GTK_SPIN_BUTTON(object));
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
   minutes = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
   object = gtk_builder_get_object(builder, "seconds");
-  g_return_if_fail(GTK_SPIN_BUTTON(object));
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
   seconds = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
   g_date_time_unref(alarm->time);
   alarm->time = g_date_time_new_local(1, 1, 1, hours, minutes, seconds);
 
   object = gtk_builder_get_object(builder, "progress");
-  g_return_if_fail(GTK_SWITCH(object));
+  g_return_if_fail(GTK_IS_SWITCH(object));
   alarm->show_progress = gtk_switch_get_active(GTK_SWITCH(object));
   if (alarm->show_progress)
   {
     object = gtk_builder_get_object(builder, "color");
-    g_return_if_fail(GTK_COLOR_BUTTON(object));
+    g_return_if_fail(GTK_IS_COLOR_BUTTON(object));
     gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(object), &alarm->color);
   }
 
   object = gtk_builder_get_object(builder, "recurrence");
-  g_return_if_fail(GTK_STACK(object));
+  g_return_if_fail(GTK_IS_STACK(object));
   g_object_get(object, "position", &value, NULL);
   g_return_if_fail(value >= 0 && value < ALARM_COUNT);
   alarm->type = value;
