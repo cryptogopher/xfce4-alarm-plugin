@@ -25,6 +25,15 @@ typedef struct _AlarmPluginClass AlarmPluginClass;
 typedef struct _AlarmPlugin AlarmPlugin;
 typedef struct _Alarm Alarm;
 
+// Only store things that have lifetime of the plugin here
+struct _AlarmPlugin
+{
+  XfcePanelPlugin parent;
+
+  GSList *alarms;
+  GtkWidget *panel_button;
+};
+
 typedef enum
 {
   ALARM_TIMER,
@@ -41,6 +50,17 @@ struct _Alarm
   gboolean show_progress;
   GdkRGBA color;
 };
+
+// Don't change order - column numbers are used in .glade
+enum AlarmColumns
+{
+  COL_ICON_NAME,
+  COL_TIME,
+  COL_NAME,
+  COL_COLOR,
+  COL_COUNT
+};
+
 
 
 #define XFCE_TYPE_ALARM_PLUGIN (alarm_plugin_get_type ())
