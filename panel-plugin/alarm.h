@@ -41,16 +41,17 @@ struct _AlarmPlugin
 
 typedef enum
 {
-  ALARM_TIMER,
-  ALARM_CLOCK,
-  ALARM_COUNT
+  TYPE_TIMER,
+  TYPE_CLOCK,
+  TYPE_COUNT
 } AlarmType;
 
 typedef enum
 {
+  NONE,
   TRIGGER_TIMER,
-  TRIGGER_EVERY_DOW,
-  TRIGGER_EVERY_NDAYS
+  REPEAT_EVERY_DOW,
+  REPEAT_EVERY_NDAYS
 } AlarmRecurrence;
 
 struct _Alarm
@@ -72,7 +73,7 @@ enum AlarmColumns
   COL_COUNT
 };
 
-const gchar *alarm_type_icons[ALARM_COUNT];
+const gchar *alarm_type_icons[TYPE_COUNT];
 
 
 #define XFCE_TYPE_ALARM_PLUGIN (alarm_plugin_get_type ())

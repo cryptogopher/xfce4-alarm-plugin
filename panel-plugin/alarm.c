@@ -28,7 +28,7 @@
 #include "properties-dialog.h"
 
 
-const gchar *alarm_type_icons[ALARM_COUNT] =
+const gchar *alarm_type_icons[TYPE_COUNT] =
 {
   "alarm-timer",
   "alarm-clock"

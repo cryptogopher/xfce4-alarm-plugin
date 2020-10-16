@@ -70,7 +70,7 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
                           gtk_stack_get_visible_child(GTK_STACK(object)),
                           "position", &value,
                           NULL);
-  g_return_if_fail(value >= 0 && value < ALARM_COUNT);
+  g_return_if_fail(value >= 0 && value < TYPE_COUNT);
   alarm->type = value;
 }
 
