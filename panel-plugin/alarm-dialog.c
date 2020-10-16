@@ -39,7 +39,6 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
 
   object = gtk_builder_get_object(builder, "name");
   g_return_if_fail(GTK_IS_ENTRY(object));
-  //g_clear_pointer(&alarm->name, g_free);
   g_free(alarm->name);
   alarm->name = g_strdup(gtk_entry_get_text(GTK_ENTRY(object)));
 
@@ -52,7 +51,7 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   object = gtk_builder_get_object(builder, "seconds");
   g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
   seconds = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
-  g_date_time_unref(alarm->time);
+  g_clear_pointer(&alarm->time, g_date_time_unref);
   alarm->time = g_date_time_new_local(1, 1, 1, hours, minutes, seconds);
 
   object = gtk_builder_get_object(builder, "progress");
@@ -67,7 +66,10 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
 
   object = gtk_builder_get_object(builder, "recurrence");
   g_return_if_fail(GTK_IS_STACK(object));
-  g_object_get(object, "position", &value, NULL);
+  gtk_container_child_get(GTK_CONTAINER(object),
+                          gtk_stack_get_visible_child(GTK_STACK(object)),
+                          "position", &value,
+                          NULL);
   g_return_if_fail(value >= 0 && value < ALARM_COUNT);
   alarm->type = value;
 }

@@ -25,6 +25,11 @@ typedef struct _AlarmPluginClass AlarmPluginClass;
 typedef struct _AlarmPlugin AlarmPlugin;
 typedef struct _Alarm Alarm;
 
+struct _AlarmPluginClass
+{
+  XfcePanelPluginClass parent;
+};
+
 // Only store things that have lifetime of the plugin here
 struct _AlarmPlugin
 {
@@ -39,8 +44,14 @@ typedef enum
   ALARM_TIMER,
   ALARM_CLOCK,
   ALARM_COUNT
-}
-AlarmType;
+} AlarmType;
+
+typedef enum
+{
+  TRIGGER_TIMER,
+  TRIGGER_EVERY_DOW,
+  TRIGGER_EVERY_NDAYS
+} AlarmRecurrence;
 
 struct _Alarm
 {
@@ -56,11 +67,12 @@ enum AlarmColumns
 {
   COL_ICON_NAME,
   COL_TIME,
-  COL_NAME,
   COL_COLOR,
+  COL_NAME,
   COL_COUNT
 };
 
+const gchar *alarm_type_icons[ALARM_COUNT];
 
 
 #define XFCE_TYPE_ALARM_PLUGIN (alarm_plugin_get_type ())

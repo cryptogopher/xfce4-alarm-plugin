@@ -18,7 +18,7 @@ libalarm_la_SOURCES = \
 	alarm.c \
 	alarm.h \
 	properties-dialog.c \
-	properties-dialog.h
+	properties-dialog.h \
 	alarm-dialog.c \
 	alarm-dialog.h
 

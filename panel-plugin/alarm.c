@@ -28,26 +28,20 @@
 #include "properties-dialog.h"
 
 
-struct _AlarmPluginClass
-{
-  XfcePanelPluginClass parent;
-};
-
-
-static void alarm_free_func(gpointer data)
-{
-  Alarm *alarm = (Alarm*) data;
-
-  g_free(alarm->name);
-  g_date_time_unref(alarm->time);
-  g_slice_free(Alarm, alarm);
-}
-
 const gchar *alarm_type_icons[ALARM_COUNT] =
 {
   "alarm-timer",
   "alarm-clock"
 };
+
+static void alarm_free_func(gpointer data)
+{
+  Alarm *alarm = (Alarm*) data;
+
+  g_date_time_unref(alarm->time);
+  g_free(alarm->name);
+  g_slice_free(Alarm, alarm);
+}
 
 
 GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,

@@ -18,8 +18,7 @@ AC_CONFIG_MACRO_DIR([m4])
 dnl ***************************
 dnl *** Initialize autoconf ***
 dnl ***************************
-AC_COPYRIGHT([Copyright (C) 2020
-        The Xfce development team. All rights reserved.])
+AC_COPYRIGHT([Copyright (C) 2020 cryptogopher. All rights reserved.])
 AC_INIT([xfce4-alarm-plugin], [alarm_version], [https://github.com/cryptogopher/xfce4-alarm-plugin], [xfce4-alarm-plugin])
 AC_PREREQ([2.50])
 AC_REVISION([xfce4_panel_version_build])

@@ -23,18 +23,36 @@
 #include "alarm-dialog.h"
 
 
+// Utilities
 static void
-alarm_to_tree_iter(Alarm *alarm, GtkTreeIter *tree_iter)
+alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
 {
+  gchar *time;
+
+  g_return_if_fail(alarm != NULL);
+  g_return_if_fail(GTK_IS_LIST_STORE(store));
+  g_return_if_fail(iter != NULL);
+
+  time = g_date_time_format(alarm->time, "%H:%M:%S");
+  gtk_list_store_set(store, iter,
+                     COL_ICON_NAME, alarm_type_icons[alarm->type],
+                     COL_TIME, time,
+                     COL_COLOR, &alarm->color,
+                     COL_NAME, alarm->name,
+                     -1);
+  g_free(time);
 }
 
+
+// Callbacks
 static void
 new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
 {
   GtkWidget *parent;
   Alarm *alarm = NULL;
   GtkBuilder *builder;
-  GObject *store;
+  GObject *tree_view;
+  GtkTreeModel *store;
   GtkTreeIter tree_iter;
 
   g_return_if_fail(GTK_IS_TOOL_BUTTON(add_button));
@@ -47,14 +65,26 @@ new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
   else
     return;
 
-  // TODO: add to tree view
   builder = g_object_get_data(G_OBJECT(parent), "builder");
-  store = gtk_builder_get_object(builder, "alarm-list");
-  g_return_if_fail(GTK_IS_LIST_STORE(store));
+  tree_view = gtk_builder_get_object(builder, "alarm-list");
+  g_return_if_fail(GTK_IS_TREE_VIEW(tree_view));
+  store = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
   gtk_list_store_append(GTK_LIST_STORE(store), &tree_iter);
-  alarm_to_tree_iter(alarm, &tree_iter);
+  alarm_to_tree_iter(alarm, GTK_LIST_STORE(store), &tree_iter);
 }
 
+static void
+edit_alarm(GtkToolButton *edit_button, AlarmPlugin *plugin)
+{
+}
+
+static void
+remove_alarm(GtkToolButton *remove_button, AlarmPlugin *plugin)
+{
+}
+
+
+// External interface
 void
 show_properties_dialog(XfcePanelPlugin *panel_plugin)
 {
@@ -81,14 +111,18 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   store = gtk_list_store_new(COL_COUNT,
                              G_TYPE_STRING,
                              G_TYPE_STRING,
-                             G_TYPE_STRING,
-                             GDK_TYPE_RGBA);
+                             GDK_TYPE_RGBA,
+                             G_TYPE_STRING);
   object = gtk_builder_get_object(builder, "alarm-list");
   g_return_if_fail(GTK_IS_TREE_VIEW(object));
   gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(store));
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), store);
 
-  gtk_builder_add_callback_symbol(builder, "new_alarm", G_CALLBACK(new_alarm));
+  gtk_builder_add_callback_symbols(builder,
+                                   "new_alarm", G_CALLBACK(new_alarm),
+                                   "edit_alarm", G_CALLBACK(edit_alarm),
+                                   "remove_alarm", G_CALLBACK(remove_alarm),
+                                   NULL);
   gtk_builder_connect_signals(builder, plugin);
 
   gtk_widget_show(GTK_WIDGET(dialog));
