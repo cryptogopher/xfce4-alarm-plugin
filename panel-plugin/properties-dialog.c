@@ -27,7 +27,7 @@
 static void
 alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
 {
-  gchar *time;
+  gchar *time, *color;
 
   g_return_if_fail(alarm != NULL);
   g_return_if_fail(GTK_IS_LIST_STORE(store));
@@ -36,13 +36,21 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
   time = g_date_time_format(alarm->time,
                             "<span size=\"large\" weight=\"normal\">%H:%M</span>" \
                             "<span size=\"small\" weight=\"normal\">:%S</span>");
+  /* Setting color through markup preserves proper color on item selection (as
+   * opposed to setting it through cell renderer background property). */
+  color = g_strdup_printf("<span size=\"x-large\" foreground=\"#%02x%02x%02x\">" \
+                          "\xe2\x96\x8a</span>",
+                          (uint) (0.5 + alarm->color.red*255),
+                          (uint) (0.5 + alarm->color.green*255),
+                          (uint) (0.5 + alarm->color.blue*255));
   gtk_list_store_set(store, iter,
                      COL_ICON_NAME, alarm_type_icons[alarm->type],
                      COL_TIME, time,
-                     COL_COLOR, &alarm->color,
+                     COL_COLOR, color,
                      COL_NAME, alarm->name,
                      -1);
   g_free(time);
+  g_free(color);
 }
 
 
@@ -108,10 +116,12 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
                     panel_plugin);
 
+  /* NOTE: once type list consists only of static types it can be moved to
+   * header file below column names for clarity */
   store = gtk_list_store_new(COL_COUNT,
                              G_TYPE_STRING,
                              G_TYPE_STRING,
-                             GDK_TYPE_RGBA,
+                             G_TYPE_STRING,
                              G_TYPE_STRING);
   object = gtk_builder_get_object(builder, "alarm-list");
   g_return_if_fail(GTK_IS_TREE_VIEW(object));

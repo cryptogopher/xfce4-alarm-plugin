@@ -46,6 +46,17 @@
           </packing>
         </child>
         <child>
+          <object class="GtkProgressBar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkToolbar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -260,11 +271,9 @@
                     <property name="sizing">fixed</property>
                     <property name="title" translatable="yes">Color</property>
                     <child>
-                      <object class="GtkCellRendererText" id="color-renderer">
-                        <property name="markup">&lt;span size="x-large" foreground="red"&gt;⬤&lt;/span&gt;</property>
-                      </object>
+                      <object class="GtkCellRendererText" id="color-renderer"/>
                       <attributes>
-                        <attribute name="foreground-rgba">2</attribute>
+                        <attribute name="markup">2</attribute>
                       </attributes>
                     </child>
                   </object>
