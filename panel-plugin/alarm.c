@@ -27,13 +27,15 @@
 #include "alarm.h"
 #include "properties-dialog.h"
 
-
+/* Plugin icon names cannot have name prefixes in common with theme icons.
+ * Otherwise theme will preferably provide its own icons. */
 const gchar *alarm_type_icons[TYPE_COUNT] =
 {
-  "alarm-timer",
-  "alarm-clock"
+  "xfce4-alarm-plugin-timer",
+  "xfce4-alarm-plugin-clock"
 };
 
+// Utilities
 static void alarm_free_func(gpointer data)
 {
   Alarm *alarm = (Alarm*) data;
@@ -42,7 +44,6 @@ static void alarm_free_func(gpointer data)
   g_free(alarm->name);
   g_slice_free(Alarm, alarm);
 }
-
 
 GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
                               const gchar* buffer, gsize buffer_length)
@@ -72,7 +73,7 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
 }
 
 
-// Panel callbacks
+// Callbacks
 static gboolean
 panel_size_changed(XfcePanelPlugin *panel_plugin, gint size)
 {

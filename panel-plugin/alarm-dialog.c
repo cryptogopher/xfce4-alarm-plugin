@@ -22,6 +22,7 @@
 #include "alarm-dialog_ui.h"
 
 
+// Utilities
 static void
 alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
 {
@@ -74,6 +75,8 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   alarm->type = value;
 }
 
+
+// External interface
 void
 show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm)
 {

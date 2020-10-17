@@ -33,7 +33,9 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
   g_return_if_fail(GTK_IS_LIST_STORE(store));
   g_return_if_fail(iter != NULL);
 
-  time = g_date_time_format(alarm->time, "%H:%M:%S");
+  time = g_date_time_format(alarm->time,
+                            "<span size=\"large\" weight=\"normal\">%H:%M</span>" \
+                            "<span size=\"small\" weight=\"normal\">:%S</span>");
   gtk_list_store_set(store, iter,
                      COL_ICON_NAME, alarm_type_icons[alarm->type],
                      COL_TIME, time,
@@ -99,8 +101,6 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
 
   dialog = gtk_builder_get_object(builder, "properties-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
-  /* Callback double casting to avoid GCC warning -Wcast-function-type
-   * https://gitlab.gnome.org/GNOME/gnome-terminal/-/issues/96 */
   g_object_set_data_full(dialog, "builder", builder, g_object_unref);
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
 
@@ -116,7 +116,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   object = gtk_builder_get_object(builder, "alarm-list");
   g_return_if_fail(GTK_IS_TREE_VIEW(object));
   gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(store));
-  g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), store);
+  g_object_unref(store);
 
   gtk_builder_add_callback_symbols(builder,
                                    "new_alarm", G_CALLBACK(new_alarm),

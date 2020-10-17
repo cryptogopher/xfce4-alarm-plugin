@@ -1,6 +1,6 @@
 # $Id$
 
-iconsdir = $(datadir)/icons/hicolor/48x48/apps
+iconsdir = $(datadir)/icons/hicolor/24x24/apps
 icons_DATA = \
 	xfce4-alarm-plugin-clock.png \
 	xfce4-alarm-plugin-timer.png

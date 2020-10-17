@@ -2,9 +2,8 @@
 
 iconsdir = $(datadir)/icons/hicolor/scalable/apps
 icons_DATA = \
-	alarm-clock.svg \
-	alarm-clock-triggered.svg \
-	alarm-timer.svg
+	xfce4-alarm-plugin-clock.svg \
+	xfce4-alarm-plugin-timer.svg
 
 EXTRA_DIST = \
 	$(icons_DATA)

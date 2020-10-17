@@ -91,6 +91,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="homogeneous">True</property>
+            <property name="icon_size">5</property>
             <property name="stack">recurrence</property>
           </object>
           <packing>
@@ -410,7 +411,7 @@
               <packing>
                 <property name="name">timer</property>
                 <property name="title" translatable="yes">Timer</property>
-                <property name="icon_name">alarm-timer</property>
+                <property name="icon_name">xfce4-alarm-plugin-timer</property>
               </packing>
             </child>
             <child>
@@ -574,7 +575,7 @@
               <packing>
                 <property name="name">clock</property>
                 <property name="title" translatable="yes">Clock</property>
-                <property name="icon_name">alarm-clock</property>
+                <property name="icon_name">xfce4-alarm-plugin-clock</property>
                 <property name="position">1</property>
               </packing>
             </child>
