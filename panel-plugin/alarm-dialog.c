@@ -34,6 +34,7 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   GObject *object;
   gint hours, minutes, seconds;
   gint value;
+  GdkRGBA color;
 
   g_return_if_fail(alarm != NULL);
   g_return_if_fail(GTK_IS_BUILDER(builder));
@@ -57,13 +58,18 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
 
   object = gtk_builder_get_object(builder, "progress");
   g_return_if_fail(GTK_IS_SWITCH(object));
-  alarm->show_progress = gtk_switch_get_active(GTK_SWITCH(object));
-  if (alarm->show_progress)
+  if (gtk_switch_get_active(GTK_SWITCH(object)))
   {
     object = gtk_builder_get_object(builder, "color");
     g_return_if_fail(GTK_IS_COLOR_BUTTON(object));
-    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(object), &alarm->color);
+    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(object), &color);
+    g_snprintf(alarm->color, sizeof(alarm->color),  "#%02x%02x%02x",
+               (uint) (0.5 + color.red*255),
+               (uint) (0.5 + color.green*255),
+               (uint) (0.5 + color.blue*255));
   }
+  else
+    alarm->color[0] = '\0';
 
   object = gtk_builder_get_object(builder, "recurrence");
   g_return_if_fail(GTK_IS_STACK(object));

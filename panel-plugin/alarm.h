@@ -19,6 +19,8 @@
 #ifndef __ALARM_PLUGIN_H__
 #define __ALARM_PLUGIN_H__
 
+#include <xfconf/xfconf.h>
+
 G_BEGIN_DECLS
 
 typedef struct _AlarmPluginClass AlarmPluginClass;
@@ -56,11 +58,11 @@ typedef enum
 
 struct _Alarm
 {
+  gchar *uuid;
   AlarmType type;
   gchar *name;
   GDateTime *time;
-  gboolean show_progress;
-  GdkRGBA color;
+  gchar color[8];
 };
 
 // Don't change order - column numbers are used in .glade
@@ -86,6 +88,7 @@ const gchar *alarm_type_icons[TYPE_COUNT];
 GType alarm_plugin_get_type(void) G_GNUC_CONST;
 void alarm_plugin_register_type(XfcePanelTypeModule *type_module);
 
+void save_alarm(AlarmPlugin *plugin, Alarm *alarm);
 GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
                               const gchar* buffer, gsize buffer_length);
 

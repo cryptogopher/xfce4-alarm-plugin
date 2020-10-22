@@ -38,11 +38,8 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
                             "<span size=\"small\" weight=\"normal\">:%S</span>");
   /* Setting color through markup preserves proper color on item selection (as
    * opposed to setting it through cell renderer background property). */
-  color = g_strdup_printf("<span size=\"x-large\" foreground=\"#%02x%02x%02x\">" \
-                          "\xe2\x96\x8a</span>",
-                          (uint) (0.5 + alarm->color.red*255),
-                          (uint) (0.5 + alarm->color.green*255),
-                          (uint) (0.5 + alarm->color.blue*255));
+  color = g_strdup_printf("<span size=\"x-large\" foreground=\"%s\">\xe2\x96\x8a</span>",
+                          alarm->color);
   gtk_list_store_set(store, iter,
                      COL_ICON_NAME, alarm_type_icons[alarm->type],
                      COL_TIME, time,
@@ -74,6 +71,8 @@ new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
     plugin->alarms = g_slist_append(plugin->alarms, alarm);
   else
     return;
+
+  save_alarm(plugin, alarm);
 
   builder = g_object_get_data(G_OBJECT(parent), "builder");
   tree_view = gtk_builder_get_object(builder, "alarm-list");

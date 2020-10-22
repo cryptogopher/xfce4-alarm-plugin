@@ -119,7 +119,7 @@
               <object class="GtkToolButton" id="one-off">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Start one-off timer</property>
+                <property name="tooltip_text" translatable="yes">Start one-off alarm</property>
                 <property name="label" translatable="yes">One-off</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-go-forward</property>
@@ -157,7 +157,7 @@
               <object class="GtkToolButton" id="reset">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Reset selected running alarm</property>
+                <property name="tooltip_text" translatable="yes">Reset selected timer</property>
                 <property name="label" translatable="yes">Reset</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-refresh</property>
@@ -171,7 +171,7 @@
               <object class="GtkToolButton" id="pause">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Pause selected alarm</property>
+                <property name="tooltip_text" translatable="yes">Pause selected timer</property>
                 <property name="label" translatable="yes">Pause</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-media-pause</property>
@@ -189,6 +189,20 @@
                 <property name="label" translatable="yes">Stop</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-media-stop</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="Finish">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Finish (fast-forward) selected alarm</property>
+                <property name="label" translatable="yes">Finish</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-media-forward</property>
               </object>
               <packing>
                 <property name="expand">False</property>
