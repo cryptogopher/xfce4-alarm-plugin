@@ -101,6 +101,8 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   GtkBuilder *builder;
   GObject *dialog, *object;
   GtkListStore *store;
+  GSList *alarm_iter;
+  GtkTreeIter tree_iter;
 
   builder = alarm_builder_new(panel_plugin, properties_dialog_ui,
                               properties_dialog_ui_length);
@@ -125,6 +127,13 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   object = gtk_builder_get_object(builder, "alarm-list");
   g_return_if_fail(GTK_IS_TREE_VIEW(object));
   gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(store));
+  alarm_iter = plugin->alarms;
+  while (alarm_iter)
+  {
+    gtk_list_store_append(store, &tree_iter);
+    alarm_to_tree_iter(alarm_iter->data, store, &tree_iter);
+    alarm_iter = alarm_iter->next;
+  }
   g_object_unref(store);
 
   gtk_builder_add_callback_symbols(builder,

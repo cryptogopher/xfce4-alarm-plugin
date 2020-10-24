@@ -46,11 +46,55 @@ static void alarm_free_func(gpointer data)
   g_slice_free(Alarm, alarm);
 }
 
+static GSList* load_alarms(AlarmPlugin *plugin)
+{
+  XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
+  XfconfChannel *channel;
+  Alarm *alarm;
+  GSList *alarms = NULL;
+  GHashTable *alarm_uuids;
+  GHashTableIter alarm_uuid_iter;
+  gpointer uuid, order;
+  gchar *value;
+
+  g_return_val_if_fail(XFCE_IS_ALARM_PLUGIN(plugin), NULL);
+
+  channel = xfce_panel_plugin_xfconf_channel_new(panel_plugin);
+  alarm_uuids = xfconf_channel_get_properties(channel, NULL);
+
+  // TODO: preserve alarm order
+  g_hash_table_iter_init(&alarm_uuid_iter, alarm_uuids);
+  while (g_hash_table_iter_next(&alarm_uuid_iter, &uuid, &order))
+  {
+    if (!g_uuid_string_is_valid(uuid))
+      continue;
+
+    alarm = g_slice_new0(Alarm);
+    alarm->uuid = g_strdup(uuid);
+
+    alarm->type = xfconf_channel_get_uint(channel, "type", TYPE_TIMER);
+    alarm->name = xfconf_channel_get_string(channel, "name", NULL);
+    value = xfconf_channel_get_string(channel, "time", "T00:15:00Z-UTC");
+    alarm->time = g_date_time_new_from_iso8601(value, NULL);
+    g_free(value);
+    value = xfconf_channel_get_string(channel, "color", "#729fcf");
+    g_strlcpy(alarm->color, value, sizeof(alarm->color));
+    g_free(value);
+
+    alarms = g_slist_append(alarms, alarm);
+  }
+
+  g_hash_table_destroy(alarm_uuids);
+  g_object_unref(channel);
+
+  return alarms;
+}
+
 void save_alarm(AlarmPlugin *plugin, Alarm *alarm)
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
-  gchar *property_base;
+  gchar *property_base, *value;
 
   g_return_if_fail(alarm != NULL);
 
@@ -68,8 +112,9 @@ void save_alarm(AlarmPlugin *plugin, Alarm *alarm)
 
   g_warn_if_fail(xfconf_channel_set_uint(channel, "type", alarm->type));
   g_warn_if_fail(xfconf_channel_set_string(channel, "name", alarm->name));
-  g_warn_if_fail(xfconf_channel_set_uint64(channel, "time",
-                                           (guint64) g_date_time_to_unix(alarm->time)));
+  value = g_date_time_format(alarm->time, "T%T%Z");
+  g_warn_if_fail(xfconf_channel_set_string(channel, "time", value));
+  g_free(value);
   g_warn_if_fail(xfconf_channel_set_string(channel, "color", alarm->color));
 
   g_object_unref(channel);
@@ -172,6 +217,8 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
   xfce_panel_plugin_menu_show_configure(panel_plugin);
   xfce_panel_plugin_set_small(panel_plugin, TRUE);
 
+  plugin->alarms = load_alarms(plugin);
+
   // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();
   gtk_container_add(GTK_CONTAINER(plugin), plugin->panel_button);
@@ -187,7 +234,8 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
   // Blank progress bar insted of icon
   // TODO: change to insert icon when no active progress bars
   gtk_box_pack_start(GTK_BOX(box), gtk_progress_bar_new(), TRUE, FALSE, 0);
-  panel_orientation_changed(panel_plugin, xfce_panel_plugin_get_orientation(panel_plugin));
+  panel_orientation_changed(panel_plugin,
+                            xfce_panel_plugin_get_orientation(panel_plugin));
 
   gtk_widget_show_all(plugin->panel_button);
 }
@@ -223,9 +271,6 @@ alarm_plugin_init(AlarmPlugin *plugin)
 {
   GError *error = NULL;
 
-  plugin->alarms = NULL;
-  plugin->panel_button = NULL;
-
   if (!xfconf_init(&error))
   {
     g_critical("Failed to initialize Xfconf: %s", error->message);
@@ -233,4 +278,7 @@ alarm_plugin_init(AlarmPlugin *plugin)
     return;
   }
   g_object_weak_ref(G_OBJECT(plugin), (GWeakNotify) xfconf_shutdown, NULL);
+
+  plugin->alarms = NULL;
+  plugin->panel_button = NULL;
 }
