@@ -37,7 +37,7 @@ struct _AlarmPlugin
 {
   XfcePanelPlugin parent;
 
-  GSList *alarms;
+  GList *alarms;
   GtkWidget *panel_button;
 };
 
@@ -59,10 +59,12 @@ typedef enum
 struct _Alarm
 {
   gchar *uuid;
+  gint index;
   AlarmType type;
   gchar *name;
-  GDateTime *time;
+  guint h, m, s;
   gchar color[8];
+  GDateTime *alert_time;
 };
 
 // Don't change order - column numbers are used in .glade

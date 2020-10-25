@@ -42,52 +42,88 @@ static void alarm_free_func(gpointer data)
 
   g_free(alarm->uuid);
   g_free(alarm->name);
-  g_date_time_unref(alarm->time);
+  g_date_time_unref(alarm->alert_time);
   g_slice_free(Alarm, alarm);
 }
 
-static GSList* load_alarms(AlarmPlugin *plugin)
+static gint alarm_order_func(gconstpointer left, gconstpointer right)
+{
+  return ((Alarm*)left)->index - ((Alarm*)right)->index;
+}
+
+static GList* load_alarms(AlarmPlugin *plugin)
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
+  const gchar *property_base;
+  guint property_base_length;
+  GHashTable *alarm_properties, *alarms;
+  GHashTableIter alarm_property_iter;
   Alarm *alarm;
-  GSList *alarms = NULL;
-  GHashTable *alarm_uuids;
-  GHashTableIter alarm_uuid_iter;
-  gpointer uuid, order;
-  gchar *value;
+  GList *alarm_list;
+  gpointer property_path, property_value;
+  gchar **parts;
+  guint part_count;
 
   g_return_val_if_fail(XFCE_IS_ALARM_PLUGIN(plugin), NULL);
 
+  property_base = xfce_panel_plugin_get_property_base(panel_plugin);
+  property_base_length = strlen(property_base);
+
   channel = xfce_panel_plugin_xfconf_channel_new(panel_plugin);
-  alarm_uuids = xfconf_channel_get_properties(channel, NULL);
-
-  // TODO: preserve alarm order
-  g_hash_table_iter_init(&alarm_uuid_iter, alarm_uuids);
-  while (g_hash_table_iter_next(&alarm_uuid_iter, &uuid, &order))
-  {
-    if (!g_uuid_string_is_valid(uuid))
-      continue;
-
-    alarm = g_slice_new0(Alarm);
-    alarm->uuid = g_strdup(uuid);
-
-    alarm->type = xfconf_channel_get_uint(channel, "type", TYPE_TIMER);
-    alarm->name = xfconf_channel_get_string(channel, "name", NULL);
-    value = xfconf_channel_get_string(channel, "time", "T00:15:00Z-UTC");
-    alarm->time = g_date_time_new_from_iso8601(value, NULL);
-    g_free(value);
-    value = xfconf_channel_get_string(channel, "color", "#729fcf");
-    g_strlcpy(alarm->color, value, sizeof(alarm->color));
-    g_free(value);
-
-    alarms = g_slist_append(alarms, alarm);
-  }
-
-  g_hash_table_destroy(alarm_uuids);
+  alarm_properties = xfconf_channel_get_properties(channel, NULL);
   g_object_unref(channel);
 
-  return alarms;
+  alarms = g_hash_table_new(g_str_hash, g_str_equal);
+
+  // property_path has form: /panel/plugin-ID[[/<alarm UUID>]/<property name>]
+  g_hash_table_iter_init(&alarm_property_iter, alarm_properties);
+  while (g_hash_table_iter_next(&alarm_property_iter, &property_path, &property_value))
+  {
+    if (!g_str_has_prefix(property_path, property_base))
+    {
+      g_warn_if_reached();
+      continue;
+    }
+
+    parts = g_strsplit((gchar*) property_path + property_base_length, "/", 3);
+    part_count = g_strv_length(parts);
+    if (part_count < 2 || !g_uuid_string_is_valid(parts[1]))
+      goto free;
+
+    alarm = g_hash_table_lookup(alarms, parts[1]);
+    if (alarm == NULL)
+    {
+      alarm = g_slice_new0(Alarm);
+      alarm->uuid = g_strdup(parts[1]);
+      g_hash_table_insert(alarms, alarm->uuid, alarm);
+    }
+
+    if (part_count == 2)
+    {
+      alarm->index = g_value_get_uint(property_value);
+      goto free;
+    }
+
+    if (g_strcmp0(parts[2], "type") == 0)
+      alarm->type = g_value_get_uint(property_value);
+    else if (g_strcmp0(parts[2], "name") == 0)
+      alarm->name = g_strdup(g_value_get_string(property_value));
+    else if (g_strcmp0(parts[2], "time") == 0)
+      sscanf(g_value_get_string(property_value), "%02u:%02u:%02u",
+             &alarm->h, &alarm->m, &alarm->s);
+    else if (g_strcmp0(parts[2], "color") == 0)
+      g_strlcpy(alarm->color, g_value_get_string(property_value), sizeof(alarm->color));
+
+  free:
+    g_strfreev(parts);
+  }
+
+  g_hash_table_destroy(alarm_properties);
+  alarm_list = g_hash_table_get_values(alarms);
+  g_hash_table_destroy(alarms);
+
+  return g_list_sort(alarm_list, alarm_order_func);
 }
 
 void save_alarm(AlarmPlugin *plugin, Alarm *alarm)
@@ -104,18 +140,24 @@ void save_alarm(AlarmPlugin *plugin, Alarm *alarm)
   g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
 
   property_base = g_strconcat(xfce_panel_plugin_get_property_base(panel_plugin), "/",
-                              alarm->uuid, "/",
-                              NULL);
+                              alarm->uuid, NULL);
   channel = xfconf_channel_new_with_property_base(xfce_panel_get_channel_name(),
                                                   property_base);
   g_free(property_base);
 
-  g_warn_if_fail(xfconf_channel_set_uint(channel, "type", alarm->type));
-  g_warn_if_fail(xfconf_channel_set_string(channel, "name", alarm->name));
-  value = g_date_time_format(alarm->time, "T%T%Z");
-  g_warn_if_fail(xfconf_channel_set_string(channel, "time", value));
+  alarm->index = g_list_index(plugin->alarms, alarm);
+  if (alarm->index == -1)
+  {
+    g_warn_if_reached();
+    alarm->index = g_list_length(plugin->alarms);
+  }
+  g_warn_if_fail(xfconf_channel_set_uint(channel, "", alarm->index));
+  g_warn_if_fail(xfconf_channel_set_uint(channel, "/type", alarm->type));
+  g_warn_if_fail(xfconf_channel_set_string(channel, "/name", alarm->name));
+  value = g_strdup_printf("%02u:%02u:%02u", alarm->h, alarm->m, alarm->s);
+  g_warn_if_fail(xfconf_channel_set_string(channel, "/time", value));
   g_free(value);
-  g_warn_if_fail(xfconf_channel_set_string(channel, "color", alarm->color));
+  g_warn_if_fail(xfconf_channel_set_string(channel, "/color", alarm->color));
 
   g_object_unref(channel);
 }
@@ -245,7 +287,7 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
 
-  g_slist_free_full(g_steal_pointer(&plugin->alarms), alarm_free_func);
+  g_list_free_full(g_steal_pointer(&plugin->alarms), alarm_free_func);
 }
 
 

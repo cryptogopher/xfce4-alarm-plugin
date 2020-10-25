@@ -202,7 +202,7 @@
                 <property name="tooltip_text" translatable="yes">Finish (fast-forward) selected alarm</property>
                 <property name="label" translatable="yes">Finish</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-media-forward</property>
+                <property name="stock_id">gtk-goto-last</property>
               </object>
               <packing>
                 <property name="expand">False</property>

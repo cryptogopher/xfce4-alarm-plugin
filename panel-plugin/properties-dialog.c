@@ -33,9 +33,9 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
   g_return_if_fail(GTK_IS_LIST_STORE(store));
   g_return_if_fail(iter != NULL);
 
-  time = g_date_time_format(alarm->time,
-                            "<span size=\"large\" weight=\"normal\">%H:%M</span>" \
-                            "<span size=\"small\" weight=\"normal\">:%S</span>");
+  time = g_strdup_printf("<span size=\"large\" weight=\"normal\">%02u:%02u</span>" \
+                         "<span size=\"small\" weight=\"normal\">:%02u</span>",
+                         alarm->h, alarm->m, alarm->s);
   /* Setting color through markup preserves proper color on item selection (as
    * opposed to setting it through cell renderer background property). */
   color = g_strdup_printf("<span size=\"x-large\" foreground=\"%s\">\xe2\x96\x8a</span>",
@@ -68,7 +68,7 @@ new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
   parent = gtk_widget_get_toplevel(GTK_WIDGET(add_button));
   show_alarm_dialog(parent, XFCE_PANEL_PLUGIN(plugin), &alarm);
   if (alarm)
-    plugin->alarms = g_slist_append(plugin->alarms, alarm);
+    plugin->alarms = g_list_append(plugin->alarms, alarm);
   else
     return;
 
@@ -101,7 +101,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   GtkBuilder *builder;
   GObject *dialog, *object;
   GtkListStore *store;
-  GSList *alarm_iter;
+  GList *alarm_iter;
   GtkTreeIter tree_iter;
 
   builder = alarm_builder_new(panel_plugin, properties_dialog_ui,

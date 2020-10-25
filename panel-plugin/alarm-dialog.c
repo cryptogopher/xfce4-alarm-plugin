@@ -28,11 +28,11 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
 {
 }
 
+// TODO: return boolean, false if error
 static void
 alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
 {
   GObject *object;
-  gint hours, minutes, seconds;
   gint value;
   GdkRGBA color;
 
@@ -46,15 +46,15 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
 
   object = gtk_builder_get_object(builder, "hours");
   g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
-  hours = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
+  alarm->h = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
+
   object = gtk_builder_get_object(builder, "minutes");
   g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
-  minutes = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
+  alarm->m = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
+
   object = gtk_builder_get_object(builder, "seconds");
   g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
-  seconds = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
-  g_clear_pointer(&alarm->time, g_date_time_unref);
-  alarm->time = g_date_time_new_local(1, 1, 1, hours, minutes, seconds);
+  alarm->s = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
 
   object = gtk_builder_get_object(builder, "progress");
   g_return_if_fail(GTK_IS_SWITCH(object));
