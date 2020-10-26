@@ -70,6 +70,7 @@ struct _Alarm
 // Don't change order - column numbers are used in .glade
 enum AlarmColumns
 {
+  COL_DATA,
   COL_ICON_NAME,
   COL_TIME,
   COL_COLOR,

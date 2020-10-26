@@ -27,7 +27,7 @@
 static void
 alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
 {
-  gchar *time, *color;
+  gchar *time, *color = NULL;
 
   g_return_if_fail(alarm != NULL);
   g_return_if_fail(GTK_IS_LIST_STORE(store));
@@ -38,16 +38,34 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
                          alarm->h, alarm->m, alarm->s);
   /* Setting color through markup preserves proper color on item selection (as
    * opposed to setting it through cell renderer background property). */
-  color = g_strdup_printf("<span size=\"x-large\" foreground=\"%s\">\xe2\x96\x8a</span>",
-                          alarm->color);
+  if (alarm->color[0] != '\0')
+    color = g_strdup_printf("<span size=\"x-large\" foreground=\"%s\">\xe2\x96\x8a</span>",
+                            alarm->color);
+
   gtk_list_store_set(store, iter,
+                     COL_DATA, alarm,
                      COL_ICON_NAME, alarm_type_icons[alarm->type],
                      COL_TIME, time,
                      COL_COLOR, color,
                      COL_NAME, alarm->name,
                      -1);
+
   g_free(time);
   g_free(color);
+}
+
+static Alarm*
+get_selected_alarm(GtkBuilder *builder, GtkTreeModel **model, GtkTreeIter *iter)
+{
+  GObject *selection;
+  Alarm *alarm = NULL;
+
+  selection = gtk_builder_get_object(builder, "tree-selection");
+  g_return_val_if_fail(GTK_IS_TREE_SELECTION(selection), NULL);
+  if (gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), model, iter))
+    gtk_tree_model_get(*model, iter, COL_DATA, &alarm, NULL);
+
+  return alarm;
 }
 
 
@@ -66,12 +84,12 @@ new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
   g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
 
   parent = gtk_widget_get_toplevel(GTK_WIDGET(add_button));
+
   show_alarm_dialog(parent, XFCE_PANEL_PLUGIN(plugin), &alarm);
   if (alarm)
     plugin->alarms = g_list_append(plugin->alarms, alarm);
   else
     return;
-
   save_alarm(plugin, alarm);
 
   builder = g_object_get_data(G_OBJECT(parent), "builder");
@@ -85,6 +103,25 @@ new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
 static void
 edit_alarm(GtkToolButton *edit_button, AlarmPlugin *plugin)
 {
+  GtkWidget *parent;
+  GtkBuilder *builder;
+  Alarm *alarm;
+  GtkTreeModel *store;
+  GtkTreeIter tree_iter;
+
+  g_return_if_fail(GTK_IS_TOOL_BUTTON(edit_button));
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+
+  parent = gtk_widget_get_toplevel(GTK_WIDGET(edit_button));
+  builder = g_object_get_data(G_OBJECT(parent), "builder");
+
+  alarm = get_selected_alarm(builder, &store, &tree_iter);
+  if (alarm == NULL)
+    return;
+  show_alarm_dialog(parent, XFCE_PANEL_PLUGIN(plugin), &alarm);
+  save_alarm(plugin, alarm);
+
+  alarm_to_tree_iter(alarm, GTK_LIST_STORE(store), &tree_iter);
 }
 
 static void
@@ -120,6 +157,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   /* NOTE: once type list consists only of static types it can be moved to
    * header file below column names for clarity */
   store = gtk_list_store_new(COL_COUNT,
+                             G_TYPE_POINTER,
                              G_TYPE_STRING,
                              G_TYPE_STRING,
                              G_TYPE_STRING,

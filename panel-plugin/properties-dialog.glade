@@ -83,7 +83,7 @@
                 <property name="label" translatable="yes">Edit alarm</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-edit</property>
-                <signal name="clicked" handler="edit_alarm" object="tree-selection" swapped="no"/>
+                <signal name="clicked" handler="edit_alarm" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -248,7 +248,7 @@
                         <property name="stock_size">3</property>
                       </object>
                       <attributes>
-                        <attribute name="icon-name">0</attribute>
+                        <attribute name="icon-name">1</attribute>
                       </attributes>
                     </child>
                   </object>
@@ -262,7 +262,7 @@
                         <property name="xpad">4</property>
                       </object>
                       <attributes>
-                        <attribute name="markup">1</attribute>
+                        <attribute name="markup">2</attribute>
                       </attributes>
                     </child>
                   </object>
@@ -275,7 +275,7 @@
                     <child>
                       <object class="GtkCellRendererText" id="name-renderer"/>
                       <attributes>
-                        <attribute name="text">3</attribute>
+                        <attribute name="text">4</attribute>
                       </attributes>
                     </child>
                   </object>
@@ -287,7 +287,7 @@
                     <child>
                       <object class="GtkCellRendererText" id="color-renderer"/>
                       <attributes>
-                        <attribute name="markup">2</attribute>
+                        <attribute name="markup">3</attribute>
                       </attributes>
                     </child>
                   </object>

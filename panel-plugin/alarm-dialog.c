@@ -26,6 +26,44 @@
 static void
 alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
 {
+  GObject *object;
+  GdkRGBA color;
+  GList *objects;
+
+  g_return_if_fail(alarm != NULL);
+  g_return_if_fail(GTK_IS_BUILDER(builder));
+
+  object = gtk_builder_get_object(builder, "name");
+  g_return_if_fail(GTK_IS_ENTRY(object));
+  gtk_entry_set_text(GTK_ENTRY(object), alarm->name);
+
+  object = gtk_builder_get_object(builder, "hours");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), alarm->h);
+
+  object = gtk_builder_get_object(builder, "minutes");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), alarm->m);
+
+  object = gtk_builder_get_object(builder, "seconds");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), alarm->s);
+
+  object = gtk_builder_get_object(builder, "progress");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  gtk_switch_set_active(GTK_SWITCH(object), alarm->color[0] != '\0');
+  if (alarm->color[0] != '\0' && gdk_rgba_parse(&color, alarm->color))
+  {
+    object = gtk_builder_get_object(builder, "color");
+    g_return_if_fail(GTK_IS_COLOR_BUTTON(object));
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(object), &color);
+  }
+
+  object = gtk_builder_get_object(builder, "recurrence");
+  g_return_if_fail(GTK_IS_STACK(object));
+  objects = gtk_container_get_children(GTK_CONTAINER(object));
+  gtk_stack_set_visible_child(GTK_STACK(object), g_list_nth_data(objects, alarm->type));
+  g_list_free(objects);
 }
 
 // TODO: return boolean, false if error
