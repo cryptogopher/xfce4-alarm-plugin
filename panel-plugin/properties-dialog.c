@@ -68,31 +68,23 @@ get_selected_alarm(GtkBuilder *builder, GtkTreeModel **model, GtkTreeIter *iter)
   return alarm;
 }
 
-
-// Callbacks
 static void
-new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
+new_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
 {
-  GtkWidget *parent;
   Alarm *alarm = NULL;
   GtkBuilder *builder;
   GObject *tree_view;
   GtkTreeModel *store;
   GtkTreeIter tree_iter;
 
-  g_return_if_fail(GTK_IS_TOOL_BUTTON(add_button));
-  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
-
-  parent = gtk_widget_get_toplevel(GTK_WIDGET(add_button));
-
-  show_alarm_dialog(parent, XFCE_PANEL_PLUGIN(plugin), &alarm);
+  show_alarm_dialog(dialog, XFCE_PANEL_PLUGIN(plugin), &alarm);
   if (alarm)
     plugin->alarms = g_list_append(plugin->alarms, alarm);
   else
     return;
   save_alarm(plugin, alarm);
 
-  builder = g_object_get_data(G_OBJECT(parent), "builder");
+  builder = g_object_get_data(G_OBJECT(dialog), "builder");
   tree_view = gtk_builder_get_object(builder, "alarm-list");
   g_return_if_fail(GTK_IS_TREE_VIEW(tree_view));
   store = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
@@ -101,32 +93,80 @@ new_alarm(GtkToolButton *add_button, AlarmPlugin *plugin)
 }
 
 static void
-edit_alarm(GtkToolButton *edit_button, AlarmPlugin *plugin)
+edit_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
 {
-  GtkWidget *parent;
   GtkBuilder *builder;
   Alarm *alarm;
   GtkTreeModel *store;
   GtkTreeIter tree_iter;
 
-  g_return_if_fail(GTK_IS_TOOL_BUTTON(edit_button));
-  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
-
-  parent = gtk_widget_get_toplevel(GTK_WIDGET(edit_button));
-  builder = g_object_get_data(G_OBJECT(parent), "builder");
+  builder = g_object_get_data(G_OBJECT(dialog), "builder");
 
   alarm = get_selected_alarm(builder, &store, &tree_iter);
   if (alarm == NULL)
     return;
-  show_alarm_dialog(parent, XFCE_PANEL_PLUGIN(plugin), &alarm);
+  show_alarm_dialog(dialog, XFCE_PANEL_PLUGIN(plugin), &alarm);
   save_alarm(plugin, alarm);
 
   alarm_to_tree_iter(alarm, GTK_LIST_STORE(store), &tree_iter);
 }
 
 static void
-remove_alarm(GtkToolButton *remove_button, AlarmPlugin *plugin)
+remove_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
 {
+}
+
+
+// Callbacks
+static void
+new_button_clicked(GtkToolButton *button, AlarmPlugin *plugin)
+{
+  g_return_if_fail(GTK_IS_TOOL_BUTTON(button));
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+
+  new_alarm(plugin, gtk_widget_get_toplevel(GTK_WIDGET(button)));
+}
+
+static void
+edit_button_clicked(GtkToolButton *button, AlarmPlugin *plugin)
+{
+  g_return_if_fail(GTK_IS_TOOL_BUTTON(button));
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+
+  edit_alarm(plugin, gtk_widget_get_toplevel(GTK_WIDGET(button)));
+}
+
+static void
+remove_button_clicked(GtkToolButton *button, AlarmPlugin *plugin)
+{
+  g_return_if_fail(GTK_IS_TOOL_BUTTON(button));
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+
+  remove_alarm(plugin, gtk_widget_get_toplevel(GTK_WIDGET(button)));
+}
+
+static void
+alarm_list_button_pressed(GtkWidget *widget, GdkEvent *event, AlarmPlugin *plugin)
+{
+  g_return_if_fail(GTK_IS_TREE_VIEW(widget));
+  g_return_if_fail(event->type == GDK_DOUBLE_BUTTON_PRESS);
+  g_return_if_fail(event->button.window ==
+      gtk_tree_view_get_bin_window(GTK_TREE_VIEW(widget)));
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+
+  if (gtk_tree_view_is_blank_at_pos(GTK_TREE_VIEW(widget), event->button.x, event->button.y,
+                                    NULL, NULL, NULL, NULL))
+    new_alarm(plugin, gtk_widget_get_toplevel(GTK_WIDGET(widget)));
+}
+
+static void
+alarm_list_row_activated(GtkTreeView *view, GtkTreePath *path, GtkTreeViewColumn *column,
+                         AlarmPlugin *plugin)
+{
+  g_return_if_fail(GTK_IS_TREE_VIEW(view));
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+
+  edit_alarm(plugin, gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
 
@@ -175,10 +215,12 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   g_object_unref(store);
 
   gtk_builder_add_callback_symbols(builder,
-                                   "new_alarm", G_CALLBACK(new_alarm),
-                                   "edit_alarm", G_CALLBACK(edit_alarm),
-                                   "remove_alarm", G_CALLBACK(remove_alarm),
-                                   NULL);
+      "new_button_clicked", G_CALLBACK(new_button_clicked),
+      "edit_button_clicked", G_CALLBACK(edit_button_clicked),
+      "remove_button_clicked", G_CALLBACK(remove_button_clicked),
+      "alarm_list_button_pressed", G_CALLBACK(alarm_list_button_pressed),
+      "alarm_list_row_activated", G_CALLBACK(alarm_list_row_activated),
+      NULL);
   gtk_builder_connect_signals(builder, plugin);
 
   gtk_widget_show(GTK_WIDGET(dialog));
