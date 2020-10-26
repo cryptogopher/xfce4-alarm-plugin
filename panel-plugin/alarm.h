@@ -25,6 +25,7 @@ G_BEGIN_DECLS
 
 typedef struct _AlarmPluginClass AlarmPluginClass;
 typedef struct _AlarmPlugin AlarmPlugin;
+typedef struct _Alert Alert;
 typedef struct _Alarm Alarm;
 
 struct _AlarmPluginClass
@@ -50,11 +51,28 @@ typedef enum
 
 typedef enum
 {
-  NONE,
+  NO_ALARM_REPEAT,
   TRIGGER_TIMER,
   REPEAT_EVERY_DOW,
   REPEAT_EVERY_NDAYS
 } AlarmRecurrence;
+
+typedef enum
+{
+  NO_ALERT_REPEAT,
+  REPEAT_NTIMES,
+  REPEAT_UNTIL_ACK
+} AlertRecurrence;
+
+struct _Alert
+{
+  gboolean notification;
+  gchar *sound;
+  gchar *command;
+  AlertRecurrence recurrence;
+  guint interval;
+  guint repeats;
+};
 
 struct _Alarm
 {
@@ -64,7 +82,10 @@ struct _Alarm
   gchar *name;
   guint h, m, s;
   gchar color[8];
-  GDateTime *alert_time;
+  Alert alert;
+  GDateTime *alert_at;
+  gint alert_repeats;
+  GTimer *alert_timer;
 };
 
 // Don't change order - column numbers are used in .glade

@@ -42,7 +42,7 @@ static void alarm_free_func(gpointer data)
 
   g_free(alarm->uuid);
   g_free(alarm->name);
-  g_date_time_unref(alarm->alert_time);
+  g_date_time_unref(alarm->alert_at);
   g_slice_free(Alarm, alarm);
 }
 
