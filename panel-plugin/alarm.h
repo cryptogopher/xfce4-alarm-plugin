@@ -88,7 +88,7 @@ struct _Alarm
   GTimer *alert_timer;
 };
 
-// Don't change order - column numbers are used in .glade
+// Column numbers are used in .glade - update if changed
 enum AlarmColumns
 {
   COL_DATA,
