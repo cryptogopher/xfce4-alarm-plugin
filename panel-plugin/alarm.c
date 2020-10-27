@@ -48,7 +48,7 @@ static void alarm_free_func(gpointer data)
 
 static gint alarm_order_func(gconstpointer left, gconstpointer right)
 {
-  return ((Alarm*)left)->index - ((Alarm*)right)->index;
+  return ((Alarm*)left)->position - ((Alarm*)right)->position;
 }
 
 static GList* load_alarms(AlarmPlugin *plugin)
@@ -101,7 +101,7 @@ static GList* load_alarms(AlarmPlugin *plugin)
 
     if (part_count == 2)
     {
-      alarm->index = g_value_get_uint(property_value);
+      alarm->position = g_value_get_uint(property_value);
       goto free;
     }
 
@@ -145,13 +145,13 @@ void save_alarm(AlarmPlugin *plugin, Alarm *alarm)
                                                   property_base);
   g_free(property_base);
 
-  alarm->index = g_list_index(plugin->alarms, alarm);
-  if (alarm->index == -1)
+  alarm->position = g_list_index(plugin->alarms, alarm);
+  if (alarm->position == -1)
   {
     g_warn_if_reached();
-    alarm->index = g_list_length(plugin->alarms);
+    alarm->position = g_list_length(plugin->alarms);
   }
-  g_warn_if_fail(xfconf_channel_set_uint(channel, "", alarm->index));
+  g_warn_if_fail(xfconf_channel_set_uint(channel, "", alarm->position));
   g_warn_if_fail(xfconf_channel_set_uint(channel, "/type", alarm->type));
   g_warn_if_fail(xfconf_channel_set_string(channel, "/name", alarm->name));
   value = g_strdup_printf("%02u:%02u:%02u", alarm->h, alarm->m, alarm->s);

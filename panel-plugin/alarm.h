@@ -77,7 +77,7 @@ struct _Alert
 struct _Alarm
 {
   gchar *uuid;
-  gint index;
+  gint position;
   AlarmType type;
   gchar *name;
   guint h, m, s;
