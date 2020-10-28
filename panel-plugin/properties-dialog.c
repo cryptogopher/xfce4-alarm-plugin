@@ -60,7 +60,7 @@ get_selected_alarm(GtkBuilder *builder, GtkTreeModel **model, GtkTreeIter *iter)
   GObject *selection;
   Alarm *alarm = NULL;
 
-  selection = gtk_builder_get_object(builder, "tree-selection");
+  selection = gtk_builder_get_object(builder, "alarm-selection");
   g_return_val_if_fail(GTK_IS_TREE_SELECTION(selection), NULL);
   if (gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), model, iter))
     gtk_tree_model_get(*model, iter, COL_DATA, &alarm, NULL);
@@ -169,6 +169,27 @@ alarm_list_row_activated(GtkTreeView *view, GtkTreePath *path, GtkTreeViewColumn
   edit_alarm(plugin, gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
+static void
+alarm_selection_changed(GtkTreeSelection *selection, GtkWidget *dialog)
+{
+  gboolean selected;
+  GtkBuilder *builder;
+  GObject *object;
+
+  g_return_if_fail(GTK_IS_TREE_SELECTION(selection));
+  g_return_if_fail(GTK_IS_DIALOG(dialog));
+
+  selected = gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), NULL, NULL);
+
+  builder = g_object_get_data(G_OBJECT(dialog), "builder");
+
+  object = gtk_builder_get_object(builder, "edit");
+  g_return_if_fail(GTK_IS_TOOL_BUTTON(object));
+  gtk_widget_set_sensitive(GTK_WIDGET(object), selected);
+  object = gtk_builder_get_object(builder, "remove");
+  g_return_if_fail(GTK_IS_TOOL_BUTTON(object));
+  gtk_widget_set_sensitive(GTK_WIDGET(object), selected);
+}
 
 // External interface
 void
@@ -220,6 +241,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
       "remove_button_clicked", G_CALLBACK(remove_button_clicked),
       "alarm_list_button_pressed", G_CALLBACK(alarm_list_button_pressed),
       "alarm_list_row_activated", G_CALLBACK(alarm_list_row_activated),
+      "alarm_selection_changed", G_CALLBACK(alarm_selection_changed),
       NULL);
   gtk_builder_connect_signals(builder, plugin);
 
