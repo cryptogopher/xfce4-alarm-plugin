@@ -77,6 +77,7 @@ struct _Alert
 struct _Alarm
 {
   gchar *uuid;
+  // 'position' used only for initial ordering in load_alarm_settings()
   gint position;
   AlarmType type;
   gchar *name;
@@ -112,7 +113,11 @@ const gchar *alarm_type_icons[TYPE_COUNT];
 GType alarm_plugin_get_type(void) G_GNUC_CONST;
 void alarm_plugin_register_type(XfcePanelTypeModule *type_module);
 
-void save_alarm(AlarmPlugin *plugin, Alarm *alarm);
+void alarm_free_func(gpointer data);
+void save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
+void save_alarm_positions(AlarmPlugin *plugin,
+                          GList *alarm_iter_from, GList *alarm_iter_to);
+void reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
 GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
                               const gchar* buffer, gsize buffer_length);
 

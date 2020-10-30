@@ -36,7 +36,8 @@ const gchar *alarm_type_icons[TYPE_COUNT] =
 };
 
 // Utilities
-static void alarm_free_func(gpointer data)
+void
+alarm_free_func(gpointer data)
 {
   Alarm *alarm = (Alarm*) data;
 
@@ -46,12 +47,14 @@ static void alarm_free_func(gpointer data)
   g_slice_free(Alarm, alarm);
 }
 
-static gint alarm_order_func(gconstpointer left, gconstpointer right)
+static gint
+alarm_order_func(gconstpointer left, gconstpointer right)
 {
   return ((Alarm*)left)->position - ((Alarm*)right)->position;
 }
 
-static GList* load_alarms(AlarmPlugin *plugin)
+static GList*
+load_alarm_settings(AlarmPlugin *plugin)
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
@@ -126,7 +129,8 @@ static GList* load_alarms(AlarmPlugin *plugin)
   return g_list_sort(alarm_list, alarm_order_func);
 }
 
-void save_alarm(AlarmPlugin *plugin, Alarm *alarm)
+void
+save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
@@ -159,6 +163,60 @@ void save_alarm(AlarmPlugin *plugin, Alarm *alarm)
   g_free(value);
   g_warn_if_fail(xfconf_channel_set_string(channel, "/color", alarm->color));
 
+  g_object_unref(channel);
+}
+
+void
+save_alarm_positions(AlarmPlugin *plugin, GList *alarm_iter_from, GList *alarm_iter_to)
+{
+  XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
+  XfconfChannel *channel;
+  gchar *property_base;
+  GList *alarm_iter;
+  Alarm *alarm;
+  gint position;
+
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+  g_return_if_fail(alarm_iter_from != NULL);
+  g_return_if_fail(alarm_iter_from != alarm_iter_to);
+
+  position = g_list_position(plugin->alarms, alarm_iter_from);
+  g_return_if_fail(position != -1);
+
+  property_base = g_strconcat(xfce_panel_plugin_get_property_base(panel_plugin), "/", NULL);
+  channel = xfconf_channel_new_with_property_base(xfce_panel_get_channel_name(),
+                                                  property_base);
+  g_free(property_base);
+
+  alarm_iter = alarm_iter_from;
+  while (alarm_iter && (alarm_iter != alarm_iter_to))
+  {
+    alarm = alarm_iter->data;
+    g_warn_if_fail(xfconf_channel_set_uint(channel, alarm->uuid, position));
+    alarm_iter = alarm_iter->next;
+    position++;
+  }
+  g_warn_if_fail(alarm_iter == alarm_iter_to);
+
+  g_object_unref(channel);
+}
+
+void
+reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
+{
+  XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
+  XfconfChannel *channel;
+  gchar *property_base;
+
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+  g_return_if_fail(alarm != NULL);
+  g_return_if_fail(alarm->uuid != NULL);
+
+  property_base = g_strconcat(xfce_panel_plugin_get_property_base(panel_plugin), "/", NULL);
+  channel = xfconf_channel_new_with_property_base(xfce_panel_get_channel_name(),
+                                                  property_base);
+  g_free(property_base);
+  xfconf_channel_reset_property(channel, alarm->uuid, TRUE);
   g_object_unref(channel);
 }
 
@@ -259,7 +317,7 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
   xfce_panel_plugin_menu_show_configure(panel_plugin);
   xfce_panel_plugin_set_small(panel_plugin, TRUE);
 
-  plugin->alarms = load_alarms(plugin);
+  plugin->alarms = load_alarm_settings(plugin);
 
   // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();

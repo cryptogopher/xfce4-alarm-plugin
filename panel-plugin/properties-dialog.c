@@ -82,7 +82,7 @@ new_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
     plugin->alarms = g_list_append(plugin->alarms, alarm);
   else
     return;
-  save_alarm(plugin, alarm);
+  save_alarm_settings(plugin, alarm);
 
   builder = g_object_get_data(G_OBJECT(dialog), "builder");
   tree_view = gtk_builder_get_object(builder, "alarm-list");
@@ -106,7 +106,7 @@ edit_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
   if (alarm == NULL)
     return;
   show_alarm_dialog(dialog, XFCE_PANEL_PLUGIN(plugin), &alarm);
-  save_alarm(plugin, alarm);
+  save_alarm_settings(plugin, alarm);
 
   alarm_to_tree_iter(alarm, GTK_LIST_STORE(store), &tree_iter);
 }
@@ -114,6 +114,27 @@ edit_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
 static void
 remove_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
 {
+  GtkBuilder *builder;
+  Alarm *alarm;
+  GList *alarm_iter, *next_iter;
+  GtkTreeModel *store;
+  GtkTreeIter tree_iter;
+
+  builder = g_object_get_data(G_OBJECT(dialog), "builder");
+  alarm = get_selected_alarm(builder, &store, &tree_iter);
+  if (alarm == NULL)
+    return;
+
+  gtk_list_store_remove(GTK_LIST_STORE(store), &tree_iter);
+
+  reset_alarm_settings(plugin, alarm);
+
+  alarm_iter = g_list_find(plugin->alarms, alarm);
+  next_iter = alarm_iter->next;
+  plugin->alarms = g_list_delete_link(plugin->alarms, alarm_iter);
+  save_alarm_positions(plugin, next_iter, NULL);
+
+  g_clear_pointer(&alarm, alarm_free_func);
 }
 
 
@@ -172,6 +193,7 @@ alarm_list_row_activated(GtkTreeView *view, GtkTreePath *path, GtkTreeViewColumn
 static void
 alarm_selection_changed(GtkTreeSelection *selection, GtkWidget *dialog)
 {
+  // Dialog required as param, because selection is not a GtkWidget
   gboolean selected;
   GtkBuilder *builder;
   GObject *object;
@@ -180,7 +202,6 @@ alarm_selection_changed(GtkTreeSelection *selection, GtkWidget *dialog)
   g_return_if_fail(GTK_IS_DIALOG(dialog));
 
   selected = gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), NULL, NULL);
-
   builder = g_object_get_data(G_OBJECT(dialog), "builder");
 
   object = gtk_builder_get_object(builder, "edit");
@@ -190,6 +211,7 @@ alarm_selection_changed(GtkTreeSelection *selection, GtkWidget *dialog)
   g_return_if_fail(GTK_IS_TOOL_BUTTON(object));
   gtk_widget_set_sensitive(GTK_WIDGET(object), selected);
 }
+
 
 // External interface
 void
