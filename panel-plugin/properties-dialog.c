@@ -63,7 +63,7 @@ get_selected_alarm(GtkBuilder *builder, GtkTreeModel **model, GtkTreeIter *iter)
   selection = gtk_builder_get_object(builder, "alarm-selection");
   g_return_val_if_fail(GTK_IS_TREE_SELECTION(selection), NULL);
   if (gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), model, iter))
-    gtk_tree_model_get(*model, iter, COL_DATA, &alarm, NULL);
+    gtk_tree_model_get(*model, iter, COL_DATA, &alarm, -1);
 
   return alarm;
 }
@@ -73,8 +73,7 @@ new_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
 {
   Alarm *alarm = NULL;
   GtkBuilder *builder;
-  GObject *tree_view;
-  GtkTreeModel *store;
+  GObject *store;
   GtkTreeIter tree_iter;
 
   show_alarm_dialog(dialog, XFCE_PANEL_PLUGIN(plugin), &alarm);
@@ -85,9 +84,8 @@ new_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
   save_alarm_settings(plugin, alarm);
 
   builder = g_object_get_data(G_OBJECT(dialog), "builder");
-  tree_view = gtk_builder_get_object(builder, "alarm-list");
-  g_return_if_fail(GTK_IS_TREE_VIEW(tree_view));
-  store = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
+  store = gtk_builder_get_object(builder, "alarm-store");
+  g_return_if_fail(GTK_IS_LIST_STORE(store));
   gtk_list_store_append(GTK_LIST_STORE(store), &tree_iter);
   alarm_to_tree_iter(alarm, GTK_LIST_STORE(store), &tree_iter);
 }
@@ -167,7 +165,7 @@ remove_button_clicked(GtkToolButton *button, AlarmPlugin *plugin)
 }
 
 static void
-alarm_list_button_pressed(GtkWidget *widget, GdkEvent *event, AlarmPlugin *plugin)
+alarm_view_button_pressed(GtkWidget *widget, GdkEvent *event, AlarmPlugin *plugin)
 {
   g_return_if_fail(GTK_IS_TREE_VIEW(widget));
   g_return_if_fail(event->type == GDK_DOUBLE_BUTTON_PRESS);
@@ -181,7 +179,7 @@ alarm_list_button_pressed(GtkWidget *widget, GdkEvent *event, AlarmPlugin *plugi
 }
 
 static void
-alarm_list_row_activated(GtkTreeView *view, GtkTreePath *path, GtkTreeViewColumn *column,
+alarm_view_row_activated(GtkTreeView *view, GtkTreePath *path, GtkTreeViewColumn *column,
                          AlarmPlugin *plugin)
 {
   g_return_if_fail(GTK_IS_TREE_VIEW(view));
@@ -212,6 +210,43 @@ alarm_selection_changed(GtkTreeSelection *selection, GtkWidget *dialog)
   gtk_widget_set_sensitive(GTK_WIDGET(object), selected);
 }
 
+static void
+alarm_store_row_changed(GtkTreeModel *store, GtkTreePath *path, GtkTreeIter *iter,
+                        AlarmPlugin *plugin)
+{
+  Alarm *alarm = NULL;
+  gint list_position;
+  gint store_position;
+  GList *iter_from, *iter_to;
+
+  g_return_if_fail(GTK_IS_LIST_STORE(store));
+  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+  // "row-changed" signal is emitted before DND source is removed from GtkListStore
+  g_return_if_fail((gtk_tree_model_iter_n_children(store, NULL) - 1) ==
+                   (gint) g_list_length(plugin->alarms));
+
+  /* After DND reordering of store item, positions of some Alarms on plugin->alarms
+   * list will be different than positions in store. plugin->alarms has to be reordered
+   * accordingly and updated positions saved. */
+  gtk_tree_model_get(store, iter, COL_DATA, &alarm, -1);
+  g_return_if_fail(alarm != NULL);
+  list_position = g_list_index(plugin->alarms, alarm);
+  g_return_if_fail(list_position != -1);
+  store_position = gtk_tree_path_get_indices(path)[0];
+  // Correct store_position for the not-yet-removed DND source if required
+  if (list_position < store_position)
+    store_position--;
+
+  if (list_position == store_position)
+    return;
+
+  plugin->alarms = g_list_remove(plugin->alarms, alarm);
+  iter_to = g_list_nth(plugin->alarms, MAX(list_position, store_position));
+  plugin->alarms = g_list_insert(plugin->alarms, alarm, store_position);
+  iter_from = g_list_nth(plugin->alarms, MIN(list_position, store_position));
+  save_alarm_positions(plugin, iter_from, iter_to);
+}
+
 
 // External interface
 void
@@ -220,7 +255,6 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GObject *dialog, *object;
-  GtkListStore *store;
   GList *alarm_iter;
   GtkTreeIter tree_iter;
 
@@ -237,33 +271,24 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),
                     panel_plugin);
 
-  /* NOTE: once type list consists only of static types it can be moved to
-   * header file below column names for clarity */
-  store = gtk_list_store_new(COL_COUNT,
-                             G_TYPE_POINTER,
-                             G_TYPE_STRING,
-                             G_TYPE_STRING,
-                             G_TYPE_STRING,
-                             G_TYPE_STRING);
-  object = gtk_builder_get_object(builder, "alarm-list");
-  g_return_if_fail(GTK_IS_TREE_VIEW(object));
-  gtk_tree_view_set_model(GTK_TREE_VIEW(object), GTK_TREE_MODEL(store));
+  object = gtk_builder_get_object(builder, "alarm-store");
+  g_return_if_fail(GTK_IS_LIST_STORE(object));
   alarm_iter = plugin->alarms;
   while (alarm_iter)
   {
-    gtk_list_store_append(store, &tree_iter);
-    alarm_to_tree_iter(alarm_iter->data, store, &tree_iter);
+    gtk_list_store_append(GTK_LIST_STORE(object), &tree_iter);
+    alarm_to_tree_iter(alarm_iter->data, GTK_LIST_STORE(object), &tree_iter);
     alarm_iter = alarm_iter->next;
   }
-  g_object_unref(store);
 
   gtk_builder_add_callback_symbols(builder,
       "new_button_clicked", G_CALLBACK(new_button_clicked),
       "edit_button_clicked", G_CALLBACK(edit_button_clicked),
       "remove_button_clicked", G_CALLBACK(remove_button_clicked),
-      "alarm_list_button_pressed", G_CALLBACK(alarm_list_button_pressed),
-      "alarm_list_row_activated", G_CALLBACK(alarm_list_row_activated),
+      "alarm_view_button_pressed", G_CALLBACK(alarm_view_button_pressed),
+      "alarm_view_row_activated", G_CALLBACK(alarm_view_row_activated),
       "alarm_selection_changed", G_CALLBACK(alarm_selection_changed),
+      "alarm_store_row_changed", G_CALLBACK(alarm_store_row_changed),
       NULL);
   gtk_builder_connect_signals(builder, plugin);
 

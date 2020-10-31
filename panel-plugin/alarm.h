@@ -77,7 +77,7 @@ struct _Alert
 struct _Alarm
 {
   gchar *uuid;
-  // 'position' used only for initial ordering in load_alarm_settings()
+  // 'position' is used only for initial ordering in load_alarm_settings()
   gint position;
   AlarmType type;
   gchar *name;
