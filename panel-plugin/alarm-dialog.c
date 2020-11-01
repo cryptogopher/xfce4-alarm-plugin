@@ -145,6 +145,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GObject *dialog;
+  GObject *source, *target;
 
   g_return_if_fail(GTK_IS_WINDOW(parent));
   g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
@@ -162,6 +163,12 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
                               "time_wrapped", G_CALLBACK(time_wrapped),
                               NULL);
   gtk_builder_connect_signals(builder, plugin);
+
+  source = gtk_builder_get_object(builder, "progress");
+  g_return_if_fail(GTK_IS_SWITCH(source));
+  target = gtk_builder_get_object(builder, "color");
+  g_return_if_fail(GTK_IS_COLOR_BUTTON(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   if (*alarm)
     alarm_to_dialog(*alarm, builder);
