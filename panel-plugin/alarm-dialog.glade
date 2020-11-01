@@ -33,6 +33,14 @@
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
   </object>
+  <object class="GtkListStore" id="timer-store">
+    <columns>
+      <!-- column-name COL_DATA -->
+      <column type="gpointer"/>
+      <!-- column-name COL_NAME -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="alarm-dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Alarm</property>
@@ -527,10 +535,10 @@
                                 <property name="can_focus">False</property>
                                 <property name="spacing">8</property>
                                 <child>
-                                  <object class="GtkSwitch" id="trigger">
+                                  <object class="GtkSwitch" id="trigger-timer">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="tooltip_text" translatable="yes">Trigger alarm after this one finishes</property>
+                                    <property name="tooltip_text" translatable="yes">Start another timer on timeout</property>
                                     <property name="valign">center</property>
                                   </object>
                                   <packing>
@@ -540,12 +548,19 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkComboBox">
+                                  <object class="GtkComboBox" id="timer-combo">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="tooltip_text" translatable="yes">Start another timer on timeout</property>
                                     <property name="halign">start</property>
                                     <property name="valign">center</property>
+                                    <property name="model">timer-store</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="timer-name"/>
+                                      <attributes>
+                                        <attribute name="text">1</attribute>
+                                      </attributes>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="expand">True</property>

@@ -145,7 +145,9 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GObject *dialog;
-  GObject *source, *target;
+  GObject *object, *source, *target;
+  GList *alarm_iter;
+  Alarm *triggered_alarm;
 
   g_return_if_fail(GTK_IS_WINDOW(parent));
   g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
@@ -169,6 +171,26 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   target = gtk_builder_get_object(builder, "color");
   g_return_if_fail(GTK_IS_COLOR_BUTTON(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+
+  source = gtk_builder_get_object(builder, "trigger-timer");
+  g_return_if_fail(GTK_IS_SWITCH(source));
+  target = gtk_builder_get_object(builder, "timer-combo");
+  g_return_if_fail(GTK_IS_COMBO_BOX(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+
+  object = gtk_builder_get_object(builder, "timer-store");
+  g_return_if_fail(GTK_IS_LIST_STORE(object));
+  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1, 0, 0L, 1, "self", -1);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(target), 0);
+  alarm_iter = plugin->alarms;
+  while (alarm_iter)
+  {
+    triggered_alarm = alarm_iter->data;
+    if (triggered_alarm->type == TYPE_TIMER && triggered_alarm != *alarm)
+      gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+                                        0, triggered_alarm, 1, triggered_alarm->name, -1);
+    alarm_iter = alarm_iter->next;
+  }
 
   if (*alarm)
     alarm_to_dialog(*alarm, builder);
