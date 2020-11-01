@@ -119,11 +119,30 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   alarm->type = value;
 }
 
+// Callbacks
+static void
+time_wrapped(GtkSpinButton *wrapped_spin, GtkSpinButton *higher_spin)
+{
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(wrapped_spin));
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(higher_spin));
+
+  switch (gtk_spin_button_get_value_as_int(wrapped_spin))
+  {
+    case 0:
+      gtk_spin_button_spin(higher_spin, GTK_SPIN_STEP_FORWARD, 1);
+      break;
+    case 59:
+      gtk_spin_button_spin(higher_spin, GTK_SPIN_STEP_BACKWARD, 1);
+      break;
+  }
+}
+
 
 // External interface
 void
 show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm)
 {
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GObject *dialog;
 
@@ -139,7 +158,10 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 
-  //gtk_builder_connect_signals(builder, NULL);
+  gtk_builder_add_callback_symbols(builder,
+                              "time_wrapped", G_CALLBACK(time_wrapped),
+                              NULL);
+  gtk_builder_connect_signals(builder, plugin);
 
   if (*alarm)
     alarm_to_dialog(*alarm, builder);

@@ -203,6 +203,7 @@
                         <property name="snap_to_ticks">True</property>
                         <property name="numeric">True</property>
                         <property name="wrap">True</property>
+                        <signal name="wrapped" handler="time_wrapped" object="hours" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">True</property>
@@ -237,6 +238,7 @@
                         <property name="snap_to_ticks">True</property>
                         <property name="numeric">True</property>
                         <property name="wrap">True</property>
+                        <signal name="wrapped" handler="time_wrapped" object="minutes" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">True</property>
