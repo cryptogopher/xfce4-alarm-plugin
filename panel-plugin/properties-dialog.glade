@@ -17,6 +17,7 @@
       <column type="gchararray"/>
     </columns>
     <signal name="row-changed" handler="alarm_store_row_changed" swapped="no"/>
+    <signal name="row-inserted" handler="alarm_store_row_inserted" object="alarm-view" swapped="no"/>
   </object>
   <object class="GtkImage" id="window-close-image">
     <property name="visible">True</property>

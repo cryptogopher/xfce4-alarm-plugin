@@ -247,6 +247,16 @@ alarm_store_row_changed(GtkTreeModel *store, GtkTreePath *path, GtkTreeIter *ite
   save_alarm_positions(plugin, iter_from, iter_to);
 }
 
+static void
+alarm_store_row_inserted(GtkTreeModel *store, GtkTreePath *path, GtkTreeIter *iter,
+                         GtkWidget *view)
+{
+  g_return_if_fail(GTK_IS_LIST_STORE(store));
+  g_return_if_fail(GTK_IS_TREE_VIEW(view));
+
+  gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, NULL, FALSE);
+}
+
 
 // External interface
 void
@@ -289,6 +299,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
       "alarm_view_row_activated", G_CALLBACK(alarm_view_row_activated),
       "alarm_selection_changed", G_CALLBACK(alarm_selection_changed),
       "alarm_store_row_changed", G_CALLBACK(alarm_store_row_changed),
+      "alarm_store_row_inserted", G_CALLBACK(alarm_store_row_inserted),
       NULL);
   gtk_builder_connect_signals(builder, plugin);
 
