@@ -16,6 +16,14 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_LIBINTL_H
+#include <libintl.h>
+#endif
+
 #include <libxfce4panel/xfce-panel-plugin.h>
 
 #include "alarm-dialog.h"
@@ -119,6 +127,20 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   alarm->type = value;
 }
 
+static gboolean
+is_sensitive_and_active(GBinding *binding, const GValue *from_value, GValue *to_value,
+                        gpointer user_data)
+{
+  GObject *source = g_binding_get_source(binding);
+
+  g_return_val_if_fail(GTK_IS_RADIO_BUTTON(source), FALSE);
+  g_return_val_if_fail(G_VALUE_HOLDS_BOOLEAN(to_value), FALSE);
+  g_value_set_boolean(to_value, gtk_widget_get_sensitive(GTK_WIDGET(source)) &&
+                                gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(source)));
+  return TRUE;
+}
+
+
 // Callbacks
 static void
 time_wrapped(GtkSpinButton *wrapped_spin, GtkSpinButton *higher_spin)
@@ -180,7 +202,8 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
 
   object = gtk_builder_get_object(builder, "timer-store");
   g_return_if_fail(GTK_IS_LIST_STORE(object));
-  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1, 0, 0L, 1, "self", -1);
+  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+                                    0, NULL, 1, "self", -1);
   gtk_combo_box_set_active(GTK_COMBO_BOX(target), 0);
   alarm_iter = plugin->alarms;
   while (alarm_iter)
@@ -191,6 +214,43 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
                                         0, triggered_alarm, 1, triggered_alarm->name, -1);
     alarm_iter = alarm_iter->next;
   }
+
+  source = gtk_builder_get_object(builder, "rerun-clock");
+  g_return_if_fail(GTK_IS_SWITCH(source));
+  target = gtk_builder_get_object(builder, "rerun-dow");
+  g_return_if_fail(GTK_IS_RADIO_BUTTON(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+  target = gtk_builder_get_object(builder, "rerun-ndays");
+  g_return_if_fail(GTK_IS_RADIO_BUTTON(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+
+  source = gtk_builder_get_object(builder, "rerun-dow");
+  target = gtk_builder_get_object(builder, "dow-view");
+  g_return_if_fail(GTK_IS_ICON_VIEW(target));
+  g_object_bind_property_full(source, "active", target, "sensitive",
+                              G_BINDING_SYNC_CREATE,
+                              is_sensitive_and_active, NULL, NULL, NULL);
+  g_object_bind_property_full(source, "sensitive", target, "sensitive",
+                              G_BINDING_SYNC_CREATE,
+                              is_sensitive_and_active, NULL, NULL, NULL);
+
+  source = gtk_builder_get_object(builder, "rerun-ndays");
+  target = gtk_builder_get_object(builder, "rerun-interval");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
+  g_object_bind_property_full(source, "active", target, "sensitive",
+                              G_BINDING_SYNC_CREATE,
+                              is_sensitive_and_active, NULL, NULL, NULL);
+  g_object_bind_property_full(source, "sensitive", target, "sensitive",
+                              G_BINDING_SYNC_CREATE,
+                              is_sensitive_and_active, NULL, NULL, NULL);
+  target = gtk_builder_get_object(builder, "rerun-period");
+  g_return_if_fail(GTK_IS_COMBO_BOX_TEXT(target));
+  g_object_bind_property_full(source, "active", target, "sensitive",
+                              G_BINDING_SYNC_CREATE,
+                              is_sensitive_and_active, NULL, NULL, NULL);
+  g_object_bind_property_full(source, "sensitive", target, "sensitive",
+                              G_BINDING_SYNC_CREATE,
+                              is_sensitive_and_active, NULL, NULL, NULL);
 
   if (*alarm)
     alarm_to_dialog(*alarm, builder);

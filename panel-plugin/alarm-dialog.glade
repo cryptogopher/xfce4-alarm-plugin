@@ -759,10 +759,10 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSwitch" id="rerun-alarm">
+                              <object class="GtkSwitch" id="rerun-clock">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="tooltip_text" translatable="yes">Repeat alert</property>
+                                <property name="tooltip_text" translatable="yes">Rerun alarm using specified pattern</property>
                                 <property name="halign">start</property>
                                 <property name="valign">center</property>
                                 <property name="hexpand">True</property>
@@ -773,11 +773,11 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkIconView">
+                              <object class="GtkIconView" id="dow-view">
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
-                                <property name="tooltip_text" translatable="yes">Repeat alarm on selected days of week</property>
+                                <property name="tooltip_text" translatable="yes">Repeat alarm on selected days of week (Ctrl-click to select multiple days)</property>
                                 <property name="halign">start</property>
                                 <property name="valign">center</property>
                                 <property name="margin">0</property>

@@ -19,8 +19,6 @@
 #ifndef __ALARM_PLUGIN_H__
 #define __ALARM_PLUGIN_H__
 
-#include <xfconf/xfconf.h>
-
 G_BEGIN_DECLS
 
 typedef struct _AlarmPluginClass AlarmPluginClass;

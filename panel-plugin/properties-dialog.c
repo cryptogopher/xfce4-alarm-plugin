@@ -16,6 +16,10 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <libxfce4panel/xfce-panel-plugin.h>
 
 #include "properties-dialog.h"
