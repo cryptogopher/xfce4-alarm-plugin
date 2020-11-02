@@ -674,7 +674,7 @@
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
                                 <property name="halign">start</property>
-                                <property name="margin_start">8</property>
+                                <property name="margin_start">16</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">rerun-dow</property>
                               </object>
@@ -735,7 +735,7 @@
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
                                 <property name="halign">start</property>
-                                <property name="margin_start">8</property>
+                                <property name="margin_start">16</property>
                                 <property name="active">True</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">rerun-ndays</property>
@@ -966,8 +966,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="halign">start</property>
-                                <property name="margin_end">16</property>
-                                <property name="label" translatable="yes">Execute command</property>
+                                <property name="label" translatable="yes">Run program</property>
                                 <property name="xalign">0</property>
                               </object>
                               <packing>
@@ -987,19 +986,6 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="tooltip_markup" translatable="yes">Run command</property>
-                                <property name="hexpand">True</property>
-                                <property name="placeholder_text" translatable="yes">$&gt; _</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">2</property>
                               </packing>
                             </child>
                             <child>
@@ -1038,6 +1024,60 @@
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">1</property>
                               </packing>
+                            </child>
+                            <child>
+                              <object class="GtkAppChooserButton">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Run program</property>
+                                <property name="valign">center</property>
+                                <property name="show_dialog_item">True</property>
+                                <property name="show_default_item">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="spacing">8</property>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="label" translatable="yes">parameters:</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="tooltip_markup" translatable="yes">Optional command line parameters</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="placeholder_text" translatable="yes">--command-line options</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                           </object>
                         </child>
@@ -1095,7 +1135,6 @@
                                 <property name="can_focus">False</property>
                                 <property name="halign">start</property>
                                 <property name="margin_left">8</property>
-                                <property name="margin_start">8</property>
                                 <child>
                                   <object class="GtkRadioButton" id="radiobutton4">
                                     <property name="label" translatable="yes">exactly</property>
@@ -1104,6 +1143,7 @@
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
                                     <property name="halign">start</property>
+                                    <property name="margin_start">8</property>
                                     <property name="draw_indicator">True</property>
                                     <property name="group">radiobutton3</property>
                                   </object>
@@ -1135,7 +1175,7 @@
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="margin_start">7</property>
+                                    <property name="margin_start">8</property>
                                     <property name="label" translatable="yes">time(s)</property>
                                   </object>
                                   <packing>
@@ -1160,7 +1200,7 @@
                                 <property name="receives_default">False</property>
                                 <property name="halign">start</property>
                                 <property name="margin_left">8</property>
-                                <property name="margin_start">8</property>
+                                <property name="margin_start">16</property>
                                 <property name="draw_indicator">True</property>
                                 <property name="group">radiobutton4</property>
                               </object>
