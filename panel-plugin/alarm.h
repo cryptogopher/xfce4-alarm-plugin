@@ -49,10 +49,17 @@ typedef enum
 
 typedef enum
 {
-  NO_ALARM_REPEAT,
-  TRIGGER_TIMER,
-  RERUN_EVERY_DOW,
-  RERUN_EVERY_NDAYS
+  NO_RERUN         = 0,
+  RERUN_MONDAYS    = 1,
+  RERUN_TUEASDAYS  = 1 << 1,
+  RERUN_WEDNESDAYS = 1 << 2,
+  RERUN_THURSDAYS  = 1 << 3,
+  RERUN_FRIDAYS    = 1 << 4,
+  RERUN_SATURDAYS  = 1 << 5,
+  RERUN_SUNDAYS    = 1 << 6,
+  RERUN_WEEKDAYS   = 31,
+  RERUN_WEEKENDS   = 96,
+  RERUN_EVERYDAY   = 127
 } AlarmRecurrence;
 
 typedef enum
@@ -81,6 +88,18 @@ struct _Alarm
   gchar *name;
   guint h, m, s;
   gchar color[8];
+  gboolean autostart_on_plugin, autostop_on_plugin;
+  gboolean autostart_on_resume, autostop_on_suspend;
+  union
+  {
+    struct
+    {
+      // rerun interval: >0 on days of week, <0 every N periods, 0 disables
+      gint interval;
+      gint period;
+    } rerun;
+    struct _Alarm *triggered_alarm;
+  };
   Alert alert;
   GDateTime *alert_at;
   gint alert_repeats;
