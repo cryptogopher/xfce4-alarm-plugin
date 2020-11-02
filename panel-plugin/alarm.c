@@ -44,7 +44,7 @@ alarm_free_func(gpointer data)
 
   g_free(alarm->uuid);
   g_free(alarm->name);
-  g_date_time_unref(alarm->alert_at);
+  g_date_time_unref(alarm->timeout_at);
   g_slice_free(Alarm, alarm);
 }
 
@@ -109,15 +109,30 @@ load_alarm_settings(AlarmPlugin *plugin)
       goto free;
     }
 
-    if (g_strcmp0(parts[2], "type") == 0)
+    if (!g_strcmp0(parts[2], "type"))
       alarm->type = g_value_get_uint(property_value);
-    else if (g_strcmp0(parts[2], "name") == 0)
+
+    else if (!g_strcmp0(parts[2], "name"))
       alarm->name = g_strdup(g_value_get_string(property_value));
-    else if (g_strcmp0(parts[2], "time") == 0)
+
+    else if (!g_strcmp0(parts[2], "time"))
       sscanf(g_value_get_string(property_value), "%02u:%02u:%02u",
              &alarm->h, &alarm->m, &alarm->s);
-    else if (g_strcmp0(parts[2], "color") == 0)
+
+    else if (!g_strcmp0(parts[2], "color"))
       g_strlcpy(alarm->color, g_value_get_string(property_value), sizeof(alarm->color));
+
+    else if (!g_strcmp0(parts[2], "autostart"))
+      alarm->autostart = g_value_get_boolean(property_value);
+
+    else if (!g_strcmp0(parts[2], "autostop"))
+      alarm->autostop = g_value_get_boolean(property_value);
+
+    else if (!g_strcmp0(parts[2], "autostart-on-resume"))
+      alarm->autostart_on_resume = g_value_get_boolean(property_value);
+
+    else if (!g_strcmp0(parts[2], "autostop-on-suspend"))
+      alarm->autostop_on_suspend = g_value_get_boolean(property_value);
 
   free:
     g_strfreev(parts);
@@ -163,6 +178,12 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   g_warn_if_fail(xfconf_channel_set_string(channel, "/time", value));
   g_free(value);
   g_warn_if_fail(xfconf_channel_set_string(channel, "/color", alarm->color));
+  g_warn_if_fail(xfconf_channel_set_bool(channel, "/autostart", alarm->autostart));
+  g_warn_if_fail(xfconf_channel_set_bool(channel, "/autostop", alarm->autostop));
+  g_warn_if_fail(xfconf_channel_set_bool(channel, "/autostart-on-resume",
+                                         alarm->autostart_on_resume));
+  g_warn_if_fail(xfconf_channel_set_bool(channel, "/autostop-on-suspend",
+                                         alarm->autostop_on_suspend));
 
   g_object_unref(channel);
 }

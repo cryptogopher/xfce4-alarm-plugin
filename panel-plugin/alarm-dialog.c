@@ -67,6 +67,22 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
     gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(object), &color);
   }
 
+  object = gtk_builder_get_object(builder, "autostart");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  gtk_switch_set_active(GTK_SWITCH(object), alarm->autostart);
+
+  object = gtk_builder_get_object(builder, "autostop");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  gtk_switch_set_active(GTK_SWITCH(object), alarm->autostop);
+
+  object = gtk_builder_get_object(builder, "autostart-on-resume");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  gtk_switch_set_active(GTK_SWITCH(object), alarm->autostart_on_resume);
+
+  object = gtk_builder_get_object(builder, "autostop-on-suspend");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  gtk_switch_set_active(GTK_SWITCH(object), alarm->autostop_on_suspend);
+
   object = gtk_builder_get_object(builder, "recurrence");
   g_return_if_fail(GTK_IS_STACK(object));
   objects = gtk_container_get_children(GTK_CONTAINER(object));
@@ -116,6 +132,22 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   }
   else
     alarm->color[0] = '\0';
+
+  object = gtk_builder_get_object(builder, "autostart");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  alarm->autostart = gtk_switch_get_active(GTK_SWITCH(object));
+
+  object = gtk_builder_get_object(builder, "autostop");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  alarm->autostop = gtk_switch_get_active(GTK_SWITCH(object));
+
+  object = gtk_builder_get_object(builder, "autostart-on-resume");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  alarm->autostart_on_resume = gtk_switch_get_active(GTK_SWITCH(object));
+
+  object = gtk_builder_get_object(builder, "autostop-on-suspend");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  alarm->autostop_on_suspend = gtk_switch_get_active(GTK_SWITCH(object));
 
   object = gtk_builder_get_object(builder, "recurrence");
   g_return_if_fail(GTK_IS_STACK(object));

@@ -47,7 +47,7 @@ typedef enum
   TYPE_COUNT
 } AlarmType;
 
-typedef enum
+enum
 {
   NO_RERUN         = 0,
   RERUN_MONDAYS    = 1,
@@ -60,50 +60,51 @@ typedef enum
   RERUN_WEEKDAYS   = 31,
   RERUN_WEEKENDS   = 96,
   RERUN_EVERYDAY   = 127
-} AlarmRecurrence;
+};
 
-typedef enum
+enum
 {
-  NO_ALERT_REPEAT,
-  REPEAT_NTIMES,
-  REPEAT_UNTIL_ACK
-} AlertRecurrence;
+  NO_ALERT_REPEAT = 0,
+  REPEAT_UNTIL_ACK = 0
+};
 
 struct _Alert
 {
   gboolean notification;
   gchar *sound;
-  gchar *command;
-  AlertRecurrence recurrence;
+  gchar *program;
+  // interval: 0 - no repeats, >0 - every N seconds
   guint interval;
+  // repeats: 0 - until acknowledged, >0 - count
   guint repeats;
+  guint repeats_left;
 };
 
 struct _Alarm
 {
+  // Persisted settings (between plugin runtimes)
   gchar *uuid;
-  // 'position' is used only for initial ordering in load_alarm_settings()
-  gint position;
   AlarmType type;
   gchar *name;
   guint h, m, s;
   gchar color[8];
-  gboolean autostart_on_plugin, autostop_on_plugin;
+  gboolean autostart, autostop;
   gboolean autostart_on_resume, autostop_on_suspend;
   union
   {
     struct
     {
-      // rerun interval: >0 on days of week, <0 every N periods, 0 disables
-      gint interval;
-      gint period;
+      gint interval; // >0 - on days of week, <0 - every N periods, 0 - disables
+      gint period; // NOTE: period enum DAYS/WEEKS/MONTHS
     } rerun;
     struct _Alarm *triggered_alarm;
   };
   Alert alert;
-  GDateTime *alert_at;
-  gint alert_repeats;
+  GDateTime *timeout_at;
   GTimer *alert_timer;
+
+  // Runtime settings
+  gint position; // used only for initial ordering in load_alarm_settings()
 };
 
 // Column numbers are used in .glade - update if changed
