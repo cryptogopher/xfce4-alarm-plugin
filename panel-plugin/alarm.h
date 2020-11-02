@@ -53,8 +53,8 @@ typedef enum
 {
   NO_ALARM_REPEAT,
   TRIGGER_TIMER,
-  REPEAT_EVERY_DOW,
-  REPEAT_EVERY_NDAYS
+  RERUN_EVERY_DOW,
+  RERUN_EVERY_NDAYS
 } AlarmRecurrence;
 
 typedef enum
