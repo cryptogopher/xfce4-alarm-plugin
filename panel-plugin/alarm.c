@@ -292,6 +292,7 @@ reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   g_object_unref(channel);
 }
 
+// TODO: allow multiple buffers with va_arg, NULL sentinel
 GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
                               const gchar* buffer, gsize buffer_length)
 {

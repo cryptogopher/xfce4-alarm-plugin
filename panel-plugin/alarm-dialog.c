@@ -28,6 +28,7 @@
 
 #include "alarm-dialog.h"
 #include "alarm-dialog_ui.h"
+#include "alert-box_ui.h"
 
 
 // Utilities
@@ -331,12 +332,14 @@ time_wrapped(GtkSpinButton *wrapped_spin, GtkSpinButton *higher_spin)
 
 
 // External interface
+// TODO: return GtkDialog which will be destroyed by caller
 void
 show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
-  GtkBuilder *builder;
+  GtkBuilder *builder, *alert_builder;
   GObject *dialog;
+  GtkWidget *alert_box;
   GObject *object, *source, *target;
   GList *alarm_iter;
   Alarm *triggered_timer;
@@ -357,12 +360,30 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
     g_return_if_reached();
   }
 
+  alert_builder = alarm_builder_new(panel_plugin, alert_box_ui, alert_box_ui_length);
+  g_return_if_fail(GTK_IS_BUILDER(alert_builder));
+  g_object_weak_ref(G_OBJECT(dialog), (GWeakNotify) G_CALLBACK(g_object_unref),
+                    alert_builder);
+
+  object = gtk_builder_get_object(alert_builder, "alert-box");
+  g_return_if_fail(GTK_IS_BOX(object));
+  alert_box = GTK_WIDGET(object);
+
+  object = gtk_builder_get_object(builder, "alert-stack");
+  g_return_if_fail(GTK_IS_STACK(object));
+  g_object_ref(alert_box);
+  gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(alert_box)), alert_box);
+  gtk_stack_add_titled(GTK_STACK(object), alert_box,
+                       "Specify custom alert settings", "custom");
+  g_object_unref(alert_box);
+  // TODO: connect label size groups
+
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 
   gtk_builder_add_callback_symbols(builder,
-                              "time_wrapped", G_CALLBACK(time_wrapped),
-                              NULL);
+                                   "time_wrapped", G_CALLBACK(time_wrapped),
+                                   NULL);
   gtk_builder_connect_signals(builder, plugin);
 
   source = gtk_builder_get_object(builder, "progress");

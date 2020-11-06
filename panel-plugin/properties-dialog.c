@@ -168,18 +168,20 @@ remove_button_clicked(GtkToolButton *button, AlarmPlugin *plugin)
   remove_alarm(plugin, gtk_widget_get_toplevel(GTK_WIDGET(button)));
 }
 
-static void
-alarm_view_button_pressed(GtkWidget *widget, GdkEvent *event, AlarmPlugin *plugin)
+static gboolean
+alarm_view_button_press(GtkWidget *widget, GdkEvent *event, AlarmPlugin *plugin)
 {
-  g_return_if_fail(GTK_IS_TREE_VIEW(widget));
-  g_return_if_fail(event->type == GDK_DOUBLE_BUTTON_PRESS);
-  g_return_if_fail(event->button.window ==
-      gtk_tree_view_get_bin_window(GTK_TREE_VIEW(widget)));
-  g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
+  g_return_val_if_fail(GTK_IS_TREE_VIEW(widget), FALSE);
+  g_return_val_if_fail(event->button.window ==
+                       gtk_tree_view_get_bin_window(GTK_TREE_VIEW(widget)), FALSE);
+  g_return_val_if_fail(XFCE_IS_ALARM_PLUGIN(plugin), FALSE);
 
-  if (gtk_tree_view_is_blank_at_pos(GTK_TREE_VIEW(widget), event->button.x, event->button.y,
+  if ((event->type == GDK_DOUBLE_BUTTON_PRESS) &&
+      gtk_tree_view_is_blank_at_pos(GTK_TREE_VIEW(widget), event->button.x, event->button.y,
                                     NULL, NULL, NULL, NULL))
     new_alarm(plugin, gtk_widget_get_toplevel(GTK_WIDGET(widget)));
+
+  return FALSE;
 }
 
 static void
@@ -263,6 +265,8 @@ alarm_store_row_inserted(GtkTreeModel *store, GtkTreePath *path, GtkTreeIter *it
 
 
 // External interface
+// TODO: return GtkDialog which will be destroyed by caller if necessary
+// (otherwise return NULL)
 void
 show_properties_dialog(XfcePanelPlugin *panel_plugin)
 {
@@ -306,7 +310,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
       "new_button_clicked", G_CALLBACK(new_button_clicked),
       "edit_button_clicked", G_CALLBACK(edit_button_clicked),
       "remove_button_clicked", G_CALLBACK(remove_button_clicked),
-      "alarm_view_button_pressed", G_CALLBACK(alarm_view_button_pressed),
+      "alarm_view_button_press", G_CALLBACK(alarm_view_button_press),
       "alarm_view_row_activated", G_CALLBACK(alarm_view_row_activated),
       "alarm_selection_changed", G_CALLBACK(alarm_selection_changed),
       "alarm_store_row_changed", G_CALLBACK(alarm_store_row_changed),
