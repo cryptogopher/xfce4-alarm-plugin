@@ -278,8 +278,9 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
 
   dialog = gtk_builder_get_object(builder, "properties-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
-  g_object_set_data_full(dialog, "builder", builder, g_object_unref);
+  g_object_weak_ref(G_OBJECT(dialog), (GWeakNotify) G_CALLBACK(g_object_unref), builder);
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
+  g_object_set_data_full(dialog, "builder", builder, g_object_unref);
 
   xfce_panel_plugin_block_menu(panel_plugin);
   g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(xfce_panel_plugin_unblock_menu),

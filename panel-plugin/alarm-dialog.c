@@ -159,8 +159,7 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
   }
 }
 
-// TODO: return boolean, false if error
-static void
+static gboolean
 alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
 {
   GObject *object;
@@ -170,33 +169,33 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   GtkTreeIter tree_iter;
   GList *items, *item_iter;
 
-  g_return_if_fail(alarm != NULL);
-  g_return_if_fail(GTK_IS_BUILDER(builder));
+  g_return_val_if_fail(alarm != NULL, FALSE);
+  g_return_val_if_fail(GTK_IS_BUILDER(builder), FALSE);
 
   object = gtk_builder_get_object(builder, "name");
-  g_return_if_fail(GTK_IS_ENTRY(object));
+  g_return_val_if_fail(GTK_IS_ENTRY(object), FALSE);
   g_free(alarm->name);
   alarm->name = g_strdup(gtk_entry_get_text(GTK_ENTRY(object)));
 
   object = gtk_builder_get_object(builder, "hours");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
   alarm->h = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
 
   object = gtk_builder_get_object(builder, "minutes");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
   alarm->m = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
 
   object = gtk_builder_get_object(builder, "seconds");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
   alarm->s = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
 
   object = gtk_builder_get_object(builder, "progress");
-  g_return_if_fail(GTK_IS_SWITCH(object));
+  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
   alarm->color[0] = '\0';
   if (gtk_switch_get_active(GTK_SWITCH(object)))
   {
     object = gtk_builder_get_object(builder, "color");
-    g_return_if_fail(GTK_IS_COLOR_BUTTON(object));
+    g_return_val_if_fail(GTK_IS_COLOR_BUTTON(object), FALSE);
     gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(object), &color);
     g_snprintf(alarm->color, sizeof(alarm->color),  "#%02x%02x%02x",
                (uint) (0.5 + color.red*255),
@@ -205,38 +204,39 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   }
 
   object = gtk_builder_get_object(builder, "autostart");
-  g_return_if_fail(GTK_IS_SWITCH(object));
+  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
   alarm->autostart = gtk_switch_get_active(GTK_SWITCH(object));
 
   object = gtk_builder_get_object(builder, "autostop");
-  g_return_if_fail(GTK_IS_SWITCH(object));
+  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
   alarm->autostop = gtk_switch_get_active(GTK_SWITCH(object));
 
   object = gtk_builder_get_object(builder, "autostart-on-resume");
-  g_return_if_fail(GTK_IS_SWITCH(object));
+  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
   alarm->autostart_on_resume = gtk_switch_get_active(GTK_SWITCH(object));
 
   object = gtk_builder_get_object(builder, "autostop-on-suspend");
-  g_return_if_fail(GTK_IS_SWITCH(object));
+  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
   alarm->autostop_on_suspend = gtk_switch_get_active(GTK_SWITCH(object));
 
   object = gtk_builder_get_object(builder, "recurrence");
-  g_return_if_fail(GTK_IS_STACK(object));
+  g_return_val_if_fail(GTK_IS_STACK(object), FALSE);
   gtk_container_child_get(GTK_CONTAINER(object),
                           gtk_stack_get_visible_child(GTK_STACK(object)),
                           "position", &value,
                           NULL);
-  g_return_if_fail(value < TYPE_COUNT);
+  g_return_val_if_fail(value < TYPE_COUNT, FALSE);
   alarm->type = value;
 
   object = gtk_builder_get_object(builder, "trigger-timer");
-  g_return_if_fail(GTK_IS_SWITCH(object));
+  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
   alarm->triggered_timer = NULL;
   if (gtk_switch_get_active(GTK_SWITCH(object)))
   {
     object = gtk_builder_get_object(builder, "timer-combo");
-    g_return_if_fail(GTK_IS_COMBO_BOX(object));
-    g_return_if_fail(gtk_combo_box_get_active_iter(GTK_COMBO_BOX(object), &tree_iter));
+    g_return_val_if_fail(GTK_IS_COMBO_BOX(object), FALSE);
+    g_return_val_if_fail(gtk_combo_box_get_active_iter(GTK_COMBO_BOX(object), &tree_iter),
+                         FALSE);
     gtk_tree_model_get(gtk_combo_box_get_model(GTK_COMBO_BOX(object)), &tree_iter,
                        COL_DATA, &alarm->triggered_timer, -1);
     if (alarm->triggered_timer == NULL)
@@ -244,20 +244,20 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   }
 
   object = gtk_builder_get_object(builder, "rerun-clock");
-  g_return_if_fail(GTK_IS_SWITCH(object));
+  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
   alarm->rerun.every = NO_RERUN;
   if (gtk_switch_get_active(GTK_SWITCH(object)))
   {
     object = gtk_builder_get_object(builder, "rerun-dow");
-    g_return_if_fail(GTK_IS_RADIO_BUTTON(object));
+    g_return_val_if_fail(GTK_IS_RADIO_BUTTON(object), FALSE);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(object)))
     {
       object = gtk_builder_get_object(builder, "dow-view");
-      g_return_if_fail(GTK_IS_ICON_VIEW(object));
+      g_return_val_if_fail(GTK_IS_ICON_VIEW(object), FALSE);
       items = gtk_icon_view_get_selected_items(GTK_ICON_VIEW(object));
 
       object = gtk_builder_get_object(builder, "dow-store");
-      g_return_if_fail(GTK_IS_TREE_MODEL(object));
+      g_return_val_if_fail(GTK_IS_TREE_MODEL(object), FALSE);
       tree_model = GTK_TREE_MODEL(object);
 
       item_iter = items;
@@ -270,28 +270,31 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
         }
         item_iter = item_iter->next;
       }
-      g_return_if_fail(alarm->rerun.every >= RERUN_DOW &&
-                       alarm->rerun.every <= RERUN_EVERYDAY);
       g_list_free_full(items, (GDestroyNotify) gtk_tree_path_free);
+      g_return_val_if_fail(alarm->rerun.every >= RERUN_DOW &&
+                           alarm->rerun.every <= RERUN_EVERYDAY, FALSE);
     }
     else
     {
       object = gtk_builder_get_object(builder, "rerun-ndays");
-      g_return_if_fail(GTK_IS_RADIO_BUTTON(object));
+      g_return_val_if_fail(GTK_IS_RADIO_BUTTON(object), FALSE);
       if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(object)))
       {
         object = gtk_builder_get_object(builder, "rerun-multiplier");
-        g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
+        g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
         alarm->rerun.every = - gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
-        g_return_if_fail(alarm->rerun.every < RERUN_DOW);
+        g_return_val_if_fail(alarm->rerun.every < RERUN_DOW, FALSE);
 
         object = gtk_builder_get_object(builder, "rerun-mode");
-        g_return_if_fail(GTK_IS_COMBO_BOX_TEXT(object));
+        g_return_val_if_fail(GTK_IS_COMBO_BOX_TEXT(object), FALSE);
         alarm->rerun.mode = gtk_combo_box_get_active(GTK_COMBO_BOX(object));
-        g_return_if_fail(alarm->rerun.mode >= 0 && alarm->rerun.mode < RERUN_MODE_COUNT);
+        g_return_val_if_fail(alarm->rerun.mode >= 0 &&
+                             alarm->rerun.mode < RERUN_MODE_COUNT, FALSE);
       }
     }
   }
+
+  return TRUE;
 }
 
 static gboolean
@@ -347,6 +350,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
 
   dialog = gtk_builder_get_object(builder, "alarm-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
+  g_object_weak_ref(G_OBJECT(dialog), (GWeakNotify) G_CALLBACK(g_object_unref), builder);
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 
@@ -429,9 +433,8 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
     if (*alarm == NULL)
       *alarm = g_slice_new0(Alarm);
 
-    alarm_from_dialog(*alarm, builder);
+    g_warn_if_fail(alarm_from_dialog(*alarm, builder));
   }
 
   gtk_widget_destroy(GTK_WIDGET(dialog));
-  g_object_unref(builder);
 }
