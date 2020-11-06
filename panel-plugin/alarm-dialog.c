@@ -107,7 +107,8 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
 
     object = gtk_builder_get_object(builder, "timer-combo");
     g_return_if_fail(GTK_IS_COMBO_BOX(object));
-    g_warn_if_fail(gtk_combo_box_set_active_id(GTK_COMBO_BOX(object), alarm->uuid));
+    g_return_if_fail(gtk_combo_box_set_active_id(GTK_COMBO_BOX(object),
+                                                 alarm->triggered_timer->uuid));
   }
 
   if (alarm->rerun.every != NO_RERUN)
@@ -235,9 +236,9 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   {
     object = gtk_builder_get_object(builder, "timer-combo");
     g_return_if_fail(GTK_IS_COMBO_BOX(object));
-    if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(object), &tree_iter))
-      gtk_tree_model_get(gtk_combo_box_get_model(GTK_COMBO_BOX(object)), &tree_iter,
-                         COL_DATA, &alarm->triggered_timer, -1);
+    g_return_if_fail(gtk_combo_box_get_active_iter(GTK_COMBO_BOX(object), &tree_iter));
+    gtk_tree_model_get(gtk_combo_box_get_model(GTK_COMBO_BOX(object)), &tree_iter,
+                       COL_DATA, &alarm->triggered_timer, -1);
     if (alarm->triggered_timer == NULL)
       alarm->triggered_timer = alarm;
   }
@@ -335,7 +336,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   GObject *dialog;
   GObject *object, *source, *target;
   GList *alarm_iter;
-  Alarm *triggered_alarm;
+  Alarm *triggered_timer;
 
   g_return_if_fail(GTK_IS_WINDOW(parent));
   g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
@@ -374,12 +375,12 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   alarm_iter = plugin->alarms;
   while (alarm_iter)
   {
-    triggered_alarm = alarm_iter->data;
-    if (triggered_alarm->type == TYPE_TIMER && triggered_alarm != *alarm)
+    triggered_timer = alarm_iter->data;
+    if (triggered_timer->type == TYPE_TIMER && triggered_timer != *alarm)
       gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
-                                        0, triggered_alarm,
-                                        1, triggered_alarm->name,
-                                        2, triggered_alarm->uuid, -1);
+                                        0, triggered_timer,
+                                        1, triggered_timer->name,
+                                        2, triggered_timer->uuid, -1);
     alarm_iter = alarm_iter->next;
   }
 
