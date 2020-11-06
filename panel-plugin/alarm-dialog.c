@@ -349,8 +349,14 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   g_return_if_fail(GTK_IS_BUILDER(builder));
 
   dialog = gtk_builder_get_object(builder, "alarm-dialog");
-  g_return_if_fail(GTK_IS_DIALOG(dialog));
-  g_object_weak_ref(G_OBJECT(dialog), (GWeakNotify) G_CALLBACK(g_object_unref), builder);
+  if (GTK_IS_DIALOG(dialog))
+    g_object_weak_ref(G_OBJECT(dialog), (GWeakNotify) G_CALLBACK(g_object_unref), builder);
+  else
+  {
+    g_object_unref(builder);
+    g_return_if_reached();
+  }
+
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 

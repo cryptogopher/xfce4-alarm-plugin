@@ -313,7 +313,7 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
                xfce_panel_plugin_get_unique_id (panel_plugin),
                error->message);
     g_error_free(error);
-    g_object_unref(builder);
+    g_clear_pointer(&builder, g_object_unref);
   }
 
   return builder;
