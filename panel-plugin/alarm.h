@@ -49,23 +49,32 @@ typedef enum
 
 enum
 {
-  NO_RERUN         = 0,
-  RERUN_MONDAYS    = 1,
-  RERUN_TUEASDAYS  = 1 << 1,
-  RERUN_WEDNESDAYS = 1 << 2,
-  RERUN_THURSDAYS  = 1 << 3,
-  RERUN_FRIDAYS    = 1 << 4,
-  RERUN_SATURDAYS  = 1 << 5,
-  RERUN_SUNDAYS    = 1 << 6,
-  RERUN_WEEKDAYS   = 31,
-  RERUN_WEEKENDS   = 96,
-  RERUN_EVERYDAY   = 127
-};
+  NO_RERUN        = 0,
+  RERUN_DOW       = 0,
+  RERUN_MONDAY    = 1,
+  RERUN_TUEASDAY  = 1 << 1,
+  RERUN_WEDNESDAY = 1 << 2,
+  RERUN_THURSDAY  = 1 << 3,
+  RERUN_FRIDAY    = 1 << 4,
+  RERUN_SATURDAY  = 1 << 5,
+  RERUN_SUNDAY    = 1 << 6,
+  RERUN_WEEKDAY   = 31,
+  RERUN_WEEKEND   = 96,
+  RERUN_EVERYDAY  = 127
+}; // RerunEvery
+
+typedef enum
+{
+  RERUN_NDAYS = 0,
+  RERUN_NWEEKS,
+  RERUN_NMONTHS,
+  RERUN_MODE_COUNT
+} RerunMode;
 
 enum
 {
-  NO_ALERT_REPEAT = 0,
-  REPEAT_UNTIL_ACK = 0
+  NO_ALERT_REPEAT = 0, // Alert.interval
+  REPEAT_UNTIL_ACK = 0 // Alert.repeats
 };
 
 struct _Alert
@@ -73,10 +82,8 @@ struct _Alert
   gboolean notification;
   gchar *sound;
   gchar *program;
-  // interval: 0 - no repeats, >0 - every N seconds
-  guint interval;
-  // repeats: 0 - until acknowledged, >0 - count
-  guint repeats;
+  guint interval; // 0 (== NO_ALERT_REPEAT) - no repeats; >0 - every N seconds
+  guint repeats; // 0 (== REPEAT_UNTIL_ACK) - until acknowledged; >0 - count
   guint repeats_left;
 };
 
@@ -90,21 +97,20 @@ struct _Alarm
   gchar color[8];
   gboolean autostart, autostop;
   gboolean autostart_on_resume, autostop_on_suspend;
-  union
+
+  struct
   {
-    struct
-    {
-      gint interval; // >0 - on days of week, <0 - every N periods, 0 - disables
-      gint period; // NOTE: period enum DAYS/WEEKS/MONTHS
-    } rerun;
-    struct _Alarm *triggered_alarm;
-  };
+    gint every; /* 0 (== NO_RERUN) - no rerun; >0 (> RERUN_DOW) - on days of week;
+                 * <0 (< RERUN_DOW) - every N modes */
+    RerunMode mode;
+  } rerun;
+  Alarm *triggered_timer;
+
   Alert alert;
   GDateTime *timeout_at;
   GTimer *alert_timer;
 
   // Runtime settings
-  gint position; // used only for initial ordering in load_alarm_settings()
 };
 
 // Column numbers are used in .glade - update if changed

@@ -36,6 +36,7 @@ const gchar *alarm_type_icons[TYPE_COUNT] =
   "xfce4-alarm-plugin-clock"
 };
 
+
 // Utilities
 void
 alarm_free_func(gpointer data)
@@ -49,9 +50,10 @@ alarm_free_func(gpointer data)
 }
 
 static gint
-alarm_order_func(gconstpointer left, gconstpointer right)
+alarm_order_func(gconstpointer left, gconstpointer right, gpointer positions)
 {
-  return ((Alarm*)left)->position - ((Alarm*)right)->position;
+  return GPOINTER_TO_UINT(g_hash_table_lookup(positions, left)) -
+         GPOINTER_TO_UINT(g_hash_table_lookup(positions, right));
 }
 
 static GList*
@@ -60,14 +62,13 @@ load_alarm_settings(AlarmPlugin *plugin)
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
   const gchar *property_base;
-  guint property_base_length;
-  GHashTable *alarm_properties, *alarms;
-  GHashTableIter alarm_property_iter;
+  guint property_base_length, part_count;
+  GHashTable *alarm_properties, *alarms, *positions, *triggered_timers;
+  GHashTableIter ht_iter;
   Alarm *alarm;
   GList *alarm_list;
-  gpointer property_path, property_value;
-  gchar **parts;
-  guint part_count;
+  gchar *property_path, **parts, *uuid;
+  gpointer property_value;
 
   g_return_val_if_fail(XFCE_IS_ALARM_PLUGIN(plugin), NULL);
 
@@ -78,11 +79,16 @@ load_alarm_settings(AlarmPlugin *plugin)
   alarm_properties = xfconf_channel_get_properties(channel, NULL);
   g_object_unref(channel);
 
+  // alarm->uuid => Alarm*
   alarms = g_hash_table_new(g_str_hash, g_str_equal);
+  // Alarm* => position
+  positions = g_hash_table_new(NULL, NULL);
+  // Alarm* => triggered_timer->uuid
+  triggered_timers = g_hash_table_new_full(NULL, NULL, NULL, g_free);
 
+  g_hash_table_iter_init(&ht_iter, alarm_properties);
   // property_path has form: /panel/plugin-ID[[/<alarm UUID>]/<property name>]
-  g_hash_table_iter_init(&alarm_property_iter, alarm_properties);
-  while (g_hash_table_iter_next(&alarm_property_iter, &property_path, &property_value))
+  while (g_hash_table_iter_next(&ht_iter, (gpointer) &property_path, &property_value))
   {
     if (!g_str_has_prefix(property_path, property_base))
     {
@@ -90,7 +96,7 @@ load_alarm_settings(AlarmPlugin *plugin)
       continue;
     }
 
-    parts = g_strsplit((gchar*) property_path + property_base_length, "/", 3);
+    parts = g_strsplit(property_path + property_base_length, "/", 3);
     part_count = g_strv_length(parts);
     if (part_count < 2 || !g_uuid_string_is_valid(parts[1]))
       goto free;
@@ -105,7 +111,8 @@ load_alarm_settings(AlarmPlugin *plugin)
 
     if (part_count == 2)
     {
-      alarm->position = g_value_get_uint(property_value);
+      g_hash_table_insert(positions, alarm,
+                          GUINT_TO_POINTER(g_value_get_uint(property_value)));
       goto free;
     }
 
@@ -134,15 +141,38 @@ load_alarm_settings(AlarmPlugin *plugin)
     else if (!g_strcmp0(parts[2], "autostop-on-suspend"))
       alarm->autostop_on_suspend = g_value_get_boolean(property_value);
 
+    else if (!g_strcmp0(parts[2], "triggered-timer"))
+      g_hash_table_insert(triggered_timers, alarm,
+                          g_strdup(g_value_get_string(property_value)));
+
+    else if (!g_strcmp0(parts[2], "rerun-every"))
+      alarm->rerun.every = g_value_get_int(property_value);
+
+    else if (!g_strcmp0(parts[2], "rerun-mode"))
+      alarm->rerun.mode = g_value_get_uint(property_value);
+
   free:
     g_strfreev(parts);
   }
-
   g_hash_table_destroy(alarm_properties);
+
+  /* TODO: consistency checks and coercion/alarm removal?
+   * e.g. type/triggered-timer, type/rerun-every, rerun-every/rerun-mode */
+
+  g_hash_table_iter_init(&ht_iter, triggered_timers);
+  while (g_hash_table_iter_next(&ht_iter, (gpointer) &alarm, (gpointer) &uuid))
+  {
+    alarm->triggered_timer = g_hash_table_lookup(alarms, uuid);
+    g_warn_if_fail(alarm->triggered_timer != NULL);
+  }
+  g_hash_table_destroy(triggered_timers);
+
   alarm_list = g_hash_table_get_values(alarms);
   g_hash_table_destroy(alarms);
 
-  return g_list_sort(alarm_list, alarm_order_func);
+  alarm_list = g_list_sort_with_data(alarm_list, alarm_order_func, positions);
+  g_hash_table_destroy(positions);
+  return alarm_list;
 }
 
 void
@@ -150,6 +180,7 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
+  gint position;
   gchar *property_base, *value;
 
   g_return_if_fail(alarm != NULL);
@@ -165,13 +196,13 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
                                                   property_base);
   g_free(property_base);
 
-  alarm->position = g_list_index(plugin->alarms, alarm);
-  if (alarm->position == -1)
+  position = g_list_index(plugin->alarms, alarm);
+  if (position == -1)
   {
     g_warn_if_reached();
-    alarm->position = g_list_length(plugin->alarms);
+    position = g_list_length(plugin->alarms);
   }
-  g_warn_if_fail(xfconf_channel_set_uint(channel, "", alarm->position));
+  g_warn_if_fail(xfconf_channel_set_uint(channel, "", position));
   g_warn_if_fail(xfconf_channel_set_uint(channel, "/type", alarm->type));
   g_warn_if_fail(xfconf_channel_set_string(channel, "/name", alarm->name));
   value = g_strdup_printf("%02u:%02u:%02u", alarm->h, alarm->m, alarm->s);
@@ -184,6 +215,25 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
                                          alarm->autostart_on_resume));
   g_warn_if_fail(xfconf_channel_set_bool(channel, "/autostop-on-suspend",
                                          alarm->autostop_on_suspend));
+
+  xfconf_channel_reset_property(channel, "/triggered-timer", FALSE);
+  xfconf_channel_reset_property(channel, "/rerun-every", FALSE);
+  xfconf_channel_reset_property(channel, "/rerun-mode", FALSE);
+  if (alarm->type == TYPE_TIMER)
+  {
+    if (alarm->triggered_timer != NULL)
+      g_warn_if_fail(xfconf_channel_set_string(channel, "/triggered-timer",
+                                               alarm->triggered_timer->uuid));
+  }
+  else 
+  {
+    if (alarm->rerun.every != NO_RERUN)
+    {
+      g_warn_if_fail(xfconf_channel_set_int(channel, "/rerun-every", alarm->rerun.every));
+      if (alarm->rerun.every < RERUN_DOW)
+        g_warn_if_fail(xfconf_channel_set_uint(channel, "/rerun-mode", alarm->rerun.mode));
+    }
+  }
 
   g_object_unref(channel);
 }
