@@ -369,7 +369,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   g_object_unref(alert_box);
 
   // In vertical layout expand alert horizontally
-  object = gtk_builder_get_object(builder, "alert-program");
+  object = gtk_builder_get_object(builder, "program");
   g_return_if_fail(GTK_IS_WIDGET(object));
   gtk_widget_set_hexpand(GTK_WIDGET(object), TRUE);
 

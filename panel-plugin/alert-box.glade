@@ -21,6 +21,35 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkAdjustment" id="runtime-multiplier-adjustment">
+    <property name="lower">1</property>
+    <property name="upper">3660</property>
+    <property name="value">1</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkListStore" id="time-store">
+    <columns>
+      <!-- column-name COL_DATA -->
+      <column type="guint"/>
+      <!-- column-name COL_NAME -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">second(s)</col>
+      </row>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">minute(s)</col>
+      </row>
+      <row>
+        <col id="0">2</col>
+        <col id="1" translatable="yes">hour(s)</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow">
     <property name="can_focus">False</property>
     <child>
@@ -31,7 +60,7 @@
         <property name="orientation">vertical</property>
         <property name="spacing">4</property>
         <child>
-          <object class="GtkAlignment" id="alert-notification">
+          <object class="GtkAlignment">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="left_padding">12</property>
@@ -83,7 +112,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkSwitch">
+                  <object class="GtkSwitch" id="notification">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="tooltip_text" translatable="yes">Show notification popup</property>
@@ -102,7 +131,7 @@
                     <property name="can_focus">False</property>
                     <property name="spacing">4</property>
                     <child>
-                      <object class="GtkComboBoxText">
+                      <object class="GtkComboBoxText" id="sound">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="tooltip_text" translatable="yes">Play sound</property>
@@ -114,7 +143,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton">
+                      <object class="GtkButton" id="play-sound">
                         <property name="label" translatable="yes">Play now</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -134,25 +163,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkAppChooserButton" id="alert-program">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">Run program</property>
-                    <property name="show_dialog_item">True</property>
-                    <property name="show_default_item">True</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">2</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="spacing">8</property>
                     <child>
-                      <object class="GtkEntry">
+                      <object class="GtkEntry" id="program-options">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_markup" translatable="yes">Optional command line parameters</property>
@@ -179,6 +195,101 @@
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAppChooserButton" id="program">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Run program</property>
+                    <property name="show_dialog_item">True</property>
+                    <property name="show_default_item">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="spacing">8</property>
+                    <child>
+                      <object class="GtkSwitch">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="valign">center</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">limit runtime to</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="runtime-multiplier">
+                        <property name="visible">True</property>
+                        <property name="sensitive">False</property>
+                        <property name="can_focus">True</property>
+                        <property name="input_purpose">digits</property>
+                        <property name="adjustment">runtime-multiplier-adjustment</property>
+                        <property name="climb_rate">1</property>
+                        <property name="snap_to_ticks">True</property>
+                        <property name="numeric">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBox" id="runtime-mode">
+                        <property name="visible">True</property>
+                        <property name="sensitive">False</property>
+                        <property name="can_focus">False</property>
+                        <property name="model">time-store</property>
+                        <property name="active">1</property>
+                        <child>
+                          <object class="GtkCellRendererText"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">4</property>
                   </packing>
                 </child>
               </object>
@@ -208,7 +319,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkAlignment" id="alert-repeat">
+          <object class="GtkAlignment">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="left_padding">12</property>
@@ -239,7 +350,7 @@
                     <property name="halign">start</property>
                     <property name="spacing">8</property>
                     <child>
-                      <object class="GtkRadioButton" id="radiobutton4">
+                      <object class="GtkRadioButton" id="repeat-ntimes">
                         <property name="label" translatable="yes">exactly</property>
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
@@ -249,7 +360,7 @@
                         <property name="margin_left">8</property>
                         <property name="margin_start">8</property>
                         <property name="draw_indicator">True</property>
-                        <property name="group">radiobutton3</property>
+                        <property name="group">repeat-until-ack</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -258,7 +369,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSpinButton" id="spinbutton1">
+                      <object class="GtkSpinButton" id="repeat-count">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
@@ -296,7 +407,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkRadioButton" id="radiobutton3">
+                  <object class="GtkRadioButton" id="repeat-until-ack">
                     <property name="label" translatable="yes">until acknowledged</property>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
@@ -306,7 +417,7 @@
                     <property name="margin_left">8</property>
                     <property name="margin_start">8</property>
                     <property name="draw_indicator">True</property>
-                    <property name="group">radiobutton4</property>
+                    <property name="group">repeat-ntimes</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -320,7 +431,7 @@
                     <property name="can_focus">False</property>
                     <property name="spacing">8</property>
                     <child>
-                      <object class="GtkSwitch">
+                      <object class="GtkSwitch" id="repeat">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Repeat alert</property>
@@ -346,7 +457,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSpinButton">
+                      <object class="GtkSpinButton" id="repeat-multiplier">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
@@ -356,6 +467,7 @@
                         <property name="input_purpose">digits</property>
                         <property name="adjustment">repeat-period-adjustment</property>
                         <property name="climb_rate">1</property>
+                        <property name="snap_to_ticks">True</property>
                         <property name="numeric">True</property>
                       </object>
                       <packing>
@@ -365,16 +477,18 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkComboBoxText">
+                      <object class="GtkComboBox" id="repeat-mode">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
+                        <property name="model">time-store</property>
                         <property name="active">1</property>
-                        <items>
-                          <item id="0" translatable="yes">second(s)</item>
-                          <item id="1" translatable="yes">minute(s)</item>
-                          <item id="2" translatable="yes">hour(s)</item>
-                        </items>
+                        <child>
+                          <object class="GtkCellRendererText"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -409,7 +523,7 @@
       <widget name="label6"/>
       <widget name="label7"/>
       <widget name="label8"/>
-      <widget name="radiobutton4"/>
+      <widget name="repeat-ntimes"/>
     </widgets>
   </object>
 </interface>
