@@ -337,7 +337,7 @@ void
 show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
-  GtkBuilder *builder, *alert_builder;
+  GtkBuilder *builder;
   GObject *dialog;
   GtkWidget *alert_box;
   GObject *object, *source, *target;
@@ -348,7 +348,10 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
   g_return_if_fail(alarm != NULL);
 
-  builder = alarm_builder_new(panel_plugin, alarm_dialog_ui, alarm_dialog_ui_length);
+  builder = alarm_builder_new(panel_plugin,
+                              alarm_dialog_ui, alarm_dialog_ui_length,
+                              alert_box_ui, alert_box_ui_length,
+                              NULL);
   g_return_if_fail(GTK_IS_BUILDER(builder));
 
   dialog = gtk_builder_get_object(builder, "alarm-dialog");
@@ -360,12 +363,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
     g_return_if_reached();
   }
 
-  alert_builder = alarm_builder_new(panel_plugin, alert_box_ui, alert_box_ui_length);
-  g_return_if_fail(GTK_IS_BUILDER(alert_builder));
-  g_object_weak_ref(G_OBJECT(dialog), (GWeakNotify) G_CALLBACK(g_object_unref),
-                    alert_builder);
-
-  object = gtk_builder_get_object(alert_builder, "alert-box");
+  object = gtk_builder_get_object(builder, "alert-box");
   g_return_if_fail(GTK_IS_BOX(object));
   alert_box = GTK_WIDGET(object);
 

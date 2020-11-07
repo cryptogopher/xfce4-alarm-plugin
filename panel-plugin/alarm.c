@@ -292,14 +292,18 @@ reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   g_object_unref(channel);
 }
 
-// TODO: allow multiple buffers with va_arg, NULL sentinel
-GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
-                              const gchar* buffer, gsize buffer_length)
+GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar* first_buffer,
+                              gsize first_buffer_length, ...)
 {
   GtkBuilder *builder;
   GError *error = NULL;
+  va_list var_args;
+  const gchar* buffer = first_buffer;
+  gsize buffer_length = first_buffer_length;
 
   g_return_val_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin), NULL);
+  g_return_val_if_fail(first_buffer != NULL, NULL);
+  g_return_val_if_fail(first_buffer_length > 0, NULL);
 
   /* Hack to make sure GtkBuilder knows about the XfceTitledDialog object
    * https://wiki.xfce.org/releng/4.8/roadmap/libxfce4ui
@@ -307,15 +311,26 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
   if (xfce_titled_dialog_get_type() == 0) return NULL;
 
   builder = gtk_builder_new();
-  if (!gtk_builder_add_from_string(builder, buffer, buffer_length, &error))
+
+  va_start(var_args, first_buffer_length);
+  while (buffer != NULL)
   {
-    g_critical("Failed to construct the builder for plugin %s-%d: %s.",
-               xfce_panel_plugin_get_name (panel_plugin),
-               xfce_panel_plugin_get_unique_id (panel_plugin),
-               error->message);
-    g_error_free(error);
-    g_clear_pointer(&builder, g_object_unref);
+    if (!gtk_builder_add_from_string(builder, buffer, buffer_length, &error))
+    {
+      g_critical("Failed to construct the builder for plugin %s-%d: %s.",
+                 xfce_panel_plugin_get_name (panel_plugin),
+                 xfce_panel_plugin_get_unique_id (panel_plugin),
+                 error->message);
+      g_error_free(error);
+      g_clear_pointer(&builder, g_object_unref);
+      break;
+    }
+
+    buffer = va_arg(var_args, gchar*);
+    if (buffer != NULL)
+      buffer_length = va_arg(var_args, gsize);
   }
+  va_end(var_args);
 
   return builder;
 }
