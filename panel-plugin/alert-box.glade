@@ -2,6 +2,25 @@
 <!-- Generated with glade 3.36.0 -->
 <interface>
   <requires lib="gtk+" version="3.22"/>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-media-play</property>
+  </object>
+  <object class="GtkAdjustment" id="repeat-count-adjustment">
+    <property name="lower">2</property>
+    <property name="upper">3660</property>
+    <property name="value">2</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="repeat-period-adjustment">
+    <property name="lower">1</property>
+    <property name="upper">3660</property>
+    <property name="value">1</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkWindow">
     <property name="can_focus">False</property>
     <child>
@@ -247,6 +266,7 @@
                         <property name="valign">center</property>
                         <property name="text" translatable="yes">0</property>
                         <property name="input_purpose">digits</property>
+                        <property name="adjustment">repeat-count-adjustment</property>
                         <property name="climb_rate">1</property>
                         <property name="numeric">True</property>
                       </object>
@@ -334,6 +354,7 @@
                         <property name="valign">center</property>
                         <property name="text" translatable="yes">0</property>
                         <property name="input_purpose">digits</property>
+                        <property name="adjustment">repeat-period-adjustment</property>
                         <property name="climb_rate">1</property>
                         <property name="numeric">True</property>
                       </object>
@@ -344,10 +365,16 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel">
+                      <object class="GtkComboBoxText">
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">second(s)</property>
+                        <property name="active">1</property>
+                        <items>
+                          <item id="0" translatable="yes">second(s)</item>
+                          <item id="1" translatable="yes">minute(s)</item>
+                          <item id="2" translatable="yes">hour(s)</item>
+                        </items>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -384,10 +411,5 @@
       <widget name="label8"/>
       <widget name="radiobutton4"/>
     </widgets>
-  </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-media-play</property>
   </object>
 </interface>
