@@ -142,8 +142,8 @@ void save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
 void save_alarm_positions(AlarmPlugin *plugin,
                           GList *alarm_iter_from, GList *alarm_iter_to);
 void reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
-GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar* first_buffer,
-                              gsize first_buffer_length, ...);
+GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
+                              const gchar* first_buffer, gsize first_buffer_length, ...);
 
 G_END_DECLS
 

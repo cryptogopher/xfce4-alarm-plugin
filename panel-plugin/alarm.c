@@ -292,14 +292,15 @@ reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   g_object_unref(channel);
 }
 
-GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar* first_buffer,
-                              gsize first_buffer_length, ...)
+GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
+                              const gchar* first_buffer, gsize first_buffer_length, ...)
 {
   GtkBuilder *builder;
   GError *error = NULL;
   va_list var_args;
   const gchar* buffer = first_buffer;
   gsize buffer_length = first_buffer_length;
+  GObject *weak_ref_obj;
 
   g_return_val_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin), NULL);
   g_return_val_if_fail(first_buffer != NULL, NULL);
@@ -322,8 +323,8 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar* first_
                  xfce_panel_plugin_get_unique_id (panel_plugin),
                  error->message);
       g_error_free(error);
-      g_clear_pointer(&builder, g_object_unref);
-      break;
+      g_object_unref(builder);
+      return NULL;
     }
 
     buffer = va_arg(var_args, gchar*);
@@ -331,6 +332,13 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar* first_
       buffer_length = va_arg(var_args, gsize);
   }
   va_end(var_args);
+
+  weak_ref_obj = gtk_builder_get_object(builder, weak_ref_id);
+  if (G_IS_OBJECT(weak_ref_obj))
+    g_object_weak_ref(G_OBJECT(weak_ref_obj), (GWeakNotify) G_CALLBACK(g_object_unref),
+                      builder);
+  else
+    g_clear_pointer(&builder, g_object_unref);
 
   return builder;
 }

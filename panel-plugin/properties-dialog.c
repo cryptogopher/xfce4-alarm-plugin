@@ -278,21 +278,15 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   GList *alarm_iter;
   GtkTreeIter tree_iter;
 
-  builder = alarm_builder_new(panel_plugin,
+  builder = alarm_builder_new(panel_plugin, "properties-dialog",
                               properties_dialog_ui, properties_dialog_ui_length,
                               alert_box_ui, alert_box_ui_length,
                               NULL);
   g_return_if_fail(GTK_IS_BUILDER(builder));
-
   dialog = gtk_builder_get_object(builder, "properties-dialog");
-  if (GTK_IS_DIALOG(dialog))
-    g_object_weak_ref(G_OBJECT(dialog), (GWeakNotify) G_CALLBACK(g_object_unref), builder);
-  else
-  {
-    g_object_unref(builder);
-    g_return_if_reached();
-  }
+  g_return_if_fail(GTK_IS_DIALOG(dialog));
 
+  // Connect alert box to dialog
   object = gtk_builder_get_object(builder, "alert-box");
   g_return_if_fail(GTK_IS_BOX(object));
   alert_box = GTK_WIDGET(object);
