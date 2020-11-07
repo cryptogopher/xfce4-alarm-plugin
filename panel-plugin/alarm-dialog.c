@@ -373,6 +373,10 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   gtk_stack_add_titled(GTK_STACK(object), alert_box,
                        "Specify custom alert settings", "custom");
   g_object_unref(alert_box);
+  // In vertical layout expand alert horizontally
+  object = gtk_builder_get_object(builder, "alert-program");
+  g_return_if_fail(GTK_IS_WIDGET(object));
+  gtk_widget_set_hexpand(GTK_WIDGET(object), TRUE);
   // TODO: connect label size groups
 
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));

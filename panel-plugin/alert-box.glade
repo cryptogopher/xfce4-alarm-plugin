@@ -115,8 +115,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkAppChooserButton">
-                    <property name="width_request">300</property>
+                  <object class="GtkAppChooserButton" id="alert-program">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Run program</property>
@@ -138,6 +137,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="tooltip_markup" translatable="yes">Optional command line parameters</property>
+                        <property name="width_chars">40</property>
                         <property name="placeholder_text" translatable="yes">--command-line options</property>
                       </object>
                       <packing>
