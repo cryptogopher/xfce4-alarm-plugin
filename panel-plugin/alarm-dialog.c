@@ -403,7 +403,9 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   object = gtk_builder_get_object(builder, "timer-store");
   g_return_if_fail(GTK_IS_LIST_STORE(object));
   gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
-                                    0, *alarm, 1, "self", 2, "", -1);
+                                    0, *alarm,
+                                    1, "self",
+                                    2, *alarm != NULL ? (*alarm)->uuid : "", -1);
   gtk_combo_box_set_active(GTK_COMBO_BOX(target), 0);
   alarm_iter = plugin->alarms;
   while (alarm_iter)
