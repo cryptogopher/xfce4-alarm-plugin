@@ -338,9 +338,8 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
-  GObject *dialog;
+  GObject *dialog, *object, *source, *target;
   GtkWidget *alert_box;
-  GObject *object, *source, *target;
   GList *alarm_iter;
   Alarm *triggered_timer;
 
