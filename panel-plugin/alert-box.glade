@@ -25,7 +25,7 @@
                 <property name="column_spacing">8</property>
                 <property name="row_homogeneous">True</property>
                 <child>
-                  <object class="GtkLabel" id="label5">
+                  <object class="GtkLabel" id="first-label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
@@ -378,7 +378,7 @@
   </object>
   <object class="GtkSizeGroup" id="alert-column">
     <widgets>
-      <widget name="label5"/>
+      <widget name="first-label"/>
       <widget name="label6"/>
       <widget name="label7"/>
       <widget name="label8"/>
