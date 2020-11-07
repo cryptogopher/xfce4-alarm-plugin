@@ -335,8 +335,7 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_r
 
   weak_ref_obj = gtk_builder_get_object(builder, weak_ref_id);
   if (G_IS_OBJECT(weak_ref_obj))
-    g_object_weak_ref(G_OBJECT(weak_ref_obj), (GWeakNotify) G_CALLBACK(g_object_unref),
-                      builder);
+    g_object_set_data_full(weak_ref_obj, "builder", builder, g_object_unref);
   else
     g_clear_pointer(&builder, g_object_unref);
 
