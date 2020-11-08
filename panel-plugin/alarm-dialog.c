@@ -357,11 +357,6 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
 
   init_alert_box(builder, "alert-revealer");
 
-  // In vertical layout expand alert horizontally
-  object = gtk_builder_get_object(builder, "program");
-  g_return_if_fail(GTK_IS_WIDGET(object));
-  gtk_widget_set_hexpand(GTK_WIDGET(object), TRUE);
-
   // Include alert box longest label in dialog label size group
   object = gtk_builder_get_object(builder, "left-column");
   g_return_if_fail(GTK_IS_SIZE_GROUP(object));
