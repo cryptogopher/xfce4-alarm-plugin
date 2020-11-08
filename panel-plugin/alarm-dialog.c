@@ -28,6 +28,7 @@
 
 #include "alarm-dialog.h"
 #include "alarm-dialog_ui.h"
+#include "alert-box.h"
 #include "alert-box_ui.h"
 
 
@@ -339,7 +340,6 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GObject *dialog, *object, *source, *target;
-  GtkWidget *alert_box;
   GList *alarm_iter;
   Alarm *triggered_timer;
 
@@ -355,28 +355,17 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   dialog = gtk_builder_get_object(builder, "alarm-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
 
-  // Connect alert box to dialog
-  object = gtk_builder_get_object(builder, "alert-box");
-  g_return_if_fail(GTK_IS_GRID(object));
-  alert_box = GTK_WIDGET(object);
-
-  object = gtk_builder_get_object(builder, "alert-stack");
-  g_return_if_fail(GTK_IS_STACK(object));
-  g_object_ref(alert_box);
-  gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(alert_box)), alert_box);
-  gtk_stack_add_titled(GTK_STACK(object), alert_box,
-                       "Specify custom alert settings", "custom");
-  g_object_unref(alert_box);
+  init_alert_box(builder, "alert-revealer");
 
   // In vertical layout expand alert horizontally
   object = gtk_builder_get_object(builder, "program");
   g_return_if_fail(GTK_IS_WIDGET(object));
   gtk_widget_set_hexpand(GTK_WIDGET(object), TRUE);
 
-  // Connect dialog and alert box label size groups
+  // Include alert box longest label in dialog label size group
   object = gtk_builder_get_object(builder, "left-column");
   g_return_if_fail(GTK_IS_SIZE_GROUP(object));
-  target = gtk_builder_get_object(builder, "first-label");
+  target = gtk_builder_get_object(builder, "longest-label");
   g_return_if_fail(GTK_IS_LABEL(target));
   gtk_size_group_add_widget(GTK_SIZE_GROUP(object), GTK_WIDGET(target));
 
@@ -455,6 +444,12 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   g_object_bind_property_full(source, "sensitive", target, "sensitive",
                               G_BINDING_SYNC_CREATE,
                               is_sensitive_and_active, NULL, NULL, NULL);
+
+  source = gtk_builder_get_object(builder, "custom-alert");
+  g_return_if_fail(GTK_IS_SWITCH(source));
+  target = gtk_builder_get_object(builder, "alert-revealer");
+  g_return_if_fail(GTK_IS_REVEALER(target));
+  g_object_bind_property(source, "active", target, "reveal-child", G_BINDING_SYNC_CREATE);
 
   if (*alarm)
     alarm_to_dialog(*alarm, builder);

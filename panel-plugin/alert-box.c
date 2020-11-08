@@ -20,14 +20,33 @@
 #include <config.h>
 #endif
 
-void
-init_alert_box(GtkBuilder *builder, XfcePanelPlugin *panel_plugin)
-{
-  GObject *dialog, *object, *source, *target;
+#include <libxfce4panel/xfce-panel-plugin.h>
 
+#include "alert-box.h"
+
+void
+init_alert_box(GtkBuilder *builder, const gchar *container_id)
+{
+  GObject *object, *source, *target;
+  GtkWidget *alert_box;
+
+  // Connect alert box to container
+  object = gtk_builder_get_object(builder, "alert-box");
+  g_return_if_fail(GTK_IS_GRID(object));
+  alert_box = GTK_WIDGET(object);
+
+  object = gtk_builder_get_object(builder, container_id);
+  g_return_if_fail(GTK_IS_CONTAINER(object));
+  g_object_ref(alert_box);
+  gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(alert_box)), alert_box);
+  gtk_container_add(GTK_CONTAINER(object), alert_box);
+  g_object_unref(alert_box);
+
+  /*
   source = gtk_builder_get_object(builder, "progress");
   g_return_if_fail(GTK_IS_SWITCH(source));
   target = gtk_builder_get_object(builder, "color");
   g_return_if_fail(GTK_IS_COLOR_BUTTON(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+  */
 }

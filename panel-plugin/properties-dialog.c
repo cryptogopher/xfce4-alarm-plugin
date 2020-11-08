@@ -24,6 +24,7 @@
 
 #include "properties-dialog.h"
 #include "properties-dialog_ui.h"
+#include "alert-box.h"
 #include "alert-box_ui.h"
 #include "alarm-dialog.h"
 
@@ -274,7 +275,6 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
   GObject *dialog, *object;
-  GtkWidget *alert_box;
   GList *alarm_iter;
   GtkTreeIter tree_iter;
 
@@ -286,17 +286,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   dialog = gtk_builder_get_object(builder, "properties-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
 
-  // Connect alert box to dialog
-  object = gtk_builder_get_object(builder, "alert-box");
-  g_return_if_fail(GTK_IS_GRID(object));
-  alert_box = GTK_WIDGET(object);
-
-  object = gtk_builder_get_object(builder, "alert-frame");
-  g_return_if_fail(GTK_IS_CONTAINER(object));
-  g_object_ref(alert_box);
-  gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(alert_box)), alert_box);
-  gtk_container_add(GTK_CONTAINER(object), alert_box);
-  g_object_unref(alert_box);
+  init_alert_box(builder, "alert-frame");
 
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
 

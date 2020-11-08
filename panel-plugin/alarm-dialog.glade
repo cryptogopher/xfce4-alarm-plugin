@@ -559,7 +559,7 @@
                             <property name="column_spacing">8</property>
                             <property name="row_homogeneous">True</property>
                             <child>
-                              <object class="GtkLabel" id="label9">
+                              <object class="GtkLabel" id="trigger-label">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="halign">start</property>
@@ -581,6 +581,7 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="tooltip_text" translatable="yes">Start another timer on timeout</property>
+                                    <property name="halign">start</property>
                                     <property name="valign">center</property>
                                   </object>
                                   <packing>
@@ -759,7 +760,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkLabel" id="label11">
+                              <object class="GtkLabel" id="rerun-label">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="halign">start</property>
@@ -850,94 +851,78 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkFrame" id="alert-default">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
-            <property name="spacing">4</property>
+            <property name="margin_top">8</property>
+            <property name="label_xalign">0</property>
+            <property name="shadow_type">none</property>
             <child>
-              <object class="GtkFrame" id="alert-default">
+              <object class="GtkAlignment">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_top">8</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">none</property>
+                <property name="left_padding">12</property>
                 <child>
-                  <object class="GtkAlignment">
+                  <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="left_padding">12</property>
+                    <property name="margin_top">4</property>
+                    <property name="row_spacing">4</property>
+                    <property name="column_spacing">8</property>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkLabel" id="custom-alert-label">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="spacing">8</property>
+                        <property name="halign">start</property>
+                        <property name="label" translatable="yes">Custom alert</property>
+                        <property name="xalign">0</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRevealer" id="alert-revealer">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="transition_type">none</property>
                         <child>
-                          <object class="GtkStackSwitcher">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="halign">center</property>
-                            <property name="stack">alert-stack</property>
-                          </object>
-                          <packing>
-                            <property name="expand">True</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
+                          <placeholder/>
                         </child>
                       </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                        <property name="width">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSwitch" id="custom-alert">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="tooltip_text" translatable="yes">Specify custom alert settings, which will be used instead of plugin defaults</property>
+                        <property name="halign">start</property>
+                        <property name="valign">center</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
                     </child>
                   </object>
                 </child>
-                <child type="label">
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Alert</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
-                  </object>
-                </child>
               </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
             </child>
-            <child>
-              <object class="GtkStack" id="alert-stack">
+            <child type="label">
+              <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="vhomogeneous">False</property>
-                <property name="transition_type">crossfade</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_top">8</property>
-                    <property name="margin_bottom">8</property>
-                    <property name="label" translatable="yes">Defaults are set in plugin "Properties" dialog</property>
-                    <attributes>
-                      <attribute name="style" value="italic"/>
-                      <attribute name="foreground" value="#88888a8a8585"/>
-                    </attributes>
-                  </object>
-                  <packing>
-                    <property name="name">Use plugin default alert settings</property>
-                    <property name="title" translatable="yes">default</property>
-                  </packing>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
+                <property name="label" translatable="yes">Alert</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
             </child>
           </object>
           <packing>
@@ -968,10 +953,12 @@
       <widget name="time-label"/>
       <widget name="progress-label"/>
       <widget name="autostart-label"/>
-      <widget name="label9"/>
+      <widget name="autostop-label"/>
+      <widget name="trigger-label"/>
       <widget name="rerun-ndays"/>
       <widget name="rerun-dow"/>
-      <widget name="label11"/>
+      <widget name="rerun-label"/>
+      <widget name="custom-alert-label"/>
     </widgets>
   </object>
 </interface>

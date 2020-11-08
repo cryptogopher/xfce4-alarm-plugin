@@ -21,6 +21,6 @@
 
 #include "alarm.h"
 
-void init_alert_box(GtkBuilder *builder, XfcePanelPlugin *panel_plugin);
+void init_alert_box(GtkBuilder *builder, const gchar *container_id);
 
 #endif /* !__ALERT_BOX_H__ */
