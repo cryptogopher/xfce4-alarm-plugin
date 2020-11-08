@@ -198,9 +198,11 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="label9">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">and limit runtime</property>
+                    <property name="xalign">0</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -238,13 +240,14 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel">
+                      <object class="GtkLabel" id="label1">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">limit runtime to</property>
+                        <property name="label" translatable="yes">to</property>
+                        <property name="xalign">1</property>
                       </object>
                       <packing>
-                        <property name="expand">False</property>
+                        <property name="expand">True</property>
                         <property name="fill">True</property>
                         <property name="position">1</property>
                       </packing>
@@ -347,7 +350,6 @@
                   <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="halign">start</property>
                     <property name="spacing">8</property>
                     <child>
                       <object class="GtkRadioButton" id="repeat-ntimes">
@@ -429,6 +431,7 @@
                   <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
                     <property name="spacing">8</property>
                     <child>
                       <object class="GtkSwitch" id="repeat">
@@ -449,9 +452,10 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">every</property>
+                        <property name="xalign">1</property>
                       </object>
                       <packing>
-                        <property name="expand">False</property>
+                        <property name="expand">True</property>
                         <property name="fill">True</property>
                         <property name="position">1</property>
                       </packing>
@@ -522,6 +526,7 @@
       <widget name="first-label"/>
       <widget name="label6"/>
       <widget name="label7"/>
+      <widget name="label9"/>
       <widget name="label8"/>
       <widget name="repeat-ntimes"/>
     </widgets>
