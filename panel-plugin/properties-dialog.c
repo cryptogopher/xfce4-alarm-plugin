@@ -288,7 +288,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
 
   // Connect alert box to dialog
   object = gtk_builder_get_object(builder, "alert-box");
-  g_return_if_fail(GTK_IS_BOX(object));
+  g_return_if_fail(GTK_IS_GRID(object));
   alert_box = GTK_WIDGET(object);
 
   object = gtk_builder_get_object(builder, "alert-frame");

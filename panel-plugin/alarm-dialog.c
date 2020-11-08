@@ -357,7 +357,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
 
   // Connect alert box to dialog
   object = gtk_builder_get_object(builder, "alert-box");
-  g_return_if_fail(GTK_IS_BOX(object));
+  g_return_if_fail(GTK_IS_GRID(object));
   alert_box = GTK_WIDGET(object);
 
   object = gtk_builder_get_object(builder, "alert-stack");

@@ -233,7 +233,6 @@
                 <property name="can_focus">True</property>
                 <property name="shadow_type">in</property>
                 <property name="min_content_width">450</property>
-                <property name="min_content_height">400</property>
                 <child>
                   <object class="GtkTreeView" id="alarm-view">
                     <property name="visible">True</property>
