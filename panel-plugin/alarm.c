@@ -292,8 +292,9 @@ reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   g_object_unref(channel);
 }
 
-GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
-                              const gchar* first_buffer, gsize first_buffer_length, ...)
+GtkBuilder*
+alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
+                  const gchar* first_buffer, gsize first_buffer_length, ...)
 {
   GtkBuilder *builder;
   GError *error = NULL;
@@ -340,6 +341,19 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_r
     g_clear_pointer(&builder, g_object_unref);
 
   return builder;
+}
+
+gboolean
+is_sensitive_and_active(GBinding *binding, const GValue *from_value, GValue *to_value,
+                        gpointer user_data)
+{
+  GObject *source = g_binding_get_source(binding);
+
+  g_return_val_if_fail(GTK_IS_RADIO_BUTTON(source), FALSE);
+  g_return_val_if_fail(G_VALUE_HOLDS_BOOLEAN(to_value), FALSE);
+  g_value_set_boolean(to_value, gtk_widget_get_sensitive(GTK_WIDGET(source)) &&
+                                gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(source)));
+  return TRUE;
 }
 
 

@@ -42,11 +42,37 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   gtk_container_add(GTK_CONTAINER(object), alert_box);
   g_object_unref(alert_box);
 
-  /*
-  source = gtk_builder_get_object(builder, "progress");
+  source = gtk_builder_get_object(builder, "limit-runtime");
   g_return_if_fail(GTK_IS_SWITCH(source));
-  target = gtk_builder_get_object(builder, "color");
-  g_return_if_fail(GTK_IS_COLOR_BUTTON(target));
+  target = gtk_builder_get_object(builder, "runtime-multiplier");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-  */
+  target = gtk_builder_get_object(builder, "runtime-mode");
+  g_return_if_fail(GTK_IS_COMBO_BOX(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+
+  source = gtk_builder_get_object(builder, "repeat");
+  g_return_if_fail(GTK_IS_SWITCH(source));
+  target = gtk_builder_get_object(builder, "repeat-multiplier");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+  target = gtk_builder_get_object(builder, "repeat-mode");
+  g_return_if_fail(GTK_IS_COMBO_BOX(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+  target = gtk_builder_get_object(builder, "repeat-ntimes");
+  g_return_if_fail(GTK_IS_RADIO_BUTTON(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+  target = gtk_builder_get_object(builder, "repeat-until-ack");
+  g_return_if_fail(GTK_IS_RADIO_BUTTON(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+
+  source = gtk_builder_get_object(builder, "repeat-ntimes");
+  target = gtk_builder_get_object(builder, "repeat-count");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
+  g_object_bind_property_full(source, "active", target, "sensitive",
+                              G_BINDING_SYNC_CREATE,
+                              is_sensitive_and_active, NULL, NULL, NULL);
+  g_object_bind_property_full(source, "sensitive", target, "sensitive",
+                              G_BINDING_SYNC_CREATE,
+                              is_sensitive_and_active, NULL, NULL, NULL);
 }
