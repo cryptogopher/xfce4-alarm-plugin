@@ -355,14 +355,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   dialog = gtk_builder_get_object(builder, "alarm-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
 
-  init_alert_box(builder, "alert-revealer");
-
-  // Include alert box longest label in dialog label size group
-  object = gtk_builder_get_object(builder, "left-column");
-  g_return_if_fail(GTK_IS_SIZE_GROUP(object));
-  target = gtk_builder_get_object(builder, "longest-label");
-  g_return_if_fail(GTK_IS_LABEL(target));
-  gtk_size_group_add_widget(GTK_SIZE_GROUP(object), GTK_WIDGET(target));
+  init_alert_box(builder, "alert-alignment");
 
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
@@ -445,6 +438,9 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   target = gtk_builder_get_object(builder, "alert-revealer");
   g_return_if_fail(GTK_IS_REVEALER(target));
   g_object_bind_property(source, "active", target, "reveal-child", G_BINDING_SYNC_CREATE);
+  target = gtk_builder_get_object(builder, "settings-box");
+  g_return_if_fail(GTK_IS_BOX(target));
+  g_object_bind_property(source, "active", target, "homogeneous", G_BINDING_SYNC_CREATE);
 
   if (*alarm)
     alarm_to_dialog(*alarm, builder);
