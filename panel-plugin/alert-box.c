@@ -42,6 +42,12 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   gtk_container_add(GTK_CONTAINER(object), alert_box);
   g_object_unref(alert_box);
 
+  source = gtk_builder_get_object(builder, "limit-loops");
+  g_return_if_fail(GTK_IS_SWITCH(source));
+  target = gtk_builder_get_object(builder, "loop-count");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
+
   source = gtk_builder_get_object(builder, "limit-runtime");
   g_return_if_fail(GTK_IS_SWITCH(source));
   target = gtk_builder_get_object(builder, "runtime-multiplier");
@@ -59,14 +65,11 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   target = gtk_builder_get_object(builder, "repeat-mode");
   g_return_if_fail(GTK_IS_COMBO_BOX(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-  target = gtk_builder_get_object(builder, "repeat-ntimes");
-  g_return_if_fail(GTK_IS_RADIO_BUTTON(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-  target = gtk_builder_get_object(builder, "repeat-until-ack");
-  g_return_if_fail(GTK_IS_RADIO_BUTTON(target));
+  target = gtk_builder_get_object(builder, "limit-repeats");
+  g_return_if_fail(GTK_IS_SWITCH(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
-  source = gtk_builder_get_object(builder, "repeat-ntimes");
+  source = gtk_builder_get_object(builder, "limit-repeats");
   target = gtk_builder_get_object(builder, "repeat-count");
   g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
   g_object_bind_property_full(source, "active", target, "sensitive",
