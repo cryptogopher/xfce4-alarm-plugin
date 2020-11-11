@@ -50,20 +50,14 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
 
   source = gtk_builder_get_object(builder, "limit-runtime");
   g_return_if_fail(GTK_IS_SWITCH(source));
-  target = gtk_builder_get_object(builder, "runtime-multiplier");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-  target = gtk_builder_get_object(builder, "runtime-mode");
-  g_return_if_fail(GTK_IS_COMBO_BOX(target));
+  target = gtk_builder_get_object(builder, "limit-runtime-box");
+  g_return_if_fail(GTK_IS_BOX(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   source = gtk_builder_get_object(builder, "repeat");
   g_return_if_fail(GTK_IS_SWITCH(source));
-  target = gtk_builder_get_object(builder, "repeat-multiplier");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-  target = gtk_builder_get_object(builder, "repeat-mode");
-  g_return_if_fail(GTK_IS_COMBO_BOX(target));
+  target = gtk_builder_get_object(builder, "repeats-box");
+  g_return_if_fail(GTK_IS_BOX(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
   target = gtk_builder_get_object(builder, "limit-repeats-box");
   g_return_if_fail(GTK_IS_BOX(target));
