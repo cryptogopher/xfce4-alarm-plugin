@@ -343,22 +343,6 @@ alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
   return builder;
 }
 
-gboolean
-is_sensitive_and_active(GBinding *binding, const GValue *from_value, GValue *to_value,
-                        gpointer user_data)
-{
-  GObject *source = g_binding_get_source(binding);
-  gboolean active;
-
-  g_return_val_if_fail(GTK_IS_TOGGLE_BUTTON(source) || GTK_IS_SWITCH(source), FALSE);
-  g_return_val_if_fail(G_VALUE_HOLDS_BOOLEAN(to_value), FALSE);
-
-  g_object_get(source, "active", &active, NULL);
-  g_value_set_boolean(to_value, gtk_widget_get_sensitive(GTK_WIDGET(source)) && active);
-
-  return TRUE;
-}
-
 
 // Callbacks
 static gboolean

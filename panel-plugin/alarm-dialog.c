@@ -385,32 +385,22 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
 
   source = gtk_builder_get_object(builder, "rerun-clock");
   g_return_if_fail(GTK_IS_SWITCH(source));
-  target = gtk_builder_get_object(builder, "rerun-dow");
-  g_return_if_fail(GTK_IS_RADIO_BUTTON(target));
+  target = gtk_builder_get_object(builder, "rerun-dow-box");
+  g_return_if_fail(GTK_IS_BOX(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-  target = gtk_builder_get_object(builder, "rerun-ndays");
-  g_return_if_fail(GTK_IS_RADIO_BUTTON(target));
+  target = gtk_builder_get_object(builder, "rerun-ndays-box");
+  g_return_if_fail(GTK_IS_BOX(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   source = gtk_builder_get_object(builder, "rerun-dow");
   target = gtk_builder_get_object(builder, "dow-view");
   g_return_if_fail(GTK_IS_ICON_VIEW(target));
-  g_object_bind_property_full(source, "active", target, "sensitive",
-                              G_BINDING_SYNC_CREATE,
-                              is_sensitive_and_active, NULL, NULL, NULL);
-  g_object_bind_property_full(source, "sensitive", target, "sensitive",
-                              G_BINDING_SYNC_CREATE,
-                              is_sensitive_and_active, NULL, NULL, NULL);
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   source = gtk_builder_get_object(builder, "rerun-ndays");
-  target = gtk_builder_get_object(builder, "rerun-ndays-box");
+  target = gtk_builder_get_object(builder, "ndays-period-box");
   g_return_if_fail(GTK_IS_BOX(target));
-  g_object_bind_property_full(source, "active", target, "sensitive",
-                              G_BINDING_SYNC_CREATE,
-                              is_sensitive_and_active, NULL, NULL, NULL);
-  g_object_bind_property_full(source, "sensitive", target, "sensitive",
-                              G_BINDING_SYNC_CREATE,
-                              is_sensitive_and_active, NULL, NULL, NULL);
+  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   source = gtk_builder_get_object(builder, "custom-alert");
   g_return_if_fail(GTK_IS_SWITCH(source));

@@ -168,7 +168,6 @@
                           <object class="GtkLabel" id="name-label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="halign">start</property>
                             <property name="label" translatable="yes">Name</property>
                             <property name="xalign">0</property>
                           </object>
@@ -194,7 +193,6 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="tooltip_text" translatable="yes">Countdown time for timer. Time of alarm for alarm clock.</property>
-                            <property name="halign">start</property>
                             <property name="label" translatable="yes">Time</property>
                             <property name="xalign">0</property>
                           </object>
@@ -307,7 +305,6 @@
                           <object class="GtkLabel" id="progress-label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="halign">start</property>
                             <property name="label" translatable="yes">Show progress</property>
                             <property name="xalign">0</property>
                           </object>
@@ -360,7 +357,6 @@
                           <object class="GtkLabel" id="autostart-label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="halign">start</property>
                             <property name="label" translatable="yes">Autostart</property>
                             <property name="xalign">0</property>
                           </object>
@@ -373,7 +369,6 @@
                           <object class="GtkLabel" id="autostop-label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="halign">start</property>
                             <property name="label" translatable="yes">Autostop</property>
                             <property name="xalign">0</property>
                           </object>
@@ -522,7 +517,6 @@
                           <object class="GtkLabel" id="custom-alert-label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="halign">start</property>
                             <property name="label" translatable="yes">Custom alert</property>
                             <property name="xalign">0</property>
                           </object>
@@ -699,97 +693,9 @@
                                     <property name="column_spacing">8</property>
                                     <property name="row_homogeneous">True</property>
                                     <child>
-                                      <object class="GtkRadioButton" id="rerun-ndays">
-                                        <property name="label" translatable="yes">every</property>
-                                        <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">False</property>
-                                        <property name="halign">start</property>
-                                        <property name="margin_left">16</property>
-                                        <property name="margin_start">16</property>
-                                        <property name="draw_indicator">True</property>
-                                        <property name="group">rerun-dow</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">0</property>
-                                        <property name="top_attach">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkBox" id="rerun-ndays-box">
-                                        <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="tooltip_text" translatable="yes">Repeat alarm every this often</property>
-                                        <property name="halign">start</property>
-                                        <property name="spacing">4</property>
-                                        <child>
-                                          <object class="GtkSpinButton" id="rerun-multiplier">
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="halign">start</property>
-                                            <property name="valign">center</property>
-                                            <property name="text" translatable="yes">1</property>
-                                            <property name="input_purpose">digits</property>
-                                            <property name="adjustment">rerun-multiplier-adjustment</property>
-                                            <property name="climb_rate">1</property>
-                                            <property name="snap_to_ticks">True</property>
-                                            <property name="numeric">True</property>
-                                            <property name="value">1</property>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="fill">True</property>
-                                            <property name="position">0</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkComboBoxText" id="rerun-mode">
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
-                                            <property name="active">0</property>
-                                            <items>
-                                              <item id="0" translatable="yes">day(s)</item>
-                                              <item id="1" translatable="yes">week(s)</item>
-                                              <item id="2" translatable="yes">month(s)</item>
-                                            </items>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="fill">True</property>
-                                            <property name="position">1</property>
-                                          </packing>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="top_attach">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkRadioButton" id="rerun-dow">
-                                        <property name="label" translatable="yes">on</property>
-                                        <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">False</property>
-                                        <property name="halign">start</property>
-                                        <property name="margin_left">16</property>
-                                        <property name="margin_start">16</property>
-                                        <property name="draw_indicator">True</property>
-                                        <property name="group">rerun-ndays</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left_attach">0</property>
-                                        <property name="top_attach">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
                                       <object class="GtkLabel" id="rerun-label">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
-                                        <property name="halign">start</property>
                                         <property name="label" translatable="yes">Rerun alarm</property>
                                         <property name="xalign">0</property>
                                       </object>
@@ -813,31 +719,143 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkIconView" id="dow-view">
+                                      <object class="GtkBox" id="rerun-dow-box">
                                         <property name="visible">True</property>
                                         <property name="sensitive">False</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="tooltip_text" translatable="yes">Repeat alarm on selected days of week (Ctrl-click to select multiple days)</property>
-                                        <property name="halign">start</property>
-                                        <property name="valign">center</property>
-                                        <property name="margin">0</property>
-                                        <property name="selection_mode">multiple</property>
-                                        <property name="item_orientation">horizontal</property>
-                                        <property name="model">dow-store</property>
-                                        <property name="row_spacing">0</property>
-                                        <property name="column_spacing">0</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="spacing">8</property>
                                         <child>
-                                          <object class="GtkCellRendererText" id="dow-name">
-                                            <property name="xalign">0.5099999904632568</property>
+                                          <object class="GtkRadioButton" id="rerun-dow">
+                                            <property name="label" translatable="yes">on</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="margin_start">16</property>
+                                            <property name="draw_indicator">True</property>
+                                            <property name="group">rerun-ndays</property>
                                           </object>
-                                          <attributes>
-                                            <attribute name="text">1</attribute>
-                                          </attributes>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkIconView" id="dow-view">
+                                            <property name="visible">True</property>
+                                            <property name="sensitive">False</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="tooltip_text" translatable="yes">Repeat alarm on selected days of week (Ctrl-click to select multiple days)</property>
+                                            <property name="halign">start</property>
+                                            <property name="valign">center</property>
+                                            <property name="margin">0</property>
+                                            <property name="selection_mode">multiple</property>
+                                            <property name="item_orientation">horizontal</property>
+                                            <property name="model">dow-store</property>
+                                            <property name="row_spacing">0</property>
+                                            <property name="column_spacing">0</property>
+                                            <child>
+                                              <object class="GtkCellRendererText" id="dow-name">
+                                                <property name="xalign">0.5099999904632568</property>
+                                              </object>
+                                              <attributes>
+                                                <attribute name="text">1</attribute>
+                                              </attributes>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">1</property>
+                                          </packing>
                                         </child>
                                       </object>
                                       <packing>
-                                        <property name="left_attach">1</property>
+                                        <property name="left_attach">0</property>
                                         <property name="top_attach">1</property>
+                                        <property name="width">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox" id="rerun-ndays-box">
+                                        <property name="visible">True</property>
+                                        <property name="sensitive">False</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="spacing">8</property>
+                                        <child>
+                                          <object class="GtkRadioButton" id="rerun-ndays">
+                                            <property name="label" translatable="yes">every</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="margin_start">16</property>
+                                            <property name="draw_indicator">True</property>
+                                            <property name="group">rerun-dow</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkBox" id="ndays-period-box">
+                                            <property name="visible">True</property>
+                                            <property name="sensitive">False</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="tooltip_text" translatable="yes">Repeat alarm every this often</property>
+                                            <property name="halign">start</property>
+                                            <property name="spacing">4</property>
+                                            <child>
+                                              <object class="GtkSpinButton" id="rerun-multiplier">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="halign">start</property>
+                                                <property name="valign">center</property>
+                                                <property name="text" translatable="yes">1</property>
+                                                <property name="input_purpose">digits</property>
+                                                <property name="adjustment">rerun-multiplier-adjustment</property>
+                                                <property name="climb_rate">1</property>
+                                                <property name="snap_to_ticks">True</property>
+                                                <property name="numeric">True</property>
+                                                <property name="value">1</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkComboBoxText" id="rerun-mode">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="active">0</property>
+                                                <items>
+                                                  <item id="0" translatable="yes">day(s)</item>
+                                                  <item id="1" translatable="yes">week(s)</item>
+                                                  <item id="2" translatable="yes">month(s)</item>
+                                                </items>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">1</property>
+                                              </packing>
+                                            </child>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="left_attach">0</property>
+                                        <property name="top_attach">2</property>
+                                        <property name="width">2</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -957,9 +975,9 @@
       <widget name="autostop-label"/>
       <widget name="custom-alert-label"/>
       <widget name="trigger-label"/>
-      <widget name="rerun-ndays"/>
-      <widget name="rerun-dow"/>
       <widget name="rerun-label"/>
+      <widget name="rerun-dow"/>
+      <widget name="rerun-ndays"/>
     </widgets>
   </object>
   <object class="GtkListStore" id="timer-store">
