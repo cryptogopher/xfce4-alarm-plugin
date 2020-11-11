@@ -403,16 +403,8 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
                               is_sensitive_and_active, NULL, NULL, NULL);
 
   source = gtk_builder_get_object(builder, "rerun-ndays");
-  target = gtk_builder_get_object(builder, "rerun-multiplier");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
-  g_object_bind_property_full(source, "active", target, "sensitive",
-                              G_BINDING_SYNC_CREATE,
-                              is_sensitive_and_active, NULL, NULL, NULL);
-  g_object_bind_property_full(source, "sensitive", target, "sensitive",
-                              G_BINDING_SYNC_CREATE,
-                              is_sensitive_and_active, NULL, NULL, NULL);
-  target = gtk_builder_get_object(builder, "rerun-mode");
-  g_return_if_fail(GTK_IS_COMBO_BOX_TEXT(target));
+  target = gtk_builder_get_object(builder, "rerun-ndays-box");
+  g_return_if_fail(GTK_IS_BOX(target));
   g_object_bind_property_full(source, "active", target, "sensitive",
                               G_BINDING_SYNC_CREATE,
                               is_sensitive_and_active, NULL, NULL, NULL);
