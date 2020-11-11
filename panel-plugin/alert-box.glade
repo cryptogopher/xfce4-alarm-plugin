@@ -7,6 +7,37 @@
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-play</property>
   </object>
+  <object class="GtkImage" id="image2">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-media-stop</property>
+  </object>
+  <object class="GtkAdjustment" id="loop-count-adjustment">
+    <property name="lower">1</property>
+    <property name="upper">3660</property>
+    <property name="value">1</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="multiplier-adjustment">
+    <property name="lower">1</property>
+    <property name="upper">3660</property>
+    <property name="value">10</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="repeat-count-adjustment">
+    <property name="lower">2</property>
+    <property name="upper">3660</property>
+    <property name="value">2</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkFileFilter" id="sound-filefilter">
+    <mime-types>
+      <mime-type>audio/*</mime-type>
+    </mime-types>
+  </object>
   <object class="GtkWindow">
     <property name="can_focus">False</property>
     <child>
@@ -419,9 +450,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkFileChooserButton">
+          <object class="GtkFileChooserButton" id="sound-chooser">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="create_folders">False</property>
+            <property name="filter">sound-filefilter</property>
             <property name="title" translatable="yes">Select alert sound</property>
           </object>
           <packing>
@@ -464,32 +497,6 @@
       <widget name="repeat-mode"/>
       <widget name="runtime-mode"/>
     </widgets>
-  </object>
-  <object class="GtkImage" id="image2">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-media-stop</property>
-  </object>
-  <object class="GtkAdjustment" id="loop-count-adjustment">
-    <property name="lower">1</property>
-    <property name="upper">3660</property>
-    <property name="value">1</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkAdjustment" id="multiplier-adjustment">
-    <property name="lower">1</property>
-    <property name="upper">3660</property>
-    <property name="value">10</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkAdjustment" id="repeat-count-adjustment">
-    <property name="lower">2</property>
-    <property name="upper">3660</property>
-    <property name="value">2</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
   </object>
   <object class="GtkListStore" id="time-store">
     <columns>
