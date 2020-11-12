@@ -43,6 +43,28 @@
       <mime-type>audio/*</mime-type>
     </mime-types>
   </object>
+  <object class="GtkListStore" id="time-store">
+    <columns>
+      <!-- column-name COL_DATA -->
+      <column type="guint"/>
+      <!-- column-name COL_NAME -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">second(s)</col>
+      </row>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">minute(s)</col>
+      </row>
+      <row>
+        <col id="0">2</col>
+        <col id="1" translatable="yes">hour(s)</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow">
     <property name="can_focus">False</property>
     <child>
@@ -271,14 +293,13 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="play-sound">
+                  <object class="GtkToggleButton" id="play-sound">
                     <property name="label" translatable="yes">Play now</property>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="focus_on_click">False</property>
                     <property name="receives_default">True</property>
-                    <property name="halign">end</property>
                     <property name="image">image1</property>
                   </object>
                   <packing>
@@ -576,27 +597,5 @@
       <widget name="runtime-mode"/>
       <widget name="repeat-mode"/>
     </widgets>
-  </object>
-  <object class="GtkListStore" id="time-store">
-    <columns>
-      <!-- column-name COL_DATA -->
-      <column type="guint"/>
-      <!-- column-name COL_NAME -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">0</col>
-        <col id="1" translatable="yes">second(s)</col>
-      </row>
-      <row>
-        <col id="0">1</col>
-        <col id="1" translatable="yes">minute(s)</col>
-      </row>
-      <row>
-        <col id="0">2</col>
-        <col id="1" translatable="yes">hour(s)</col>
-      </row>
-    </data>
   </object>
 </interface>
