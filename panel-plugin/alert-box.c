@@ -24,6 +24,29 @@
 
 #include "alert-box.h"
 
+// Callbacks
+static void
+sound_chooser_file_set(GtkFileChooserButton *button, gpointer user_data)
+{
+  GtkBuilder *builder;
+  GObject *object;
+
+  g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(button));
+
+  object = G_OBJECT(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  builder = g_object_get_data(object, "builder");
+
+  object = gtk_builder_get_object(builder, "sound-play-box");
+  g_return_if_fail(GTK_IS_BOX(object));
+  gtk_widget_set_sensitive(GTK_WIDGET(object), TRUE);
+
+  object = gtk_builder_get_object(builder, "sound-loop-box");
+  g_return_if_fail(GTK_IS_BOX(object));
+  gtk_widget_set_sensitive(GTK_WIDGET(object), TRUE);
+}
+
+
+// External interface
 void
 init_alert_box(GtkBuilder *builder, const gchar *container_id)
 {
@@ -34,6 +57,11 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   object = gtk_builder_get_object(builder, "alert-box");
   g_return_if_fail(GTK_IS_GRID(object));
   alert_box = GTK_WIDGET(object);
+
+  // Only add symbols here. They will be connected by container.
+  gtk_builder_add_callback_symbols(builder,
+      "sound_chooser_file_set", G_CALLBACK(sound_chooser_file_set),
+      NULL);
 
   object = gtk_builder_get_object(builder, container_id);
   g_return_if_fail(GTK_IS_CONTAINER(object));

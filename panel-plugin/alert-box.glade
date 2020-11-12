@@ -265,6 +265,7 @@
                 <property name="create_folders">False</property>
                 <property name="filter">sound-filefilter</property>
                 <property name="title" translatable="yes">Select alert sound</property>
+                <signal name="file-set" handler="sound_chooser_file_set" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -275,12 +276,12 @@
             <child>
               <object class="GtkBox" id="sound-play-box">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="spacing">8</property>
                 <child>
                   <object class="GtkButton" id="clear-sound">
                     <property name="visible">True</property>
-                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="focus_on_click">False</property>
                     <property name="receives_default">True</property>
@@ -296,7 +297,6 @@
                   <object class="GtkToggleButton" id="play-sound">
                     <property name="label" translatable="yes">Play now</property>
                     <property name="visible">True</property>
-                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="focus_on_click">False</property>
                     <property name="receives_default">True</property>
