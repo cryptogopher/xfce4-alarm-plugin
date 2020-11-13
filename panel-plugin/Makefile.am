@@ -30,6 +30,7 @@ libalarm_la_CFLAGS = \
 	$(LIBXFCE4UI_CFLAGS) \
 	$(LIBXFCE4PANEL_CFLAGS) \
 	$(XFCONF_CFLAGS) \
+	$(LIBCANBERRA_CFLAGS) \
 	$(PLATFORM_CFLAGS)
 
 libalarm_la_LDFLAGS = \
@@ -43,7 +44,8 @@ libalarm_la_LIBADD = \
 	$(LIBXFCE4UTIL_LIBS) \
 	$(LIBXFCE4UI_LIBS) \
 	$(LIBXFCE4PANEL_LIBS) \
-	$(XFCONF_LIBS)
+	$(XFCONF_LIBS) \
+	$(LIBCANBERRA_LIBS)
 
 #
 # .desktop file
