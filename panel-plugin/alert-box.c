@@ -24,25 +24,47 @@
 
 #include "alert-box.h"
 
-// Callbacks
+// Utilities
 static void
-sound_chooser_file_set(GtkFileChooserButton *button, gpointer user_data)
+enable_sound_options(GtkWidget *dialog, gboolean enabled)
 {
   GtkBuilder *builder;
   GObject *object;
 
-  g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(button));
+  builder = g_object_get_data(G_OBJECT(dialog), "builder");
 
-  object = G_OBJECT(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  builder = g_object_get_data(object, "builder");
+  if (!enabled)
+  {
+    object = gtk_builder_get_object(builder, "sound-chooser");
+    g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(object));
+    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(object));
+  }
 
   object = gtk_builder_get_object(builder, "sound-play-box");
   g_return_if_fail(GTK_IS_BOX(object));
-  gtk_widget_set_sensitive(GTK_WIDGET(object), TRUE);
+  gtk_widget_set_sensitive(GTK_WIDGET(object), enabled);
 
   object = gtk_builder_get_object(builder, "sound-loop-box");
   g_return_if_fail(GTK_IS_BOX(object));
-  gtk_widget_set_sensitive(GTK_WIDGET(object), TRUE);
+  gtk_widget_set_sensitive(GTK_WIDGET(object), enabled);
+}
+
+
+// Callbacks
+static void
+sound_chooser_file_set(GtkFileChooserButton *button, gpointer user_data)
+{
+  g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(button));
+
+  enable_sound_options(gtk_widget_get_toplevel(GTK_WIDGET(button)), TRUE);
+}
+
+static void
+clear_sound_clicked(GtkButton *button, gpointer user_data)
+{
+  g_return_if_fail(GTK_IS_BUTTON(button));
+
+  enable_sound_options(gtk_widget_get_toplevel(GTK_WIDGET(button)), FALSE);
 }
 
 
@@ -61,6 +83,7 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   // Only add symbols here. They will be connected by container.
   gtk_builder_add_callback_symbols(builder,
       "sound_chooser_file_set", G_CALLBACK(sound_chooser_file_set),
+      "clear_sound_clicked", G_CALLBACK(clear_sound_clicked),
       NULL);
 
   object = gtk_builder_get_object(builder, container_id);
