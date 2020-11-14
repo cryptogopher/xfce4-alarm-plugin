@@ -25,8 +25,9 @@
 
 #include "alert-box.h"
 
-static void
-playback_finished(ca_context *c, uint32_t id, int error_code, void *userdata);
+
+static gboolean playback_finished(gpointer button);
+static void ca_playback_finished(ca_context *c, uint32_t id, int error_code, void *button);
 
 
 // Utilities
@@ -60,6 +61,7 @@ play_sound(GtkWidget *dialog, gboolean play)
 {
   GtkBuilder *builder;
   GObject *object, *image;
+  GtkToggleButton *button;
   const gchar *widgets[] = {"sound-chooser", "clear-sound", "sound-loop-box", NULL};
   const gchar **widget;
   ca_context *context;
@@ -80,9 +82,10 @@ play_sound(GtkWidget *dialog, gboolean play)
   g_return_if_fail(GTK_IS_IMAGE(image));
   object = gtk_builder_get_object(builder, "play-sound");
   g_return_if_fail(GTK_IS_BUTTON(object));
-  gtk_button_set_image(GTK_BUTTON(object), GTK_WIDGET(image));
-  gtk_button_set_label(GTK_BUTTON(object), play ? "Stop" : "Play now");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(object), play);
+  button = GTK_TOGGLE_BUTTON(object);
+  gtk_button_set_image(GTK_BUTTON(button), GTK_WIDGET(image));
+  gtk_button_set_label(GTK_BUTTON(button), play ? "Stop" : "Play now");
+  gtk_toggle_button_set_active(button, play);
 
   object = gtk_builder_get_object(builder, "alert-box");
   context = g_object_get_data(object, "ca-context");
@@ -94,7 +97,8 @@ play_sound(GtkWidget *dialog, gboolean play)
 
     g_warn_if_fail(!ca_proplist_create(&proplist));
     g_warn_if_fail(!ca_proplist_sets(proplist, CA_PROP_MEDIA_FILENAME, filename));
-    g_warn_if_fail(!ca_context_play_full(context, 1, proplist, playback_finished, dialog));
+    g_warn_if_fail(!ca_context_play_full(context, 1, proplist, ca_playback_finished,
+                                         button));
     g_warn_if_fail(!ca_proplist_destroy(proplist));
 
     g_free(filename);
@@ -105,6 +109,13 @@ play_sound(GtkWidget *dialog, gboolean play)
     if (is_playing)
       g_warn_if_fail(!ca_context_cancel(context, 1));
   }
+}
+
+static void
+ca_playback_finished(ca_context *c, uint32_t id, int error_code, void *button)
+{
+  if (error_code != CA_ERROR_CANCELED)
+    g_idle_add(playback_finished, button);
 }
 
 
@@ -134,13 +145,14 @@ play_sound_toggled(GtkToggleButton *button, gpointer user_data)
              gtk_toggle_button_get_active(button));
 }
 
-static void
-playback_finished(ca_context *c, uint32_t id, int error_code, void *userdata)
+static gboolean
+playback_finished(gpointer button)
 {
-  /* Avoid deadlock on re-entering play_sound() when playback finish is
-   * due to cancellation in progress. */
-  if (error_code != CA_ERROR_CANCELED)
-    play_sound(GTK_WIDGET(userdata), FALSE);
+  g_return_val_if_fail(GTK_IS_TOGGLE_BUTTON(button), G_SOURCE_REMOVE);
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), FALSE);
+
+  return G_SOURCE_REMOVE;
 }
 
 

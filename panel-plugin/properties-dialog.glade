@@ -29,6 +29,7 @@
     <property name="title" translatable="yes">Alarm</property>
     <property name="icon_name">xfce4-alarm-plugin-clock</property>
     <property name="type_hint">dialog</property>
+    <property name="subtitle" translatable="yes">Set alarm based on timer or clock</property>
     <child internal-child="vbox">
       <object class="GtkBox">
         <property name="can_focus">False</property>
