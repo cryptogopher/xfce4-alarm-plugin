@@ -12,6 +12,11 @@
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-stop</property>
   </object>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">edit-clear-symbolic</property>
+  </object>
   <object class="GtkImage" id="image3">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -30,6 +35,32 @@
     <property name="value">10</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+  </object>
+  <object class="GtkFileFilter" id="program-filter">
+    <mime-types>
+      <mime-type>application/x-csh</mime-type>
+      <mime-type>application/x-executable</mime-type>
+      <mime-type>application/x-perl</mime-type>
+      <mime-type>application/x-python</mime-type>
+      <mime-type>application/x-ruby</mime-type>
+      <mime-type>application/x-shellscript</mime-type>
+    </mime-types>
+    <patterns>
+      <pattern>*.pl</pattern>
+      <pattern>*.py</pattern>
+      <pattern>*.rb</pattern>
+      <pattern>*,sh</pattern>
+    </patterns>
+  </object>
+  <object class="GtkListStore" id="program-store">
+    <columns>
+      <!-- column-name COL_DATA -->
+      <column type="GAppInfo"/>
+      <!-- column-name COL_ICON -->
+      <column type="GIcon"/>
+      <!-- column-name COL_NAME -->
+      <column type="gchararray"/>
+    </columns>
   </object>
   <object class="GtkAdjustment" id="repeat-count-adjustment">
     <property name="lower">2</property>
@@ -126,19 +157,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkAppChooserButton" id="program">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="tooltip_text" translatable="yes">Run program</property>
-            <property name="show_dialog_item">True</property>
-            <property name="show_default_item">True</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">3</property>
           </packing>
         </child>
         <child>
@@ -571,6 +589,59 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">7</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkComboBox" id="program">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="model">program-store</property>
+                <child>
+                  <object class="GtkCellRendererPixbuf" id="program-icon">
+                    <property name="stock_size">2</property>
+                  </object>
+                  <attributes>
+                    <attribute name="gicon">1</attribute>
+                  </attributes>
+                </child>
+                <child>
+                  <object class="GtkCellRendererText" id="program-name">
+                    <property name="ellipsize">end</property>
+                  </object>
+                  <attributes>
+                    <attribute name="text">2</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="clear-program">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="focus_on_click">False</property>
+                <property name="receives_default">True</property>
+                <property name="image">image1</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">3</property>
           </packing>
         </child>
         <child>
