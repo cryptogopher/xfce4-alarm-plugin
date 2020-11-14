@@ -118,6 +118,14 @@ ca_playback_finished(ca_context *c, uint32_t id, int error_code, void *button)
     g_idle_add(playback_finished, button);
 }
 
+static gint
+app_order_func(gconstpointer left, gconstpointer right)
+{
+  // TODO: make sorting case insensitive
+  return g_utf8_collate(g_app_info_get_display_name(G_APP_INFO(left)),
+                        g_app_info_get_display_name(G_APP_INFO(right)));
+}
+
 
 // Callbacks
 static void
@@ -155,6 +163,13 @@ playback_finished(gpointer button)
   return G_SOURCE_REMOVE;
 }
 
+static gboolean
+program_separator_func(GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+{
+  gboolean separator;
+  gtk_tree_model_get(model, iter, 3, &separator, -1);
+  return separator;
+}
 
 // External interface
 void
@@ -163,16 +178,17 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   GObject *object, *source, *target;
   GtkWidget *alert_box;
   ca_context *context;
+  GList *apps, *app_iter;
+  GAppInfo *app;
 
-  // Connect alert box to container
   object = gtk_builder_get_object(builder, "alert-box");
   g_return_if_fail(GTK_IS_GRID(object));
+  alert_box = GTK_WIDGET(object);
 
+  // Create libcanberra context for playing sounds
   ca_context_create(&context);
   g_object_set_data(object, "ca-context", context);
   g_object_weak_ref(object, (GWeakNotify) G_CALLBACK(ca_context_destroy), context);
-
-  alert_box = GTK_WIDGET(object);
 
   // Only add symbols here. They will be connected by container.
   gtk_builder_add_callback_symbols(builder,
@@ -181,12 +197,63 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
       "play_sound_toggled", G_CALLBACK(play_sound_toggled),
       NULL);
 
+  // Connect alert box to container
   object = gtk_builder_get_object(builder, container_id);
   g_return_if_fail(GTK_IS_CONTAINER(object));
   g_object_ref(alert_box);
   gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(alert_box)), alert_box);
   gtk_container_add(GTK_CONTAINER(object), alert_box);
   g_object_unref(alert_box);
+
+  // Fill program list:
+  object = gtk_builder_get_object(builder, "program-store");
+  g_return_if_fail(GTK_IS_LIST_STORE(object));
+  // - (none)
+  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+                                    0, NULL,
+                                    1, NULL,
+                                    2, "(None)",
+                                    3, FALSE, -1);
+  // - separator
+  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+                                    0, NULL,
+                                    1, NULL,
+                                    2, NULL,
+                                    3, TRUE, -1);
+  // - file chooser
+  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+                                    0, NULL,
+                                    1, NULL,
+                                    2, "Choose program file...",
+                                    3, FALSE, -1);
+  // - separator
+  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+                                    0, NULL,
+                                    1, NULL,
+                                    2, NULL,
+                                    3, TRUE, -1);
+  // - applications
+  apps = g_app_info_get_all();
+  apps = g_list_sort(apps, app_order_func);
+  app_iter = apps;
+  while (app_iter)
+  {
+    app = app_iter->data;
+    if (g_app_info_should_show(app))
+      gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+                                        0, app,
+                                        1, g_app_info_get_icon(app),
+                                        2, g_app_info_get_display_name(app),
+                                        3, FALSE, -1);
+    app_iter = app_iter->next;
+  }
+  g_list_free_full(apps, g_object_unref);
+
+  object = gtk_builder_get_object(builder, "program");
+  g_return_if_fail(GTK_IS_COMBO_BOX(object));
+  gtk_combo_box_set_row_separator_func(GTK_COMBO_BOX(object), program_separator_func, NULL,
+                                       NULL);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
 
   source = gtk_builder_get_object(builder, "limit-loops");
   g_return_if_fail(GTK_IS_SWITCH(source));

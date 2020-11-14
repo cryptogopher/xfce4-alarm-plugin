@@ -12,11 +12,6 @@
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-stop</property>
   </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">edit-clear-symbolic</property>
-  </object>
   <object class="GtkImage" id="image3">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -55,11 +50,13 @@
   <object class="GtkListStore" id="program-store">
     <columns>
       <!-- column-name COL_DATA -->
-      <column type="GAppInfo"/>
+      <column type="gpointer"/>
       <!-- column-name COL_ICON -->
       <column type="GIcon"/>
       <!-- column-name COL_NAME -->
       <column type="gchararray"/>
+      <!-- column-name COL_SEPARATOR -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkAdjustment" id="repeat-count-adjustment">
@@ -592,51 +589,25 @@
           </packing>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkComboBox" id="program">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="spacing">8</property>
+            <property name="model">program-store</property>
             <child>
-              <object class="GtkComboBox" id="program">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="model">program-store</property>
-                <child>
-                  <object class="GtkCellRendererPixbuf" id="program-icon">
-                    <property name="stock_size">2</property>
-                  </object>
-                  <attributes>
-                    <attribute name="gicon">1</attribute>
-                  </attributes>
-                </child>
-                <child>
-                  <object class="GtkCellRendererText" id="program-name">
-                    <property name="ellipsize">end</property>
-                  </object>
-                  <attributes>
-                    <attribute name="text">2</attribute>
-                  </attributes>
-                </child>
+              <object class="GtkCellRendererPixbuf" id="program-icon">
+                <property name="stock_size">2</property>
               </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
+              <attributes>
+                <attribute name="gicon">1</attribute>
+              </attributes>
             </child>
             <child>
-              <object class="GtkButton" id="clear-program">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="focus_on_click">False</property>
-                <property name="receives_default">True</property>
-                <property name="image">image1</property>
+              <object class="GtkCellRendererText" id="program-name">
+                <property name="ellipsize">end</property>
               </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
+              <attributes>
+                <attribute name="text">2</attribute>
+              </attributes>
             </child>
           </object>
           <packing>
