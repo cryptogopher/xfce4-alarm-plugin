@@ -26,6 +26,21 @@
 #include "alert-box.h"
 
 
+enum ProgramColumns
+{
+  PROGRAM_DATA,
+  PROGRAM_ICON,
+  PROGRAM_NAME,
+  PROGRAM_SEPARATOR,
+  PROGRAM_HAS_ICON
+};
+
+enum ProgramEntries
+{
+  PROGRAM_NONE = 0,
+  PROGRAM_CHOOSE_FILE = 2
+};
+
 static gboolean playback_finished(gpointer button);
 static void ca_playback_finished(ca_context *c, uint32_t id, int error_code, void *button);
 
@@ -126,6 +141,64 @@ app_order_func(gconstpointer left, gconstpointer right)
                         g_app_info_get_display_name(G_APP_INFO(right)));
 }
 
+static gint
+select_program(GtkBuilder *builder, GtkWidget *parent)
+{
+  gint active = PROGRAM_NONE;
+  GObject *dialog, *store;
+  gchar *filename;
+  GAppInfo *appinfo;
+  GError *error = NULL;
+  GFile *file;
+  GFileInfo *fileinfo;
+  GIcon *fileicon = NULL;
+
+  dialog = gtk_builder_get_object(builder, "program-dialog");
+  g_return_val_if_fail(GTK_IS_FILE_CHOOSER_DIALOG(dialog), PROGRAM_NONE);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
+
+  store = gtk_builder_get_object(builder, "program-store");
+  g_return_val_if_fail(GTK_IS_LIST_STORE(store), PROGRAM_NONE);
+
+  if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK)
+  {
+    filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+    g_return_val_if_fail(filename != NULL, PROGRAM_NONE);
+
+    appinfo = g_app_info_create_from_commandline(filename, NULL, G_APP_INFO_CREATE_NONE,
+                                                 &error);
+
+    // TODO: look for existing entry with given filename/commandline and select
+
+    if (error == NULL)
+    {
+      file = g_file_new_for_path(filename);
+      fileinfo = g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_ICON,
+          G_FILE_QUERY_INFO_NONE, NULL, NULL);
+      if (fileinfo != NULL)
+        fileicon = g_file_info_get_icon(fileinfo);
+
+      active = PROGRAM_CHOOSE_FILE + 1;
+      gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, active,
+                                        PROGRAM_DATA, appinfo,
+                                        PROGRAM_ICON, fileicon,
+                                        PROGRAM_NAME, g_app_info_get_display_name(appinfo),
+                                        PROGRAM_SEPARATOR, FALSE,
+                                        PROGRAM_HAS_ICON, TRUE, -1);
+
+      g_object_unref(fileinfo);
+      g_object_unref(file);
+      g_object_unref(appinfo);
+    }
+
+    g_free(filename);
+  }
+
+  gtk_widget_hide(GTK_WIDGET(dialog));
+
+  return active;
+}
+
 
 // Callbacks
 static void
@@ -171,6 +244,22 @@ program_separator_func(GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
   return separator;
 }
 
+static void
+program_changed(GtkComboBox *widget, gpointer user_data)
+{
+  GtkWidget *parent;
+  gint active;
+
+  g_return_if_fail(GTK_IS_COMBO_BOX(widget));
+  if (gtk_combo_box_get_active(widget) != PROGRAM_CHOOSE_FILE)
+    return;
+
+  parent = gtk_widget_get_toplevel(GTK_WIDGET(widget));
+  active = select_program(g_object_get_data(G_OBJECT(parent), "builder"), parent);
+  gtk_combo_box_set_active(widget, active);
+}
+
+
 // External interface
 void
 init_alert_box(GtkBuilder *builder, const gchar *container_id)
@@ -195,6 +284,7 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
       "sound_chooser_file_set", G_CALLBACK(sound_chooser_file_set),
       "clear_sound_clicked", G_CALLBACK(clear_sound_clicked),
       "play_sound_toggled", G_CALLBACK(play_sound_toggled),
+      "program_changed", G_CALLBACK(program_changed),
       NULL);
 
   // Connect alert box to container
@@ -205,34 +295,13 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   gtk_container_add(GTK_CONTAINER(object), alert_box);
   g_object_unref(alert_box);
 
-  // Fill program list:
+  /* Fill program list. Positions prefilled from .glade:
+   * PROGRAM_NONE:        (None)
+   * 1:                   separator
+   * PROGRAM_CHOOSE_FILE: file chooser
+   * 3:                   separator */
   object = gtk_builder_get_object(builder, "program-store");
   g_return_if_fail(GTK_IS_LIST_STORE(object));
-  // - (none)
-  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
-                                    0, NULL,
-                                    1, NULL,
-                                    2, "(None)",
-                                    3, FALSE, -1);
-  // - separator
-  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
-                                    0, NULL,
-                                    1, NULL,
-                                    2, NULL,
-                                    3, TRUE, -1);
-  // - file chooser
-  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
-                                    0, NULL,
-                                    1, NULL,
-                                    2, "Choose program file...",
-                                    3, FALSE, -1);
-  // - separator
-  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
-                                    0, NULL,
-                                    1, NULL,
-                                    2, NULL,
-                                    3, TRUE, -1);
-  // - applications
   apps = g_app_info_get_all();
   apps = g_list_sort(apps, app_order_func);
   app_iter = apps;
@@ -241,10 +310,11 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
     app = app_iter->data;
     if (g_app_info_should_show(app))
       gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
-                                        0, app,
-                                        1, g_app_info_get_icon(app),
-                                        2, g_app_info_get_display_name(app),
-                                        3, FALSE, -1);
+                                        PROGRAM_DATA, app,
+                                        PROGRAM_ICON, g_app_info_get_icon(app),
+                                        PROGRAM_NAME, g_app_info_get_display_name(app),
+                                        PROGRAM_SEPARATOR, FALSE,
+                                        PROGRAM_HAS_ICON, TRUE, -1);
     app_iter = app_iter->next;
   }
   g_list_free_full(apps, g_object_unref);
