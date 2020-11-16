@@ -145,10 +145,13 @@ static gint
 select_program(GtkBuilder *builder, GtkWidget *parent)
 {
   gint active = PROGRAM_NONE;
-  GObject *dialog, *store;
+  GObject *dialog, *object;
   gchar *filename;
-  GAppInfo *appinfo;
+  GAppInfo *appinfo, *tree_appinfo;
   GError *error = NULL;
+  GtkTreeModel *tree_model;
+  GtkTreeIter tree_iter;
+  GtkTreePath *tree_path;
   GFile *file;
   GFileInfo *fileinfo;
   GIcon *fileicon = NULL;
@@ -157,8 +160,9 @@ select_program(GtkBuilder *builder, GtkWidget *parent)
   g_return_val_if_fail(GTK_IS_FILE_CHOOSER_DIALOG(dialog), PROGRAM_NONE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 
-  store = gtk_builder_get_object(builder, "program-store");
-  g_return_val_if_fail(GTK_IS_LIST_STORE(store), PROGRAM_NONE);
+  object = gtk_builder_get_object(builder, "program-store");
+  g_return_val_if_fail(GTK_IS_LIST_STORE(object), PROGRAM_NONE);
+  tree_model = GTK_TREE_MODEL(object);
 
   if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK)
   {
@@ -167,28 +171,53 @@ select_program(GtkBuilder *builder, GtkWidget *parent)
 
     appinfo = g_app_info_create_from_commandline(filename, NULL, G_APP_INFO_CREATE_NONE,
                                                  &error);
-
-    // TODO: look for existing entry with given filename/commandline and select
-
     if (error == NULL)
     {
-      file = g_file_new_for_path(filename);
-      fileinfo = g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_ICON,
-          G_FILE_QUERY_INFO_NONE, NULL, NULL);
-      if (fileinfo != NULL)
-        fileicon = g_file_info_get_icon(fileinfo);
+      // Look for existing entry with given commandline and select if already added
+      if (gtk_tree_model_get_iter_first(tree_model, &tree_iter))
+        do
+        {
+          gtk_tree_model_get(tree_model, &tree_iter, PROGRAM_DATA, &tree_appinfo, -1);
+          if (tree_appinfo != NULL &&
+              !g_strcmp0(g_app_info_get_commandline(appinfo),
+                         g_app_info_get_commandline(tree_appinfo)))
+          {
+            tree_path = gtk_tree_model_get_path(tree_model, &tree_iter);
+            active = gtk_tree_path_get_indices(tree_path)[0];
+            gtk_tree_path_free(tree_path);
 
-      active = PROGRAM_CHOOSE_FILE + 1;
-      gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, active,
+            g_clear_pointer(&appinfo, g_object_unref);
+            break;
+          }
+        }
+        while (gtk_tree_model_iter_next(tree_model, &tree_iter));
+
+      // Otherwise insert new entry right below 'Choose program file'
+      if (active == PROGRAM_NONE)
+      {
+        active = PROGRAM_CHOOSE_FILE + 1;
+
+        file = g_file_new_for_path(filename);
+        fileinfo = g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_ICON,
+            G_FILE_QUERY_INFO_NONE, NULL, NULL);
+        if (fileinfo != NULL)
+          fileicon = g_file_info_get_icon(fileinfo);
+
+        gtk_list_store_insert_with_values(GTK_LIST_STORE(tree_model), NULL, active,
                                         PROGRAM_DATA, appinfo,
                                         PROGRAM_ICON, fileicon,
                                         PROGRAM_NAME, g_app_info_get_display_name(appinfo),
                                         PROGRAM_SEPARATOR, FALSE,
                                         PROGRAM_HAS_ICON, TRUE, -1);
 
-      g_object_unref(fileinfo);
-      g_object_unref(file);
-      g_object_unref(appinfo);
+        g_object_unref(fileinfo);
+        g_object_unref(file);
+      }
+    }
+    else
+    {
+      g_warning("Failed to get app info: %s.", error->message);
+      g_error_free(error);
     }
 
     g_free(filename);
@@ -259,6 +288,28 @@ program_changed(GtkComboBox *widget, gpointer user_data)
   gtk_combo_box_set_active(widget, active);
 }
 
+static gboolean
+program_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+  GtkTreeModel *model;
+  GtkTreeIter iter;
+  GAppInfo *appinfo;
+
+  g_return_val_if_fail(GTK_IS_COMBO_BOX(widget), FALSE);
+
+  model = gtk_combo_box_get_model(GTK_COMBO_BOX(widget));
+  if (gtk_tree_model_get_iter_first(model, &iter))
+    do
+    {
+      gtk_tree_model_get(model, &iter, PROGRAM_DATA, &appinfo, -1);
+      if (appinfo != NULL)
+        g_object_unref(appinfo);
+    }
+    while (gtk_tree_model_iter_next(model, &iter));
+
+  return FALSE;
+}
+
 
 // External interface
 void
@@ -285,6 +336,7 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
       "clear_sound_clicked", G_CALLBACK(clear_sound_clicked),
       "play_sound_toggled", G_CALLBACK(play_sound_toggled),
       "program_changed", G_CALLBACK(program_changed),
+      "program_delete_event", G_CALLBACK(program_delete_event),
       NULL);
 
   // Connect alert box to container
@@ -317,7 +369,7 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
                                         PROGRAM_HAS_ICON, TRUE, -1);
     app_iter = app_iter->next;
   }
-  g_list_free_full(apps, g_object_unref);
+  g_list_free(apps);
 
   object = gtk_builder_get_object(builder, "program");
   g_return_if_fail(GTK_IS_COMBO_BOX(object));
