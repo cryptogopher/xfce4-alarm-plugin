@@ -51,8 +51,6 @@ select_sound(GtkWidget *dialog, gboolean select)
 {
   GtkBuilder *builder;
   GObject *object;
-  const gchar *widgets[] = {"sound-play-box", "sound-loop-box", NULL};
-  const gchar **widget;
 
   builder = g_object_get_data(G_OBJECT(dialog), "builder");
 
@@ -63,12 +61,7 @@ select_sound(GtkWidget *dialog, gboolean select)
     gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(object));
   }
 
-  for (widget = widgets; *widget; widget++)
-  {
-    object = gtk_builder_get_object(builder, *widget);
-    g_return_if_fail(GTK_IS_WIDGET(object));
-    gtk_widget_set_sensitive(GTK_WIDGET(object), select);
-  }
+  set_sensitive(builder, select, "sound-play-box", "sound-loop-box", NULL);
 }
 
 static void
