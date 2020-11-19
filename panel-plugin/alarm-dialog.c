@@ -113,13 +113,13 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
                                                  alarm->triggered_timer->uuid));
   }
 
-  if (alarm->rerun.every != NO_RERUN)
+  if (alarm->rerun_every != NO_RERUN)
   {
     object = gtk_builder_get_object(builder, "rerun-clock");
     g_return_if_fail(GTK_IS_SWITCH(object));
     gtk_switch_set_active(GTK_SWITCH(object), TRUE);
 
-    if (alarm->rerun.every >= RERUN_DOW)
+    if (alarm->rerun_every >= RERUN_DOW)
     {
       object = gtk_builder_get_object(builder, "rerun-dow");
       g_return_if_fail(GTK_IS_RADIO_BUTTON(object));
@@ -135,7 +135,7 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
         do
         {
           gtk_tree_model_get(tree_model, &tree_iter, COL_DATA, &value, -1);
-          if (alarm->rerun.every & (1 << value))
+          if (alarm->rerun_every & (1 << value))
           {
             tree_path = gtk_tree_model_get_path(tree_model, &tree_iter);
             gtk_icon_view_select_path(GTK_ICON_VIEW(object), tree_path);
@@ -152,11 +152,11 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
 
       object = gtk_builder_get_object(builder, "rerun-multiplier");
       g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), -alarm->rerun.every);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), -alarm->rerun_every);
 
       object = gtk_builder_get_object(builder, "rerun-mode");
       g_return_if_fail(GTK_IS_COMBO_BOX_TEXT(object));
-      gtk_combo_box_set_active(GTK_COMBO_BOX(object), alarm->rerun.mode);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(object), alarm->rerun_mode);
     }
   }
 }
@@ -247,7 +247,7 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
 
   object = gtk_builder_get_object(builder, "rerun-clock");
   g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
-  alarm->rerun.every = NO_RERUN;
+  alarm->rerun_every = NO_RERUN;
   if (gtk_switch_get_active(GTK_SWITCH(object)))
   {
     object = gtk_builder_get_object(builder, "rerun-dow");
@@ -268,13 +268,13 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
         if (gtk_tree_model_get_iter(tree_model, &tree_iter, (GtkTreePath*) item_iter->data))
         {
           gtk_tree_model_get(tree_model, &tree_iter, COL_DATA, &value, -1);
-          alarm->rerun.every |= (1 << value);
+          alarm->rerun_every |= (1 << value);
         }
         item_iter = item_iter->next;
       }
       g_list_free_full(items, (GDestroyNotify) gtk_tree_path_free);
-      g_return_val_if_fail(alarm->rerun.every >= RERUN_DOW &&
-                           alarm->rerun.every <= RERUN_EVERYDAY, FALSE);
+      g_return_val_if_fail(alarm->rerun_every >= RERUN_DOW &&
+                           alarm->rerun_every <= RERUN_EVERYDAY, FALSE);
     }
     else
     {
@@ -284,14 +284,14 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
       {
         object = gtk_builder_get_object(builder, "rerun-multiplier");
         g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
-        alarm->rerun.every = - gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
-        g_return_val_if_fail(alarm->rerun.every < RERUN_DOW, FALSE);
+        alarm->rerun_every = - gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
+        g_return_val_if_fail(alarm->rerun_every < RERUN_DOW, FALSE);
 
         object = gtk_builder_get_object(builder, "rerun-mode");
         g_return_val_if_fail(GTK_IS_COMBO_BOX_TEXT(object), FALSE);
-        alarm->rerun.mode = gtk_combo_box_get_active(GTK_COMBO_BOX(object));
-        g_return_val_if_fail(alarm->rerun.mode >= 0 &&
-                             alarm->rerun.mode < RERUN_MODE_COUNT, FALSE);
+        alarm->rerun_mode = gtk_combo_box_get_active(GTK_COMBO_BOX(object));
+        g_return_val_if_fail(alarm->rerun_mode >= 0 &&
+                             alarm->rerun_mode < RERUN_MODE_COUNT, FALSE);
       }
     }
   }

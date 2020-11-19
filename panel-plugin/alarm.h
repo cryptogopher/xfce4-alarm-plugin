@@ -81,9 +81,13 @@ struct _Alert
 {
   gboolean notification;
   gchar *sound;
+  guint sound_loops;
   gchar *program;
+  gchar *program_options;
+  guint program_runtime;
   guint interval; // 0 (== NO_ALERT_REPEAT) - no repeats; >0 - every N seconds
-  guint repeats; // 0 (== REPEAT_UNTIL_ACK) - until acknowledged; >0 - count
+  guint repeats; // 0 (== REPEAT_UNTIL_ACK) - until acknowledged; >1 - count
+
   guint repeats_left;
 };
 
@@ -98,12 +102,9 @@ struct _Alarm
   gboolean autostart, autostop;
   gboolean autostart_on_resume, autostop_on_suspend;
 
-  struct
-  {
-    gint every; /* 0 (== NO_RERUN) - no rerun; >0 (> RERUN_DOW) - on days of week;
-                 * <0 (< RERUN_DOW) - every N modes */
-    RerunMode mode;
-  } rerun;
+  gint rerun_every; /* 0 (== NO_RERUN) - no rerun; >0 (> RERUN_DOW) - on days of week;
+                     * <0 (< RERUN_DOW) - every N modes */
+  RerunMode rerun_mode;
   Alarm *triggered_timer;
 
   Alert alert;

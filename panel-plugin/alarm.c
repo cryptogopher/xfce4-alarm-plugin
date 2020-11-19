@@ -146,10 +146,10 @@ load_alarm_settings(AlarmPlugin *plugin)
                           g_strdup(g_value_get_string(property_value)));
 
     else if (!g_strcmp0(parts[2], "rerun-every"))
-      alarm->rerun.every = g_value_get_int(property_value);
+      alarm->rerun_every = g_value_get_int(property_value);
 
     else if (!g_strcmp0(parts[2], "rerun-mode"))
-      alarm->rerun.mode = g_value_get_uint(property_value);
+      alarm->rerun_mode = g_value_get_uint(property_value);
 
   free:
     g_strfreev(parts);
@@ -227,11 +227,11 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   }
   else 
   {
-    if (alarm->rerun.every != NO_RERUN)
+    if (alarm->rerun_every != NO_RERUN)
     {
-      g_warn_if_fail(xfconf_channel_set_int(channel, "/rerun-every", alarm->rerun.every));
-      if (alarm->rerun.every < RERUN_DOW)
-        g_warn_if_fail(xfconf_channel_set_uint(channel, "/rerun-mode", alarm->rerun.mode));
+      g_warn_if_fail(xfconf_channel_set_int(channel, "/rerun-every", alarm->rerun_every));
+      if (alarm->rerun_every < RERUN_DOW)
+        g_warn_if_fail(xfconf_channel_set_uint(channel, "/rerun-mode", alarm->rerun_mode));
     }
   }
 
