@@ -277,15 +277,22 @@ static void
 program_changed(GtkComboBox *widget, gpointer user_data)
 {
   GtkWidget *parent;
+  GtkBuilder *builder;
   gint active;
 
   g_return_if_fail(GTK_IS_COMBO_BOX(widget));
-  if (gtk_combo_box_get_active(widget) != PROGRAM_CHOOSE_FILE)
-    return;
+  active = gtk_combo_box_get_active(widget);
 
   parent = gtk_widget_get_toplevel(GTK_WIDGET(widget));
-  active = select_program(g_object_get_data(G_OBJECT(parent), "builder"), parent);
-  gtk_combo_box_set_active(widget, active);
+  builder = g_object_get_data(G_OBJECT(parent), "builder");
+
+  set_sensitive(builder, active > PROGRAM_CHOOSE_FILE,
+                "program-options", "limit-runtime-box", NULL);
+
+  if (active != PROGRAM_CHOOSE_FILE)
+    return;
+
+  gtk_combo_box_set_active(widget, select_program(builder, parent));
 }
 
 static gboolean

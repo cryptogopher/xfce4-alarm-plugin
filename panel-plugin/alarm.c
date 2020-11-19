@@ -299,7 +299,7 @@ alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
   GtkBuilder *builder;
   GError *error = NULL;
   va_list var_args;
-  const gchar* buffer = first_buffer;
+  const gchar *buffer = first_buffer;
   gsize buffer_length = first_buffer_length;
   GObject *weak_ref_obj;
 
@@ -341,6 +341,28 @@ alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
     g_clear_pointer(&builder, g_object_unref);
 
   return builder;
+}
+
+void
+set_sensitive(GtkBuilder *builder, gboolean sensitive, const gchar *first_widget_id, ...)
+{
+  va_list var_args;
+  const gchar *widget_id = first_widget_id;
+  GObject *object;
+
+  g_return_if_fail(GTK_IS_BUILDER(builder));
+  g_return_if_fail(first_widget_id != NULL);
+
+  va_start(var_args, first_widget_id);
+  while (widget_id != NULL)
+  {
+    object = gtk_builder_get_object(builder, widget_id);
+    g_return_if_fail(GTK_IS_WIDGET(object));
+    gtk_widget_set_sensitive(GTK_WIDGET(object), sensitive);
+
+    widget_id = va_arg(var_args, gchar*);
+  }
+  va_end(var_args);
 }
 
 

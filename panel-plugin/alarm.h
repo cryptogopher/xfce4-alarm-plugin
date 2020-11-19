@@ -144,6 +144,8 @@ void save_alarm_positions(AlarmPlugin *plugin,
 void reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
 GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
                               const gchar* first_buffer, gsize first_buffer_length, ...);
+void set_sensitive(GtkBuilder *builder, gboolean sensitive,
+                   const gchar *first_widget_id, ...);
 
 G_END_DECLS
 
