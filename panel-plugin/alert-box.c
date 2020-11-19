@@ -70,8 +70,6 @@ play_sound(GtkWidget *dialog, gboolean play)
   GtkBuilder *builder;
   GObject *object, *image;
   GtkToggleButton *button;
-  const gchar *widgets[] = {"sound-chooser", "clear-sound", "sound-loop-box", NULL};
-  const gchar **widget;
   ca_context *context;
   ca_proplist *proplist;
   gchar *filename;
@@ -79,12 +77,7 @@ play_sound(GtkWidget *dialog, gboolean play)
 
   builder = g_object_get_data(G_OBJECT(dialog), "builder");
 
-  for (widget = widgets; *widget; widget++)
-  {
-    object = gtk_builder_get_object(builder, *widget);
-    g_return_if_fail(GTK_IS_WIDGET(object));
-    gtk_widget_set_sensitive(GTK_WIDGET(object), !play);
-  }
+  set_sensitive(builder, !play, "sound-chooser", "clear-sound", "sound-loop-box", NULL);
 
   image = gtk_builder_get_object(builder, play ? "image-stop" : "image-play");
   g_return_if_fail(GTK_IS_IMAGE(image));

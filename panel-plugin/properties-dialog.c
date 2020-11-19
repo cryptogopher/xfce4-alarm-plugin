@@ -202,7 +202,6 @@ alarm_selection_changed(GtkTreeSelection *selection, GtkWidget *dialog)
   // Dialog required as param, because selection is not a GtkWidget
   gboolean selected;
   GtkBuilder *builder;
-  GObject *object;
 
   g_return_if_fail(GTK_IS_TREE_SELECTION(selection));
   g_return_if_fail(GTK_IS_DIALOG(dialog));
@@ -210,12 +209,7 @@ alarm_selection_changed(GtkTreeSelection *selection, GtkWidget *dialog)
   selected = gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), NULL, NULL);
   builder = g_object_get_data(G_OBJECT(dialog), "builder");
 
-  object = gtk_builder_get_object(builder, "edit");
-  g_return_if_fail(GTK_IS_TOOL_BUTTON(object));
-  gtk_widget_set_sensitive(GTK_WIDGET(object), selected);
-  object = gtk_builder_get_object(builder, "remove");
-  g_return_if_fail(GTK_IS_TOOL_BUTTON(object));
-  gtk_widget_set_sensitive(GTK_WIDGET(object), selected);
+  set_sensitive(builder, selected, "edit", "remove", NULL);
 }
 
 static void
