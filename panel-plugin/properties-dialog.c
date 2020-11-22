@@ -310,5 +310,7 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
       NULL);
   gtk_builder_connect_signals(builder, plugin);
 
+  alert_to_dialog(plugin->alert, builder);
+
   gtk_widget_show(GTK_WIDGET(dialog));
 }

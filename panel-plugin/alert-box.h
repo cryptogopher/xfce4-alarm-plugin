@@ -22,5 +22,7 @@
 #include "alarm.h"
 
 void init_alert_box(GtkBuilder *builder, const gchar *container_id);
+void alert_to_dialog(Alert *alert, GtkBuilder *builder);
+gboolean alert_from_dialog(Alert *alert, GtkBuilder *builder);
 
 #endif /* !__ALERT_BOX_H__ */

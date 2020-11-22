@@ -37,6 +37,7 @@ struct _AlarmPlugin
   XfcePanelPlugin parent;
 
   GList *alarms;
+  Alert *alert;
   GtkWidget *panel_button;
 };
 
@@ -107,7 +108,7 @@ struct _Alarm
   RerunMode rerun_mode;
   Alarm *triggered_timer;
 
-  Alert alert;
+  Alert *alert;
   GDateTime *timeout_at;
   GTimer *alert_timer;
 

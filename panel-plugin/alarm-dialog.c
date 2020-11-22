@@ -159,6 +159,8 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
       gtk_combo_box_set_active(GTK_COMBO_BOX(object), alarm->rerun_mode);
     }
   }
+
+  alert_to_dialog(alarm->alert, builder);
 }
 
 static gboolean
@@ -295,6 +297,8 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
       }
     }
   }
+
+  g_return_val_if_fail(alert_from_dialog(alarm->alert, builder), FALSE);
 
   return TRUE;
 }

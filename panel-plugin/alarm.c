@@ -43,6 +43,14 @@ alarm_free_func(gpointer data)
 {
   Alarm *alarm = (Alarm*) data;
 
+  if (alarm->alert != NULL)
+  {
+    g_free(alarm->alert->sound);
+    g_free(alarm->alert->program);
+    g_free(alarm->alert->program_options);
+    g_slice_free(Alert, alarm->alert);
+  }
+
   g_free(alarm->uuid);
   g_free(alarm->name);
   g_date_time_unref(alarm->timeout_at);

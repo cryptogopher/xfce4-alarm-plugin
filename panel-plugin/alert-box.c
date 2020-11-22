@@ -397,3 +397,17 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 }
+
+void
+alert_to_dialog(Alert *alert, GtkBuilder *builder)
+{
+}
+
+gboolean
+alert_from_dialog(Alert *alert, GtkBuilder *builder)
+{
+  g_return_val_if_fail(alert != NULL, FALSE);
+  g_return_val_if_fail(GTK_IS_BUILDER(builder), FALSE);
+
+  return TRUE;
+}
