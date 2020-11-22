@@ -38,18 +38,21 @@ const gchar *alarm_type_icons[TYPE_COUNT] =
 
 
 // Utilities
+static void
+alert_free(Alert *alert)
+{
+  g_free(alert->sound);
+  g_free(alert->program);
+  g_free(alert->program_options);
+  g_slice_free(Alert, alert);
+}
+
 void
-alarm_free_func(gpointer data)
+alarm_free(gpointer data)
 {
   Alarm *alarm = (Alarm*) data;
 
-  if (alarm->alert != NULL)
-  {
-    g_free(alarm->alert->sound);
-    g_free(alarm->alert->program);
-    g_free(alarm->alert->program_options);
-    g_slice_free(Alert, alarm->alert);
-  }
+  g_clear_pointer(&alarm->alert, alert_free);
 
   g_free(alarm->uuid);
   g_free(alarm->name);
@@ -444,6 +447,8 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
   xfce_panel_plugin_set_small(panel_plugin, TRUE);
 
   plugin->alarms = load_alarm_settings(plugin);
+  plugin->alert = g_slice_new0(Alert);
+  // TODO: load default alert/set property bindings
 
   // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();
@@ -471,7 +476,8 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
 
-  g_list_free_full(g_steal_pointer(&plugin->alarms), alarm_free_func);
+  g_list_free_full(g_steal_pointer(&plugin->alarms), alarm_free);
+  g_clear_pointer(&plugin->alert, alert_free);
 }
 
 
@@ -506,5 +512,6 @@ alarm_plugin_init(AlarmPlugin *plugin)
   g_object_weak_ref(G_OBJECT(plugin), (GWeakNotify) xfconf_shutdown, NULL);
 
   plugin->alarms = NULL;
+  plugin->alert = NULL;
   plugin->panel_button = NULL;
 }

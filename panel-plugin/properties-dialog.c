@@ -138,7 +138,7 @@ remove_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
   plugin->alarms = g_list_delete_link(plugin->alarms, alarm_iter);
   save_alarm_positions(plugin, next_iter, NULL);
 
-  g_clear_pointer(&alarm, alarm_free_func);
+  g_clear_pointer(&alarm, alarm_free);
 }
 
 

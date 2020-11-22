@@ -139,7 +139,7 @@ const gchar *alarm_type_icons[TYPE_COUNT];
 GType alarm_plugin_get_type(void) G_GNUC_CONST;
 void alarm_plugin_register_type(XfcePanelTypeModule *type_module);
 
-void alarm_free_func(gpointer data);
+void alarm_free(gpointer data);
 void save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
 void save_alarm_positions(AlarmPlugin *plugin,
                           GList *alarm_iter_from, GList *alarm_iter_to);
