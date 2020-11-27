@@ -330,7 +330,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   GtkBuilder *builder;
-  GObject *dialog, *object, *source, *target;
+  GObject *dialog, *object, *store;
   GList *alarm_iter;
   Alarm *triggered_timer;
 
@@ -356,64 +356,26 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
                                    NULL);
   gtk_builder_connect_signals(builder, plugin);
 
-  source = gtk_builder_get_object(builder, "progress");
-  g_return_if_fail(GTK_IS_SWITCH(source));
-  target = gtk_builder_get_object(builder, "color");
-  g_return_if_fail(GTK_IS_COLOR_BUTTON(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-
-  source = gtk_builder_get_object(builder, "trigger-timer");
-  g_return_if_fail(GTK_IS_SWITCH(source));
-  target = gtk_builder_get_object(builder, "timer-combo");
-  g_return_if_fail(GTK_IS_COMBO_BOX(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-
-  object = gtk_builder_get_object(builder, "timer-store");
-  g_return_if_fail(GTK_IS_LIST_STORE(object));
-  gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+  object = gtk_builder_get_object(builder, "timer-combo");
+  g_return_if_fail(GTK_IS_COMBO_BOX(object));
+  store = gtk_builder_get_object(builder, "timer-store");
+  g_return_if_fail(GTK_IS_LIST_STORE(store));
+  gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
                                     0, *alarm,
                                     1, "self",
                                     2, *alarm != NULL ? (*alarm)->uuid : "", -1);
-  gtk_combo_box_set_active(GTK_COMBO_BOX(target), 0);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
   alarm_iter = plugin->alarms;
   while (alarm_iter)
   {
     triggered_timer = alarm_iter->data;
     if (triggered_timer->type == TYPE_TIMER && triggered_timer != *alarm)
-      gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
+      gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
                                         0, triggered_timer,
                                         1, triggered_timer->name,
                                         2, triggered_timer->uuid, -1);
     alarm_iter = alarm_iter->next;
   }
-
-  source = gtk_builder_get_object(builder, "rerun-clock");
-  g_return_if_fail(GTK_IS_SWITCH(source));
-  target = gtk_builder_get_object(builder, "rerun-dow-box");
-  g_return_if_fail(GTK_IS_BOX(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-  target = gtk_builder_get_object(builder, "rerun-ndays-box");
-  g_return_if_fail(GTK_IS_BOX(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-
-  source = gtk_builder_get_object(builder, "rerun-dow");
-  target = gtk_builder_get_object(builder, "dow-view");
-  g_return_if_fail(GTK_IS_ICON_VIEW(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-
-  source = gtk_builder_get_object(builder, "rerun-ndays");
-  target = gtk_builder_get_object(builder, "ndays-period-box");
-  g_return_if_fail(GTK_IS_BOX(target));
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-
-  source = gtk_builder_get_object(builder, "custom-alert");
-  g_return_if_fail(GTK_IS_SWITCH(source));
-  target = gtk_builder_get_object(builder, "alert-revealer");
-  g_return_if_fail(GTK_IS_REVEALER(target));
-  g_object_bind_property(source, "active", target, "reveal-child", G_BINDING_SYNC_CREATE);
-  target = gtk_builder_get_object(builder, "settings-box");
-  g_return_if_fail(GTK_IS_BOX(target));
-  g_object_bind_property(source, "active", target, "homogeneous", G_BINDING_SYNC_CREATE);
 
   if (*alarm)
     alarm_to_dialog(*alarm, builder);
