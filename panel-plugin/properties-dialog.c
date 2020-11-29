@@ -271,6 +271,12 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   GObject *dialog, *object;
   GList *alarm_iter;
   GtkTreeIter tree_iter;
+  const gchar **object_id;
+  const gchar *alert_bindings[] =
+  {
+    "notification", "active", "notification",
+    NULL
+  };
 
   builder = alarm_builder_new(panel_plugin, "properties-dialog",
                               properties_dialog_ui, properties_dialog_ui_length,
@@ -309,6 +315,15 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
       "alarm_store_row_inserted", G_CALLBACK(alarm_store_row_inserted),
       NULL);
   gtk_builder_connect_signals(builder, plugin);
+
+  // Bind default alert properties to widgets
+  for (object_id = alert_bindings; *object_id != NULL; object_id += 3)
+  {
+    object = gtk_builder_get_object(builder, *object_id);
+    g_return_if_fail(GTK_IS_WIDGET(object));
+    g_object_bind_property(plugin, *(object_id + 2), object, *(object_id + 1),
+                           G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL);
+  }
 
   alert_to_dialog(plugin->alert, builder);
 

@@ -36,6 +36,22 @@ const gchar *alarm_type_icons[TYPE_COUNT] =
   "xfce4-alarm-plugin-clock"
 };
 
+enum
+{
+  PROP_0,
+  PROP_ALERT_NOTIFICATION,
+  PROP_COUNT,
+  PROP_ALERT_SOUND,
+  PROP_ALERT_SOUND_LOOPS,
+  PROP_ALERT_PROGRAM,
+  PROP_ALERT_PROGRAM_OPTIONS,
+  PROP_ALERT_PROGRAM_RUNTIME,
+  PROP_ALERT_INTERVAL,
+  PROP_ALERT_REPEATS,
+};
+
+static GParamSpec *plugin_class_props[PROP_COUNT] = {NULL, };
+
 
 // Utilities
 static void
@@ -48,10 +64,8 @@ alert_free(Alert *alert)
 }
 
 void
-alarm_free(gpointer data)
+alarm_free(Alarm *alarm)
 {
-  Alarm *alarm = (Alarm*) data;
-
   g_clear_pointer(&alarm->alert, alert_free);
 
   g_free(alarm->uuid);
@@ -437,9 +451,46 @@ panel_button_toggled(GtkWidget *panel_button, AlarmPlugin *plugin)
 XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
 
 static void
+plugin_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+{
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(object);
+
+  switch (prop_id)
+  {
+    case PROP_ALERT_NOTIFICATION:
+      g_value_set_boolean(value, plugin->alert->notification);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+  }
+}
+
+static void
+plugin_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+{
+  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(object);
+
+  switch (prop_id)
+  {
+    case PROP_ALERT_NOTIFICATION:
+      plugin->alert->notification = g_value_get_boolean(value);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+  }
+}
+
+static void
 plugin_construct(XfcePanelPlugin *panel_plugin)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
+  gchar *property_base;
+  XfconfChannel *channel;
+  gint prop_id;
+  gchar *xfconf_prop;
+  GParamSpec *pspec;
   GtkWidget *box;
 
   xfce_textdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR, "UTF-8");
@@ -448,7 +499,21 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
 
   plugin->alarms = load_alarm_settings(plugin);
   plugin->alert = g_slice_new0(Alert);
-  // TODO: load default alert/set property bindings
+
+  // Bind default alert properties to xfconf properties
+  property_base = g_strconcat(xfce_panel_plugin_get_property_base(panel_plugin),
+                              "/default-alert", NULL);
+  channel = xfconf_channel_new_with_property_base(xfce_panel_get_channel_name(),
+                                                  property_base);
+  g_free(property_base);
+  g_object_weak_ref(G_OBJECT(plugin), (GWeakNotify) G_CALLBACK(g_object_unref), channel);
+  for (prop_id = 1; prop_id < PROP_COUNT; prop_id++)
+  {
+    pspec = plugin_class_props[prop_id];
+    xfconf_prop = g_strconcat("/", pspec->name, NULL);
+    xfconf_g_property_bind(channel, xfconf_prop, pspec->value_type, plugin, pspec->name);
+    g_free(xfconf_prop);
+  }
 
   // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();
@@ -476,7 +541,7 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
 
-  g_list_free_full(g_steal_pointer(&plugin->alarms), alarm_free);
+  g_list_free_full(g_steal_pointer(&plugin->alarms), (GDestroyNotify) alarm_free);
   g_clear_pointer(&plugin->alert, alert_free);
 }
 
@@ -484,11 +549,15 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
 static void
 alarm_plugin_class_init(AlarmPluginClass *klass)
 {
-  //GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+  GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
   XfcePanelPluginClass *plugin_class = XFCE_PANEL_PLUGIN_CLASS(klass);
 
-  //gobject_class->get_property = directory_menu_plugin_get_property;
-  //gobject_class->set_property = directory_menu_plugin_set_property;
+  plugin_class_props[PROP_ALERT_NOTIFICATION] =
+    g_param_spec_boolean("notification", NULL, NULL,
+                         TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  gobject_class->get_property = plugin_get_property;
+  gobject_class->set_property = plugin_set_property;
+  g_object_class_install_properties(gobject_class, PROP_COUNT, plugin_class_props);
 
   plugin_class->construct = plugin_construct;
   plugin_class->free_data = plugin_free_data;
