@@ -26,6 +26,7 @@
 #include <xfconf/xfconf.h>
 
 #include "alarm.h"
+#include "alert.h"
 #include "properties-dialog.h"
 
 /* Plugin icon names cannot have name prefixes in common with theme icons.
@@ -36,37 +37,12 @@ const gchar *alarm_type_icons[TYPE_COUNT] =
   "xfce4-alarm-plugin-clock"
 };
 
-enum
-{
-  PROP_0,
-  PROP_ALERT_NOTIFICATION,
-  PROP_COUNT,
-  PROP_ALERT_SOUND,
-  PROP_ALERT_SOUND_LOOPS,
-  PROP_ALERT_PROGRAM,
-  PROP_ALERT_PROGRAM_OPTIONS,
-  PROP_ALERT_PROGRAM_RUNTIME,
-  PROP_ALERT_INTERVAL,
-  PROP_ALERT_REPEATS,
-};
-
-static GParamSpec *plugin_class_props[PROP_COUNT] = {NULL, };
-
 
 // Utilities
-static void
-alert_free(Alert *alert)
-{
-  g_free(alert->sound);
-  g_free(alert->program);
-  g_free(alert->program_options);
-  g_slice_free(Alert, alert);
-}
-
 void
 alarm_free(Alarm *alarm)
 {
-  g_clear_pointer(&alarm->alert, alert_free);
+  g_clear_object(&alarm->alert);
 
   g_free(alarm->uuid);
   g_free(alarm->name);
@@ -363,7 +339,7 @@ alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
   if (G_IS_OBJECT(weak_ref_obj))
     g_object_set_data_full(weak_ref_obj, "builder", builder, g_object_unref);
   else
-    g_clear_pointer(&builder, g_object_unref);
+    g_clear_object(&builder);
 
   return builder;
 }
@@ -388,6 +364,57 @@ set_sensitive(GtkBuilder *builder, gboolean sensitive, const gchar *first_widget
     widget_id = va_arg(var_args, gchar*);
   }
   va_end(var_args);
+}
+
+void
+g_object_copy(GObject *src, GObject *dst)
+{
+  GParamSpec **specs;
+  guint spec_count, i, prop_count = 0;
+  const gchar **names;
+  GValue *values;
+
+  g_return_if_fail(G_IS_OBJECT(src));
+  g_return_if_fail(G_IS_OBJECT(dst));
+  g_return_if_fail(G_TYPE_FROM_INSTANCE(src) == G_TYPE_FROM_INSTANCE(dst));
+
+  specs = g_object_class_list_properties(G_OBJECT_GET_CLASS(src), &spec_count);
+
+  names = g_new0(const gchar*, spec_count);
+  values = g_new0(GValue, spec_count);
+  for (i = 0; i < spec_count; i++)
+  {
+    if ((specs[i]->flags & G_PARAM_READWRITE) == 0)
+      continue;
+
+    names[prop_count] = g_param_spec_get_name(specs[i]);
+    g_object_get_property(src, names[prop_count], &values[prop_count]);
+
+    prop_count++;
+  }
+
+  g_object_setv(dst, prop_count, names, values);
+
+  g_free(specs);
+  g_free(names);
+  g_free(values);
+
+  return;
+}
+
+gpointer
+g_object_dup(GObject *src)
+{
+  GObject *dst;
+
+  if (src == NULL)
+    return NULL;
+
+  g_return_val_if_fail(G_IS_OBJECT(src), NULL);
+
+  dst = g_object_new(G_TYPE_FROM_INSTANCE(src), NULL);
+  g_object_copy(src, dst);
+  return (gpointer) dst;
 }
 
 
@@ -451,46 +478,11 @@ panel_button_toggled(GtkWidget *panel_button, AlarmPlugin *plugin)
 XFCE_PANEL_DEFINE_PLUGIN(AlarmPlugin, alarm_plugin)
 
 static void
-plugin_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
-{
-  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(object);
-
-  switch (prop_id)
-  {
-    case PROP_ALERT_NOTIFICATION:
-      g_value_set_boolean(value, plugin->alert->notification);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-  }
-}
-
-static void
-plugin_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
-{
-  AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(object);
-
-  switch (prop_id)
-  {
-    case PROP_ALERT_NOTIFICATION:
-      plugin->alert->notification = g_value_get_boolean(value);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-  }
-}
-
-static void
 plugin_construct(XfcePanelPlugin *panel_plugin)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
   gchar *property_base;
   XfconfChannel *channel;
-  gint prop_id;
-  gchar *xfconf_prop;
-  GParamSpec *pspec;
   GtkWidget *box;
 
   xfce_textdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR, "UTF-8");
@@ -498,7 +490,6 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
   xfce_panel_plugin_set_small(panel_plugin, TRUE);
 
   plugin->alarms = load_alarm_settings(plugin);
-  plugin->alert = g_slice_new0(Alert);
 
   // Bind default alert properties to xfconf properties
   property_base = g_strconcat(xfce_panel_plugin_get_property_base(panel_plugin),
@@ -507,13 +498,7 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
                                                   property_base);
   g_free(property_base);
   g_object_weak_ref(G_OBJECT(plugin), (GWeakNotify) G_CALLBACK(g_object_unref), channel);
-  for (prop_id = 1; prop_id < PROP_COUNT; prop_id++)
-  {
-    pspec = plugin_class_props[prop_id];
-    xfconf_prop = g_strconcat("/", pspec->name, NULL);
-    xfconf_g_property_bind(channel, xfconf_prop, pspec->value_type, plugin, pspec->name);
-    g_free(xfconf_prop);
-  }
+  plugin->alert = alert_new(channel);
 
   // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();
@@ -542,22 +527,19 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
 
   g_list_free_full(g_steal_pointer(&plugin->alarms), (GDestroyNotify) alarm_free);
-  g_clear_pointer(&plugin->alert, alert_free);
+  g_clear_object(&plugin->alert);
 }
 
 
 static void
 alarm_plugin_class_init(AlarmPluginClass *klass)
 {
-  GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
+  //GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
   XfcePanelPluginClass *plugin_class = XFCE_PANEL_PLUGIN_CLASS(klass);
 
-  plugin_class_props[PROP_ALERT_NOTIFICATION] =
-    g_param_spec_boolean("notification", NULL, NULL,
-                         TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  gobject_class->get_property = plugin_get_property;
-  gobject_class->set_property = plugin_set_property;
-  g_object_class_install_properties(gobject_class, PROP_COUNT, plugin_class_props);
+  //gobject_class->get_property = plugin_get_property;
+  //gobject_class->set_property = plugin_set_property;
+  //g_object_class_install_properties(gobject_class, PROP_COUNT, plugin_class_props);
 
   plugin_class->construct = plugin_construct;
   plugin_class->free_data = plugin_free_data;

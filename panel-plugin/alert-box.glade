@@ -19,14 +19,14 @@
   </object>
   <object class="GtkAdjustment" id="loop-count-adjustment">
     <property name="lower">1</property>
-    <property name="upper">3660</property>
+    <property name="upper">1000</property>
     <property name="value">1</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="multiplier-adjustment">
     <property name="lower">1</property>
-    <property name="upper">3660</property>
+    <property name="upper">1000</property>
     <property name="value">10</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
@@ -154,7 +154,7 @@
   </object>
   <object class="GtkAdjustment" id="repeat-count-adjustment">
     <property name="lower">2</property>
-    <property name="upper">3660</property>
+    <property name="upper">1000</property>
     <property name="value">2</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
@@ -373,7 +373,7 @@
                 <property name="create_folders">False</property>
                 <property name="filter">sound-filefilter</property>
                 <property name="title" translatable="yes">Select alert sound</property>
-                <signal name="file-set" handler="sound_chooser_file_set" swapped="no"/>
+                <signal name="selection-changed" handler="sound_chooser_selection_changed" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>

@@ -78,20 +78,6 @@ enum
   REPEAT_UNTIL_ACK = 0 // Alert.repeats
 };
 
-struct _Alert
-{
-  gboolean notification;
-  gchar *sound;
-  guint sound_loops;
-  gchar *program;
-  gchar *program_options;
-  guint program_runtime;
-  guint interval; // 0 (== NO_ALERT_REPEAT) - no repeats; >0 - every N seconds
-  guint repeats; // 0 (== REPEAT_UNTIL_ACK) - until acknowledged; >1 - count
-
-  guint repeats_left;
-};
-
 struct _Alarm
 {
   // Persisted settings (between plugin runtimes)
@@ -148,6 +134,8 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_r
                               const gchar* first_buffer, gsize first_buffer_length, ...);
 void set_sensitive(GtkBuilder *builder, gboolean sensitive,
                    const gchar *first_widget_id, ...);
+void g_object_copy(GObject *src, GObject *dst);
+gpointer g_object_dup(GObject *src);
 
 G_END_DECLS
 

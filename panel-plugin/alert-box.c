@@ -20,10 +20,13 @@
 #include <config.h>
 #endif
 
-#include <libxfce4panel/xfce-panel-plugin.h>
 #include <canberra.h>
+#include <libxfce4panel/xfce-panel-plugin.h>
+#include <xfconf/xfconf.h>
 
 #include "alert-box.h"
+#include "alert-box_ui.h"
+#include "alert.h"
 
 
 enum ProgramColumns
@@ -46,22 +49,44 @@ static void ca_playback_finished(ca_context *c, uint32_t id, int error_code, voi
 
 
 // Utilities
-static void
-select_sound(GtkWidget *dialog, gboolean select)
+static gboolean
+bind_alert_properties(GtkBuilder *builder, Alert *alert, const gchar *first_alert_prop,
+                      const gchar *first_widget_id, const gchar *first_widget_prop,
+                      GBindingTransformFunc first_transform_to,
+                      GBindingTransformFunc first_transform_from, ...)
 {
-  GtkBuilder *builder;
-  GObject *object;
+  // TODO: zapisac parametry w struct i normalnie w petli bindowac?
+  // bo to i tak w jednym miejscu jest uzywane
+  va_list var_args;
+  const char *alert_prop = first_alert_prop;
+  const char *widget_id = first_widget_id;
+  const char *widget_prop = first_widget_prop;
+  GBindingTransformFunc transform_to = first_transform_to;
+  GBindingTransformFunc transform_from = first_transform_from;
+  GObject *widget;
 
-  builder = g_object_get_data(G_OBJECT(dialog), "builder");
+  g_return_val_if_fail(GTK_IS_BUILDER(builder), FALSE);
+  g_return_val_if_fail(ALARM_PLUGIN_IS_ALERT(alert), FALSE);
+  g_return_val_if_fail(first_alert_prop != NULL, FALSE);
 
-  if (!select)
+  va_start(var_args, first_transform_from);
+  while (alert_prop != NULL)
   {
-    object = gtk_builder_get_object(builder, "sound-chooser");
-    g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(object));
-    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(object));
-  }
+    widget = gtk_builder_get_object(builder, widget_id);
+    g_return_val_if_fail(GTK_IS_WIDGET(widget), FALSE);
+    g_object_bind_property_full(alert, alert_prop, widget, widget_prop,
+                                G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL,
+                                transform_to, transform_from, NULL, NULL);
 
-  set_sensitive(builder, select, "sound-play-box", "sound-loop-box", NULL);
+    alert_prop = va_arg(var_args, const gchar*);
+    widget_id = va_arg(var_args, const gchar*);
+    widget_prop = va_arg(var_args, const gchar*);
+    transform_to = va_arg(var_args, GBindingTransformFunc);
+    transform_from = va_arg(var_args, GBindingTransformFunc);
+  }
+  va_end(var_args);
+
+  return TRUE;
 }
 
 static void
@@ -75,7 +100,7 @@ play_sound(GtkWidget *dialog, gboolean play)
   gchar *filename;
   int is_playing;
 
-  builder = g_object_get_data(G_OBJECT(dialog), "builder");
+  builder = g_object_get_data(G_OBJECT(dialog), "alert-builder");
 
   set_sensitive(builder, !play, "sound-chooser", "clear-sound", "sound-loop-box", NULL);
 
@@ -172,7 +197,7 @@ select_program(GtkBuilder *builder, GtkWidget *parent)
             active = gtk_tree_path_get_indices(tree_path)[0];
             gtk_tree_path_free(tree_path);
 
-            g_clear_pointer(&appinfo, g_object_unref);
+            g_clear_object(&appinfo);
             break;
           }
         }
@@ -217,19 +242,44 @@ select_program(GtkBuilder *builder, GtkWidget *parent)
 
 // Callbacks
 static void
-sound_chooser_file_set(GtkFileChooserButton *button, gpointer user_data)
+sound_chooser_selection_changed(GtkFileChooserButton *button, Alert *alert)
 {
-  g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(button));
+  GtkWidget *parent;
+  GtkBuilder *builder;
+  GObject *object;
+  gchar *filename;
 
-  select_sound(gtk_widget_get_toplevel(GTK_WIDGET(button)), TRUE);
+  g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(button));
+  g_return_if_fail(ALARM_PLUGIN_IS_ALERT(alert));
+
+  parent = gtk_widget_get_toplevel(GTK_WIDGET(button));
+  builder = g_object_get_data(G_OBJECT(parent), "alert-builder");
+
+  object = gtk_builder_get_object(builder, "sound-chooser");
+  g_return_if_fail(GTK_IS_FILE_CHOOSER(object));
+
+  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(object));
+  g_object_set(G_OBJECT(alert), "sound", filename, NULL);
+  set_sensitive(builder, filename != NULL, "sound-play-box", "sound-loop-box", NULL);
+
+  g_free(filename);
 }
 
 static void
 clear_sound_clicked(GtkButton *button, gpointer user_data)
 {
+  GtkWidget *parent;
+  GtkBuilder *builder;
+  GObject *object;
+
   g_return_if_fail(GTK_IS_BUTTON(button));
 
-  select_sound(gtk_widget_get_toplevel(GTK_WIDGET(button)), FALSE);
+  parent = gtk_widget_get_toplevel(GTK_WIDGET(button));
+  builder = g_object_get_data(G_OBJECT(parent), "alert-builder");
+
+  object = gtk_builder_get_object(builder, "sound-chooser");
+  g_return_if_fail(GTK_IS_FILE_CHOOSER(object));
+  gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(object));
 }
 
 static void
@@ -270,7 +320,7 @@ program_changed(GtkComboBox *widget, gpointer user_data)
   active = gtk_combo_box_get_active(widget);
 
   parent = gtk_widget_get_toplevel(GTK_WIDGET(widget));
-  builder = g_object_get_data(G_OBJECT(parent), "builder");
+  builder = g_object_get_data(G_OBJECT(parent), "alert-builder");
 
   set_sensitive(builder, active > PROGRAM_CHOOSE_FILE,
                 "program-options", "limit-runtime-box", NULL);
@@ -305,40 +355,50 @@ program_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 
 
 // External interface
-void
-init_alert_box(GtkBuilder *builder, const gchar *container_id)
+gboolean
+show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *container)
 {
+  GtkBuilder *builder;
   GObject *object, *source, *target;
   GtkWidget *alert_box;
   ca_context *context;
   GList *apps, *app_iter;
   GAppInfo *app;
+  const gchar *filename;
 
+  // TODO: normalnie unrefowac tam gdzie jest call init_alert_box
+  g_object_set_data_full(G_OBJECT(container), "alert", alert, g_object_unref);
+
+  alert->builder = alarm_builder_new(panel_plugin, "alert-box",
+                                     alert_box_ui, alert_box_ui_length,
+                                     NULL);
+  g_return_val_if_fail(GTK_IS_BUILDER(builder), FALSE);
   object = gtk_builder_get_object(builder, "alert-box");
-  g_return_if_fail(GTK_IS_GRID(object));
+  g_return_val_if_fail(GTK_IS_GRID(object), FALSE);
   alert_box = GTK_WIDGET(object);
+
+  // Connect alert box to container
+  g_object_ref(alert_box);
+  gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(alert_box)), alert_box);
+  gtk_container_add(container, alert_box);
+  g_object_unref(alert_box);
+  // TODO: builder dać w struct Alert i clearowac na destrukcji boxa
+  g_object_set_data(G_OBJECT(gtk_widget_get_toplevel(alert_box)), "alert-builder", builder);
 
   // Create libcanberra context for playing sounds
   ca_context_create(&context);
+  // TODO: ca-context dać w struct Alert i clearowac na destrukcji boxa
   g_object_set_data(object, "ca-context", context);
   g_object_weak_ref(object, (GWeakNotify) G_CALLBACK(ca_context_destroy), context);
 
-  // Only add symbols here. They will be connected by container.
   gtk_builder_add_callback_symbols(builder,
-      "sound_chooser_file_set", G_CALLBACK(sound_chooser_file_set),
+      "sound_chooser_selection_changed", G_CALLBACK(sound_chooser_selection_changed),
       "clear_sound_clicked", G_CALLBACK(clear_sound_clicked),
       "play_sound_toggled", G_CALLBACK(play_sound_toggled),
       "program_changed", G_CALLBACK(program_changed),
       "program_delete_event", G_CALLBACK(program_delete_event),
       NULL);
-
-  // Connect alert box to container
-  object = gtk_builder_get_object(builder, container_id);
-  g_return_if_fail(GTK_IS_CONTAINER(object));
-  g_object_ref(alert_box);
-  gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(alert_box)), alert_box);
-  gtk_container_add(GTK_CONTAINER(object), alert_box);
-  g_object_unref(alert_box);
+  gtk_builder_connect_signals(builder, alert);
 
   /* Fill program list. Positions prefilled from .glade:
    * PROGRAM_NONE:        (None)
@@ -346,7 +406,7 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
    * PROGRAM_CHOOSE_FILE: file chooser
    * 3:                   separator */
   object = gtk_builder_get_object(builder, "program-store");
-  g_return_if_fail(GTK_IS_LIST_STORE(object));
+  g_return_val_if_fail(GTK_IS_LIST_STORE(object), FALSE);
   apps = g_app_info_get_all();
   apps = g_list_sort(apps, app_order_func);
   app_iter = apps;
@@ -365,49 +425,59 @@ init_alert_box(GtkBuilder *builder, const gchar *container_id)
   g_list_free(apps);
 
   object = gtk_builder_get_object(builder, "program");
-  g_return_if_fail(GTK_IS_COMBO_BOX(object));
+  g_return_val_if_fail(GTK_IS_COMBO_BOX(object), FALSE);
   gtk_combo_box_set_row_separator_func(GTK_COMBO_BOX(object), program_separator_func, NULL,
                                        NULL);
   gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
 
   source = gtk_builder_get_object(builder, "limit-loops");
-  g_return_if_fail(GTK_IS_SWITCH(source));
+  g_return_val_if_fail(GTK_IS_SWITCH(source), FALSE);
   target = gtk_builder_get_object(builder, "loop-count");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(target), FALSE);
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   source = gtk_builder_get_object(builder, "limit-runtime");
-  g_return_if_fail(GTK_IS_SWITCH(source));
+  g_return_val_if_fail(GTK_IS_SWITCH(source), FALSE);
   target = gtk_builder_get_object(builder, "limit-period-box");
-  g_return_if_fail(GTK_IS_BOX(target));
+  g_return_val_if_fail(GTK_IS_BOX(target), FALSE);
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   source = gtk_builder_get_object(builder, "repeat");
-  g_return_if_fail(GTK_IS_SWITCH(source));
+  g_return_val_if_fail(GTK_IS_SWITCH(source), FALSE);
   target = gtk_builder_get_object(builder, "repeats-interval-box");
-  g_return_if_fail(GTK_IS_BOX(target));
+  g_return_val_if_fail(GTK_IS_BOX(target), FALSE);
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
   target = gtk_builder_get_object(builder, "limit-repeats-box");
-  g_return_if_fail(GTK_IS_BOX(target));
+  g_return_val_if_fail(GTK_IS_BOX(target), FALSE);
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   source = gtk_builder_get_object(builder, "limit-repeats");
-  g_return_if_fail(GTK_IS_SWITCH(source));
+  g_return_val_if_fail(GTK_IS_SWITCH(source), FALSE);
   target = gtk_builder_get_object(builder, "repeat-count");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(target));
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(target), FALSE);
   g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-}
 
-void
-alert_to_dialog(Alert *alert, GtkBuilder *builder)
-{
-}
+  // Set widgets according to alert properties
+  object = gtk_builder_get_object(builder, "sound-chooser");
+  g_return_val_if_fail(GTK_IS_FILE_CHOOSER(object), FALSE);
+  filename = alert_get_sound(alert);
+  if (g_file_test(filename, G_FILE_TEST_IS_REGULAR))
+    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(object), filename);
+  else
+    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(object));
 
-gboolean
-alert_from_dialog(Alert *alert, GtkBuilder *builder)
-{
-  g_return_val_if_fail(alert != NULL, FALSE);
-  g_return_val_if_fail(GTK_IS_BUILDER(builder), FALSE);
+  g_return_val_if_fail(
+    bind_alert_properties(builder, alert,
+      "notification", "notification", "active", NULL, NULL,
+      "sound-loops", "limit-loops", "active", NULL, NULL,
+      "sound-loops", "loop-count", "value", NULL, NULL,
+      "program-options", "program-options", "text", NULL, NULL,
+      "program-runtime", "limit-runtime", "active", NULL, NULL,
+      "program-runtime", "runtime-multiplier", "value", NULL, NULL,
+      "program-runtime", "runtime-mode", "active", NULL, NULL,
+      NULL),
+    FALSE
+  );
 
   return TRUE;
 }

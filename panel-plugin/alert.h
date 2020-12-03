@@ -16,12 +16,17 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __ALERT_BOX_H__
-#define __ALERT_BOX_H__
+#ifndef __ALARM_PLUGIN_ALERT_H__
+#define __ALARM_PLUGIN_ALERT_H__
 
-#include "alarm.h"
+G_BEGIN_DECLS
 
-gboolean show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin,
-                        GtkContainer *container);
+#define ALARM_PLUGIN_TYPE_ALERT (alert_get_type())
+G_DECLARE_FINAL_TYPE(Alert, alert, ALARM_PLUGIN, ALERT, GObject)
 
-#endif /* !__ALERT_BOX_H__ */
+Alert* alert_new(XfconfChannel *channel);
+const gchar* alert_get_sound(Alert *alert);
+
+G_END_DECLS
+
+#endif /* !__ALARM_PLUGIN_ALERT_H__ */

@@ -25,11 +25,12 @@
 #endif
 
 #include <libxfce4panel/xfce-panel-plugin.h>
+#include <xfconf/xfconf.h>
 
 #include "alarm-dialog.h"
 #include "alarm-dialog_ui.h"
 #include "alert-box.h"
-#include "alert-box_ui.h"
+#include "alert.h"
 
 
 // Utilities
@@ -95,6 +96,10 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
   g_return_if_fail(GTK_IS_SWITCH(object));
   gtk_switch_set_active(GTK_SWITCH(object), alarm->autostop_on_suspend);
 
+  object = gtk_builder_get_object(builder, "custom-alert");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  gtk_switch_set_active(GTK_SWITCH(object), alarm->alert != NULL);
+
   object = gtk_builder_get_object(builder, "recurrence");
   g_return_if_fail(GTK_IS_STACK(object));
   objects = gtk_container_get_children(GTK_CONTAINER(object));
@@ -159,8 +164,6 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
       gtk_combo_box_set_active(GTK_COMBO_BOX(object), alarm->rerun_mode);
     }
   }
-
-  alert_to_dialog(alarm->alert, builder);
 }
 
 static gboolean
@@ -172,6 +175,7 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   GtkTreeModel *tree_model;
   GtkTreeIter tree_iter;
   GList *items, *item_iter;
+  Alert *alert;
 
   g_return_val_if_fail(alarm != NULL, FALSE);
   g_return_val_if_fail(GTK_IS_BUILDER(builder), FALSE);
@@ -298,7 +302,21 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
     }
   }
 
-  g_return_val_if_fail(alert_from_dialog(alarm->alert, builder), FALSE);
+  object = gtk_builder_get_object(builder, "custom-alert");
+  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
+  if (gtk_switch_get_active(GTK_SWITCH(object)))
+  {
+    object = gtk_builder_get_object(builder, "alert-alignment");
+    g_return_val_if_fail(GTK_IS_CONTAINER(object), FALSE);
+    alert = g_object_get_data(object, "alert");
+
+    if (alarm->alert == NULL)
+      alarm->alert = g_object_ref(alert);
+    else
+      g_object_copy(G_OBJECT(alert), G_OBJECT(alarm->alert));
+  }
+  else
+    g_clear_object(&alarm->alert);
 
   return TRUE;
 }
@@ -333,6 +351,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   GObject *dialog, *object, *store;
   GList *alarm_iter;
   Alarm *triggered_timer;
+  Alert *alert;
 
   g_return_if_fail(GTK_IS_WINDOW(parent));
   g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
@@ -340,13 +359,17 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
 
   builder = alarm_builder_new(panel_plugin, "alarm-dialog",
                               alarm_dialog_ui, alarm_dialog_ui_length,
-                              alert_box_ui, alert_box_ui_length,
                               NULL);
   g_return_if_fail(GTK_IS_BUILDER(builder));
   dialog = gtk_builder_get_object(builder, "alarm-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
 
-  init_alert_box(builder, "alert-alignment");
+  object = gtk_builder_get_object(builder, "alert-alignment");
+  g_return_if_fail(GTK_IS_CONTAINER(object));
+  alert = g_object_dup(G_OBJECT((*alarm)->alert));
+  if (alert == NULL)
+    alert = alert_new(NULL);
+  g_return_if_fail(show_alert_box(alert, panel_plugin, GTK_CONTAINER(object)));
 
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
