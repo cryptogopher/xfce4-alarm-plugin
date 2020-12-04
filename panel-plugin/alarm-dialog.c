@@ -361,7 +361,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   bound_alert = g_object_dup(G_OBJECT((*alarm)->alert));
   if (bound_alert == NULL)
     bound_alert = alert_new(NULL);
-  g_object_weak_ref(object, g_object_unref, bound_alert);
+  g_object_weak_ref(object, (GWeakNotify) G_CALLBACK(g_object_unref), bound_alert);
   g_return_if_fail(show_alert_box(bound_alert, panel_plugin, GTK_CONTAINER(object)));
 
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));

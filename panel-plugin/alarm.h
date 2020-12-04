@@ -48,7 +48,7 @@ typedef enum
   TYPE_COUNT
 } AlarmType;
 
-enum
+enum RerunEvery
 {
   NO_RERUN        = 0,
   RERUN_DOW       = 0,
@@ -62,7 +62,7 @@ enum
   RERUN_WEEKDAY   = 31,
   RERUN_WEEKEND   = 96,
   RERUN_EVERYDAY  = 127
-}; // RerunEvery
+};
 
 typedef enum
 {
@@ -71,12 +71,6 @@ typedef enum
   RERUN_NMONTHS,
   RERUN_MODE_COUNT
 } RerunMode;
-
-enum
-{
-  NO_ALERT_REPEAT = 0, // Alert.interval
-  REPEAT_UNTIL_ACK = 0 // Alert.repeats
-};
 
 struct _Alarm
 {
@@ -113,6 +107,15 @@ enum AlarmColumns
 };
 
 const gchar *alarm_type_icons[TYPE_COUNT];
+
+typedef struct
+{
+  const gchar *object_prop;
+  const gchar *widget_id;
+  const gchar *widget_prop;
+  GBindingTransformFunc transform_to;
+  GBindingTransformFunc transform_from;
+} PropertyBinding;
 
 
 #define XFCE_TYPE_ALARM_PLUGIN (alarm_plugin_get_type ())

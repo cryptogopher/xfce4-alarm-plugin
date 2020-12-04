@@ -46,6 +46,12 @@ struct _Alert
   guint repeats_left;
 };
 
+enum AlertRepeats
+{
+  NO_ALERT_REPEAT = 0, // Alert.interval
+  REPEAT_UNTIL_ACK = 0 // Alert.repeats
+};
+
 enum AlertProperties
 {
   PROP_0,
@@ -215,46 +221,6 @@ alert_init(Alert *alert)
 // Utilities
 static gboolean playback_finished(gpointer button);
 static void ca_playback_finished(ca_context *c, uint32_t id, int error_code, void *button);
-
-static gboolean
-bind_alert_properties(GtkBuilder *builder, Alert *alert, const gchar *first_alert_prop,
-                      const gchar *first_widget_id, const gchar *first_widget_prop,
-                      GBindingTransformFunc first_transform_to,
-                      GBindingTransformFunc first_transform_from, ...)
-{
-  // TODO: zapisac parametry w struct i normalnie w petli bindowac?
-  // bo to i tak w jednym miejscu jest uzywane
-  va_list var_args;
-  const char *alert_prop = first_alert_prop;
-  const char *widget_id = first_widget_id;
-  const char *widget_prop = first_widget_prop;
-  GBindingTransformFunc transform_to = first_transform_to;
-  GBindingTransformFunc transform_from = first_transform_from;
-  GObject *widget;
-
-  g_return_val_if_fail(GTK_IS_BUILDER(builder), FALSE);
-  g_return_val_if_fail(ALARM_PLUGIN_IS_ALERT(alert), FALSE);
-  g_return_val_if_fail(first_alert_prop != NULL, FALSE);
-
-  va_start(var_args, first_transform_from);
-  while (alert_prop != NULL)
-  {
-    widget = gtk_builder_get_object(builder, widget_id);
-    g_return_val_if_fail(GTK_IS_WIDGET(widget), FALSE);
-    g_object_bind_property_full(alert, alert_prop, widget, widget_prop,
-                                G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL,
-                                transform_to, transform_from, NULL, NULL);
-
-    alert_prop = va_arg(var_args, const gchar*);
-    widget_id = va_arg(var_args, const gchar*);
-    widget_prop = va_arg(var_args, const gchar*);
-    transform_to = va_arg(var_args, GBindingTransformFunc);
-    transform_from = va_arg(var_args, GBindingTransformFunc);
-  }
-  va_end(var_args);
-
-  return TRUE;
-}
 
 static void
 clear_context(Alert *alert)
@@ -535,6 +501,16 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   GtkWidget *alert_box;
   GList *apps, *app_iter;
   GAppInfo *app;
+  PropertyBinding alert_bindings[] =
+  {
+    {"notification", "notification", "active", NULL, NULL},
+    {"sound-loops", "limit-loops", "active", NULL, NULL},
+    {"sound-loops", "loop-count", "value", NULL, NULL},
+    {"program-options", "program-options", "text", NULL, NULL},
+    {"program-runtime", "limit-runtime", "active", NULL, NULL},
+    {"program-runtime", "runtime-multiplier", "value", NULL, NULL},
+    {"program-runtime", "runtime-mode", "active", NULL, NULL},
+  };
 
   alert->builder = alarm_builder_new(panel_plugin, "alert-box", &object,
                                      alert_box_ui, alert_box_ui_length,
@@ -628,18 +604,17 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   else
     gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(object));
 
-  g_return_val_if_fail(
-    bind_alert_properties(alert->builder, alert,
-      "notification", "notification", "active", NULL, NULL,
-      "sound-loops", "limit-loops", "active", NULL, NULL,
-      "sound-loops", "loop-count", "value", NULL, NULL,
-      "program-options", "program-options", "text", NULL, NULL,
-      "program-runtime", "limit-runtime", "active", NULL, NULL,
-      "program-runtime", "runtime-multiplier", "value", NULL, NULL,
-      "program-runtime", "runtime-mode", "active", NULL, NULL,
-      NULL),
-    FALSE
-  );
+  for (guint i = 0; i < sizeof(alert_bindings)/sizeof(alert_bindings[0]); i++)
+  {
+    target = gtk_builder_get_object(alert->builder, alert_bindings[i].widget_id);
+    g_return_val_if_fail(GTK_IS_WIDGET(target), FALSE);
+    g_object_bind_property_full(alert, alert_bindings[i].object_prop,
+                                target, alert_bindings[i].widget_prop,
+                                G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL,
+                                alert_bindings[i].transform_to,
+                                alert_bindings[i].transform_from,
+                                NULL, NULL);
+  }
 
   return TRUE;
 }
