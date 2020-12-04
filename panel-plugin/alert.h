@@ -25,7 +25,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(Alert, alert, ALARM_PLUGIN, ALERT, GObject)
 
 Alert* alert_new(XfconfChannel *channel);
-const gchar* alert_get_sound(Alert *alert);
+gboolean show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin,
+                        GtkContainer *container);
 
 G_END_DECLS
 

@@ -21,11 +21,12 @@
 #endif
 
 #include <libxfce4panel/xfce-panel-plugin.h>
+#include <xfconf/xfconf.h>
 
 #include "properties-dialog.h"
 #include "properties-dialog_ui.h"
 #include "alarm-dialog.h"
-#include "alert-box.h"
+#include "alert.h"
 
 
 // Utilities
@@ -271,11 +272,10 @@ show_properties_dialog(XfcePanelPlugin *panel_plugin)
   GList *alarm_iter;
   GtkTreeIter tree_iter;
 
-  builder = alarm_builder_new(panel_plugin, "properties-dialog",
+  builder = alarm_builder_new(panel_plugin, "properties-dialog", &dialog,
                               properties_dialog_ui, properties_dialog_ui_length,
                               NULL);
   g_return_if_fail(GTK_IS_BUILDER(builder));
-  dialog = gtk_builder_get_object(builder, "properties-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
 
   object = gtk_builder_get_object(builder, "alert-frame");

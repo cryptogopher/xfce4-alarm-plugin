@@ -29,7 +29,6 @@
 
 #include "alarm-dialog.h"
 #include "alarm-dialog_ui.h"
-#include "alert-box.h"
 #include "alert.h"
 
 
@@ -167,7 +166,7 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
 }
 
 static gboolean
-alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
+alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
 {
   GObject *object;
   guint value;
@@ -175,7 +174,6 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   GtkTreeModel *tree_model;
   GtkTreeIter tree_iter;
   GList *items, *item_iter;
-  Alert *alert;
 
   g_return_val_if_fail(alarm != NULL, FALSE);
   g_return_val_if_fail(GTK_IS_BUILDER(builder), FALSE);
@@ -305,16 +303,10 @@ alarm_from_dialog(Alarm *alarm, GtkBuilder *builder)
   object = gtk_builder_get_object(builder, "custom-alert");
   g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
   if (gtk_switch_get_active(GTK_SWITCH(object)))
-  {
-    object = gtk_builder_get_object(builder, "alert-alignment");
-    g_return_val_if_fail(GTK_IS_CONTAINER(object), FALSE);
-    alert = g_object_get_data(object, "alert");
-
     if (alarm->alert == NULL)
-      alarm->alert = g_object_ref(alert);
+      alarm->alert = g_object_ref(bound_alert);
     else
-      g_object_copy(G_OBJECT(alert), G_OBJECT(alarm->alert));
-  }
+      g_object_copy(G_OBJECT(bound_alert), G_OBJECT(alarm->alert));
   else
     g_clear_object(&alarm->alert);
 
@@ -342,7 +334,8 @@ time_wrapped(GtkSpinButton *wrapped_spin, GtkSpinButton *higher_spin)
 
 
 // External interface
-// TODO: return GtkDialog which will be destroyed by caller
+// TODO: return GtkDialog which will be destroyed by caller (because it's not
+// destroyed in case of error?)
 void
 show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm)
 {
@@ -351,25 +344,25 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   GObject *dialog, *object, *store;
   GList *alarm_iter;
   Alarm *triggered_timer;
-  Alert *alert;
+  Alert *bound_alert;
 
   g_return_if_fail(GTK_IS_WINDOW(parent));
   g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
   g_return_if_fail(alarm != NULL);
 
-  builder = alarm_builder_new(panel_plugin, "alarm-dialog",
+  builder = alarm_builder_new(panel_plugin, "alarm-dialog", &dialog,
                               alarm_dialog_ui, alarm_dialog_ui_length,
                               NULL);
   g_return_if_fail(GTK_IS_BUILDER(builder));
-  dialog = gtk_builder_get_object(builder, "alarm-dialog");
   g_return_if_fail(GTK_IS_DIALOG(dialog));
 
   object = gtk_builder_get_object(builder, "alert-alignment");
   g_return_if_fail(GTK_IS_CONTAINER(object));
-  alert = g_object_dup(G_OBJECT((*alarm)->alert));
-  if (alert == NULL)
-    alert = alert_new(NULL);
-  g_return_if_fail(show_alert_box(alert, panel_plugin, GTK_CONTAINER(object)));
+  bound_alert = g_object_dup(G_OBJECT((*alarm)->alert));
+  if (bound_alert == NULL)
+    bound_alert = alert_new(NULL);
+  g_object_weak_ref(object, g_object_unref, bound_alert);
+  g_return_if_fail(show_alert_box(bound_alert, panel_plugin, GTK_CONTAINER(object)));
 
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
@@ -408,7 +401,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
     if (*alarm == NULL)
       *alarm = g_slice_new0(Alarm);
 
-    g_warn_if_fail(alarm_from_dialog(*alarm, builder));
+    g_warn_if_fail(alarm_from_dialog(*alarm, bound_alert, builder));
   }
 
   gtk_widget_destroy(GTK_WIDGET(dialog));

@@ -294,7 +294,8 @@ reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
 }
 
 GtkBuilder*
-alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
+alarm_builder_new(XfcePanelPlugin *panel_plugin,
+                  const gchar *weak_ref_id, GObject **weak_ref_obj,
                   const gchar* first_buffer, gsize first_buffer_length, ...)
 {
   GtkBuilder *builder;
@@ -302,7 +303,6 @@ alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
   va_list var_args;
   const gchar *buffer = first_buffer;
   gsize buffer_length = first_buffer_length;
-  GObject *weak_ref_obj;
 
   g_return_val_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin), NULL);
   g_return_val_if_fail(first_buffer != NULL, NULL);
@@ -335,9 +335,12 @@ alarm_builder_new(XfcePanelPlugin *panel_plugin, const gchar *weak_ref_id,
   }
   va_end(var_args);
 
-  weak_ref_obj = gtk_builder_get_object(builder, weak_ref_id);
-  if (G_IS_OBJECT(weak_ref_obj))
-    g_object_set_data_full(weak_ref_obj, "builder", builder, g_object_unref);
+  *weak_ref_obj = gtk_builder_get_object(builder, weak_ref_id);
+  if (GTK_IS_WIDGET(*weak_ref_obj))
+    // TODO: builder should be saved in structure Plugin/Alarm like in Alert and
+    // destroyed from there instead of by data binding here (or builder pointer
+    // can be passed as argument and weak_ref clearing it set here)
+    g_object_set_data_full(*weak_ref_obj, "builder", builder, g_object_unref);
   else
     g_clear_object(&builder);
 

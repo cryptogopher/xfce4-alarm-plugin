@@ -23,9 +23,7 @@ libalarm_la_SOURCES = \
 	properties-dialog.c \
 	properties-dialog.h \
 	alarm-dialog.c \
-	alarm-dialog.h \
-	alert-box.c \
-	alert-box.h
+	alarm-dialog.h
 
 libalarm_la_CFLAGS = \
 	$(LIBXFCE4UTIL_CFLAGS) \
