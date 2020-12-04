@@ -292,7 +292,7 @@
         <child>
           <object class="GtkBox" id="limit-repeats-box">
             <property name="visible">True</property>
-            <property name="sensitive">False</property>
+            <property name="sensitive" bind-source="repeat" bind-property="active" bind-flags="sync-create"/>
             <property name="can_focus">False</property>
             <property name="spacing">8</property>
             <child>
@@ -324,7 +324,7 @@
             <child>
               <object class="GtkSpinButton" id="repeat-count">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
+                <property name="sensitive" bind-source="limit-repeats" bind-property="active" bind-flags="sync-create"/>
                 <property name="can_focus">True</property>
                 <property name="halign">start</property>
                 <property name="valign">center</property>
@@ -466,7 +466,7 @@
             <child>
               <object class="GtkSpinButton" id="loop-count">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
+                <property name="sensitive" bind-source="limit-loops" bind-property="active" bind-flags="sync-create"/>
                 <property name="can_focus">True</property>
                 <property name="halign">start</property>
                 <property name="valign">center</property>
@@ -538,7 +538,7 @@
             <child>
               <object class="GtkBox" id="limit-period-box">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
+                <property name="sensitive" bind-source="limit-runtime" bind-property="active" bind-flags="sync-create"/>
                 <property name="can_focus">False</property>
                 <property name="spacing">8</property>
                 <child>
@@ -626,7 +626,7 @@
             <child>
               <object class="GtkBox" id="repeats-interval-box">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
+                <property name="sensitive" bind-source="repeat" bind-property="active" bind-flags="sync-create"/>
                 <property name="can_focus">False</property>
                 <property name="spacing">8</property>
                 <child>

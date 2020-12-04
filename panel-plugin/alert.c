@@ -497,7 +497,7 @@ alert_new(XfconfChannel *channel)
 gboolean
 show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *container)
 {
-  GObject *object, *source, *target;
+  GObject *object, *target;
   GtkWidget *alert_box;
   GList *apps, *app_iter;
   GAppInfo *app;
@@ -567,34 +567,6 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   gtk_combo_box_set_row_separator_func(GTK_COMBO_BOX(object), program_separator_func, NULL,
                                        NULL);
   gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
-
-  // TODO: move prop bindings to glade
-  source = gtk_builder_get_object(alert->builder, "limit-loops");
-  g_return_val_if_fail(GTK_IS_SWITCH(source), FALSE);
-  target = gtk_builder_get_object(alert->builder, "loop-count");
-  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(target), FALSE);
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-
-  source = gtk_builder_get_object(alert->builder, "limit-runtime");
-  g_return_val_if_fail(GTK_IS_SWITCH(source), FALSE);
-  target = gtk_builder_get_object(alert->builder, "limit-period-box");
-  g_return_val_if_fail(GTK_IS_BOX(target), FALSE);
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-
-  source = gtk_builder_get_object(alert->builder, "repeat");
-  g_return_val_if_fail(GTK_IS_SWITCH(source), FALSE);
-  target = gtk_builder_get_object(alert->builder, "repeats-interval-box");
-  g_return_val_if_fail(GTK_IS_BOX(target), FALSE);
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-  target = gtk_builder_get_object(alert->builder, "limit-repeats-box");
-  g_return_val_if_fail(GTK_IS_BOX(target), FALSE);
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
-
-  source = gtk_builder_get_object(alert->builder, "limit-repeats");
-  g_return_val_if_fail(GTK_IS_SWITCH(source), FALSE);
-  target = gtk_builder_get_object(alert->builder, "repeat-count");
-  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(target), FALSE);
-  g_object_bind_property(source, "active", target, "sensitive", G_BINDING_SYNC_CREATE);
 
   // Set widgets according to alert properties
   object = gtk_builder_get_object(alert->builder, "sound-chooser");
