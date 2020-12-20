@@ -110,9 +110,9 @@ const gchar *alarm_type_icons[TYPE_COUNT];
 
 typedef struct
 {
-  const gchar *object_prop;
   const gchar *widget_id;
   const gchar *widget_prop;
+  const gchar *object_prop;
   GBindingTransformFunc transform_to;
   GBindingTransformFunc transform_from;
 } PropertyBinding;

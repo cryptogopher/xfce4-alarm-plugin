@@ -115,6 +115,10 @@ alert_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *ps
       g_value_set_string(value, self->program_options);
       break;
 
+    case PROP_ALERT_PROGRAM_RUNTIME:
+      g_value_set_uint(value, self->program_runtime);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
   }
@@ -142,6 +146,7 @@ alert_set_property(GObject *object, guint prop_id, const GValue *value, GParamSp
 
     case PROP_ALERT_SOUND_LOOPS:
       self->sound_loops = g_value_get_uint(value);
+      g_printerr("propset: %s -> %i\n", pspec->name, self->sound_loops);
       break;
 
     case PROP_ALERT_PROGRAM:
@@ -152,6 +157,10 @@ alert_set_property(GObject *object, guint prop_id, const GValue *value, GParamSp
     case PROP_ALERT_PROGRAM_OPTIONS:
       g_free(self->program_options);
       self->program_options = g_value_dup_string(value);
+      break;
+
+    case PROP_ALERT_PROGRAM_RUNTIME:
+      self->program_runtime = g_value_get_uint(value);
       break;
 
     default:
@@ -470,6 +479,34 @@ program_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
   return FALSE;
 }
 
+static gboolean
+uint2bool(GBinding *binding, const GValue *from_value, GValue *to_value, gpointer user_data)
+{
+  g_printerr("uint: %u", g_value_get_uint(from_value));
+  g_value_set_boolean(to_value, g_value_get_uint(from_value) > 0);
+  g_printerr("bool: %i", g_value_get_boolean(to_value));
+  return TRUE;
+}
+
+static gboolean
+sensitivity_to_value(GBinding *binding, const GValue *from_value, GValue *to_value,
+                     gpointer user_data)
+{
+  GObject *source;
+
+  if (g_value_get_boolean(from_value))
+  {
+    source = g_binding_get_source(binding);
+    g_return_val_if_fail(g_object_class_find_property(G_OBJECT_GET_CLASS(source), "value"),
+                         FALSE);
+    g_object_get_property(source, "value", to_value);
+  }
+  else
+    g_value_set_uint(to_value, 0);
+
+  return TRUE;
+}
+
 
 // External interface
 Alert*
@@ -503,13 +540,13 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   GAppInfo *app;
   PropertyBinding alert_bindings[] =
   {
-    {"notification", "notification", "active", NULL, NULL},
-    {"sound-loops", "limit-loops", "active", NULL, NULL},
-    {"sound-loops", "loop-count", "value", NULL, NULL},
-    {"program-options", "program-options", "text", NULL, NULL},
-    {"program-runtime", "limit-runtime", "active", NULL, NULL},
-    {"program-runtime", "runtime-multiplier", "value", NULL, NULL},
-    {"program-runtime", "runtime-mode", "active", NULL, NULL},
+    {"notification", "active", "notification", NULL, NULL},
+    {"loop-count", "sensitive", "sound-loops", sensitivity_to_value, NULL},
+    {"loop-count", "value", "sound-loops", NULL, NULL},
+    {"program-options", "text", "program-options", NULL, NULL},
+    {"limit-runtime", "active", "program-runtime", NULL, NULL},
+    {"runtime-multiplier", "value", "program-runtime", NULL, NULL},
+//    {"program-runtime", "runtime-mode", "active", uint2bool, uint2bool},
   };
 
   alert->builder = alarm_builder_new(panel_plugin, "alert-box", &object,
@@ -569,6 +606,7 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
 
   // Set widgets according to alert properties
+  // TODO: remove duplication between this and sound_chooser_selection_changed
   object = gtk_builder_get_object(alert->builder, "sound-chooser");
   g_return_val_if_fail(GTK_IS_FILE_CHOOSER(object), FALSE);
   if (g_file_test(alert->sound, G_FILE_TEST_IS_REGULAR))
@@ -580,9 +618,9 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   {
     target = gtk_builder_get_object(alert->builder, alert_bindings[i].widget_id);
     g_return_val_if_fail(GTK_IS_WIDGET(target), FALSE);
-    g_object_bind_property_full(alert, alert_bindings[i].object_prop,
-                                target, alert_bindings[i].widget_prop,
-                                G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL,
+    g_object_bind_property_full(target, alert_bindings[i].widget_prop,
+                                alert, alert_bindings[i].object_prop,
+                                G_BINDING_DEFAULT,
                                 alert_bindings[i].transform_to,
                                 alert_bindings[i].transform_from,
                                 NULL, NULL);
