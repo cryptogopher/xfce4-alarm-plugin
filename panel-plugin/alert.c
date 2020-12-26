@@ -28,6 +28,8 @@
 #include "alert-box_ui.h"
 #include "alert.h"
 
+#define UNICODE_INFINITY "\xe2\x88\x9e"
+
 struct _Alert
 {
   GObject parent;
@@ -398,7 +400,6 @@ play_sound_toggled(GtkToggleButton *button, Alert *alert)
   image = gtk_builder_get_object(alert->builder, play ? "image-stop" : "image-play");
   g_return_if_fail(GTK_IS_IMAGE(image));
   gtk_button_set_image(GTK_BUTTON(button), GTK_WIDGET(image));
-  gtk_button_set_label(GTK_BUTTON(button), play ? "Stop" : "Play now");
   gtk_toggle_button_set_active(button, play);
 
   if (play)
@@ -425,6 +426,23 @@ playback_finished(gpointer button)
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), FALSE);
 
   return G_SOURCE_REMOVE;
+}
+
+static gboolean
+loop_count_output(GtkSpinButton *button, gpointer user_data)
+{
+  GtkAdjustment *adjustment;
+
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(button), FALSE);
+
+  adjustment = gtk_spin_button_get_adjustment(button);
+  if (gtk_adjustment_get_value(adjustment) == 0)
+  {
+    gtk_entry_set_text(GTK_ENTRY(button), UNICODE_INFINITY);
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 static gboolean
@@ -541,7 +559,6 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   PropertyBinding alert_bindings[] =
   {
     {"notification", "active", "notification", NULL, NULL},
-    {"loop-count", "sensitive", "sound-loops", sensitivity_to_value, NULL},
     {"loop-count", "value", "sound-loops", NULL, NULL},
     {"program-options", "text", "program-options", NULL, NULL},
     {"limit-runtime", "active", "program-runtime", NULL, NULL},
@@ -570,6 +587,7 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
       "sound_chooser_selection_changed", G_CALLBACK(sound_chooser_selection_changed),
       "clear_sound_clicked", G_CALLBACK(clear_sound_clicked),
       "play_sound_toggled", G_CALLBACK(play_sound_toggled),
+      "loop_count_output", G_CALLBACK(loop_count_output),
       "program_changed", G_CALLBACK(program_changed),
       "program_delete_event", G_CALLBACK(program_delete_event),
       NULL);
@@ -618,9 +636,9 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   {
     target = gtk_builder_get_object(alert->builder, alert_bindings[i].widget_id);
     g_return_val_if_fail(GTK_IS_WIDGET(target), FALSE);
-    g_object_bind_property_full(target, alert_bindings[i].widget_prop,
-                                alert, alert_bindings[i].object_prop,
-                                G_BINDING_DEFAULT,
+    g_object_bind_property_full(alert, alert_bindings[i].object_prop,
+                                target, alert_bindings[i].widget_prop,
+                                G_BINDING_SYNC_CREATE | G_BINDING_BIDIRECTIONAL,
                                 alert_bindings[i].transform_to,
                                 alert_bindings[i].transform_from,
                                 NULL, NULL);

@@ -28,6 +28,7 @@
 #include "alarm-dialog.h"
 #include "alert.h"
 
+#define UNICODE_BLOCK "\xe2\x96\x8a"
 
 // Utilities
 static void
@@ -45,8 +46,8 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
   /* Setting color through markup preserves proper color on item selection (as
    * opposed to setting it through cell renderer background property). */
   if (alarm->color[0] != '\0')
-    color = g_strdup_printf("<span size=\"x-large\" foreground=\"%s\">\xe2\x96\x8a</span>",
-                            alarm->color);
+    color = g_strdup_printf("<span size=\"x-large\" foreground=\"%s\">" UNICODE_BLOCK
+                            "</span>", alarm->color);
 
   gtk_list_store_set(store, iter,
                      COL_DATA, alarm,
