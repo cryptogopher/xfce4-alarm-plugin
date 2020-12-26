@@ -20,6 +20,8 @@
 #include <config.h>
 #endif
 
+#include <math.h>
+
 #include <canberra.h>
 #include <libxfce4panel/xfce-panel-plugin.h>
 #include <xfconf/xfconf.h>
@@ -429,7 +431,7 @@ playback_finished(gpointer button)
 }
 
 static gboolean
-loop_count_output(GtkSpinButton *button, gpointer user_data)
+count_spin_output(GtkSpinButton *button, gpointer user_data)
 {
   GtkAdjustment *adjustment;
 
@@ -466,7 +468,7 @@ program_changed(GtkComboBox *widget, Alert *alert)
   active = gtk_combo_box_get_active(widget);
 
   set_sensitive(alert->builder, active > PROGRAM_CHOOSE_FILE,
-                "program-options", "limit-runtime-box", NULL);
+                "program-options", "program-runtime-box", NULL);
 
   if (active != PROGRAM_CHOOSE_FILE)
     return;
@@ -495,6 +497,64 @@ program_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
     while (gtk_tree_model_iter_next(model, &iter));
 
   return FALSE;
+}
+
+static gint
+time_spin_input(GtkSpinButton *button, gdouble *new_value, gpointer user_data)
+{
+  const gchar *time;
+  gchar *error = NULL, **parts;
+  gint pos = 0;
+
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(button), FALSE);
+
+  time = gtk_entry_get_text(GTK_ENTRY(button));
+  if (time == NULL)
+    return GTK_INPUT_ERROR;
+
+  if (!strcmp(time, UNICODE_INFINITY))
+  {
+    *new_value = 0;
+    return TRUE;
+  }
+
+  parts = g_strsplit(time, ":", 3);
+  do {
+    *new_value = 60*(*new_value) + g_strtod(parts[pos], &error);
+    pos++;
+  }
+  while ((parts[pos] != NULL) && (*error == '\0'));
+  g_strfreev(parts);
+
+  *new_value *= pow(60, 3 - pos);
+
+  if (error != NULL)
+    return GTK_INPUT_ERROR;
+  else
+    return TRUE;
+}
+
+static gboolean
+time_spin_output(GtkSpinButton *button, gpointer user_data)
+{
+  GtkAdjustment *adjustment;
+  gint value;
+  gchar *time;
+
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(button), FALSE);
+
+  adjustment = gtk_spin_button_get_adjustment(button);
+  value = gtk_adjustment_get_value(adjustment);
+  if (value == 0)
+    time = g_strdup(UNICODE_INFINITY);
+  else
+    time = g_strdup_printf("%02u:%02u:%02u", value/3600, value%3600/60, value%60);
+
+  if (strcmp(time, gtk_entry_get_text(GTK_ENTRY(button))))
+    gtk_entry_set_text(GTK_ENTRY(button), time);
+  g_free(time);
+
+  return TRUE;
 }
 
 static gboolean
@@ -561,8 +621,7 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
     {"notification", "active", "notification", NULL, NULL},
     {"loop-count", "value", "sound-loops", NULL, NULL},
     {"program-options", "text", "program-options", NULL, NULL},
-    {"limit-runtime", "active", "program-runtime", NULL, NULL},
-    {"runtime-multiplier", "value", "program-runtime", NULL, NULL},
+    {"program-runtime", "value", "program-runtime", NULL, NULL},
 //    {"program-runtime", "runtime-mode", "active", uint2bool, uint2bool},
   };
 
@@ -587,9 +646,11 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
       "sound_chooser_selection_changed", G_CALLBACK(sound_chooser_selection_changed),
       "clear_sound_clicked", G_CALLBACK(clear_sound_clicked),
       "play_sound_toggled", G_CALLBACK(play_sound_toggled),
-      "loop_count_output", G_CALLBACK(loop_count_output),
+      "loop_count_output", G_CALLBACK(count_spin_output),
       "program_changed", G_CALLBACK(program_changed),
       "program_delete_event", G_CALLBACK(program_delete_event),
+      "program_runtime_input", G_CALLBACK(time_spin_input),
+      "program_runtime_output", G_CALLBACK(time_spin_output),
       NULL);
   gtk_builder_connect_signals(alert->builder, alert);
 
