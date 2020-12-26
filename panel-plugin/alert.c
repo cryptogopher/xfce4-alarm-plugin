@@ -65,9 +65,9 @@ enum AlertProperties
   PROP_ALERT_PROGRAM,
   PROP_ALERT_PROGRAM_OPTIONS,
   PROP_ALERT_PROGRAM_RUNTIME,
-  PROP_COUNT,
-  PROP_ALERT_INTERVAL,
   PROP_ALERT_REPEATS,
+  PROP_ALERT_INTERVAL,
+  PROP_COUNT,
 };
 
 static GParamSpec *alert_class_props[PROP_COUNT] = {NULL, };
@@ -123,6 +123,14 @@ alert_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *ps
       g_value_set_uint(value, self->program_runtime);
       break;
 
+    case PROP_ALERT_REPEATS:
+      g_value_set_uint(value, self->repeats);
+      break;
+
+    case PROP_ALERT_INTERVAL:
+      g_value_set_uint(value, self->interval);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
   }
@@ -150,7 +158,6 @@ alert_set_property(GObject *object, guint prop_id, const GValue *value, GParamSp
 
     case PROP_ALERT_SOUND_LOOPS:
       self->sound_loops = g_value_get_uint(value);
-      g_printerr("propset: %s -> %i\n", pspec->name, self->sound_loops);
       break;
 
     case PROP_ALERT_PROGRAM:
@@ -165,6 +172,14 @@ alert_set_property(GObject *object, guint prop_id, const GValue *value, GParamSp
 
     case PROP_ALERT_PROGRAM_RUNTIME:
       self->program_runtime = g_value_get_uint(value);
+      break;
+
+    case PROP_ALERT_REPEATS:
+      self->repeats = g_value_get_uint(value);
+      break;
+
+    case PROP_ALERT_INTERVAL:
+      self->interval = g_value_get_uint(value);
       break;
 
     default:
@@ -214,7 +229,13 @@ alert_class_init(AlertClass *klass)
     g_param_spec_string("program-options", NULL, NULL, "",
                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
   alert_class_props[PROP_ALERT_PROGRAM_RUNTIME] =
-    g_param_spec_uint("program-runtime", NULL, NULL, 0, 3600000, 0,
+    g_param_spec_uint("program-runtime", NULL, NULL, 0, 359999, 0,
+                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  alert_class_props[PROP_ALERT_REPEATS] =
+    g_param_spec_uint("repeats", NULL, NULL, 0, 1000, 0,
+                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  alert_class_props[PROP_ALERT_INTERVAL] =
+    g_param_spec_uint("interval", NULL, NULL, 0, 359999, 0,
                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   gobject_class->get_property = alert_get_property;
@@ -558,30 +579,10 @@ time_spin_output(GtkSpinButton *button, gpointer user_data)
 }
 
 static gboolean
-uint2bool(GBinding *binding, const GValue *from_value, GValue *to_value, gpointer user_data)
+repeats_to_interval_sensitivity(GBinding *binding, const GValue *from_value,
+                                GValue *to_value, gpointer user_data)
 {
-  g_printerr("uint: %u", g_value_get_uint(from_value));
-  g_value_set_boolean(to_value, g_value_get_uint(from_value) > 0);
-  g_printerr("bool: %i", g_value_get_boolean(to_value));
-  return TRUE;
-}
-
-static gboolean
-sensitivity_to_value(GBinding *binding, const GValue *from_value, GValue *to_value,
-                     gpointer user_data)
-{
-  GObject *source;
-
-  if (g_value_get_boolean(from_value))
-  {
-    source = g_binding_get_source(binding);
-    g_return_val_if_fail(g_object_class_find_property(G_OBJECT_GET_CLASS(source), "value"),
-                         FALSE);
-    g_object_get_property(source, "value", to_value);
-  }
-  else
-    g_value_set_uint(to_value, 0);
-
+  g_value_set_boolean(to_value, g_value_get_uint(from_value) != 1);
   return TRUE;
 }
 
@@ -622,7 +623,9 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
     {"loop-count", "value", "sound-loops", NULL, NULL},
     {"program-options", "text", "program-options", NULL, NULL},
     {"program-runtime", "value", "program-runtime", NULL, NULL},
-//    {"program-runtime", "runtime-mode", "active", uint2bool, uint2bool},
+    {"repeat-count", "value", "repeats", NULL, NULL},
+    {"repeat-interval", "value", "interval", NULL, NULL},
+    {"repeat-interval", "sensitive", "repeats", repeats_to_interval_sensitivity, NULL},
   };
 
   alert->builder = alarm_builder_new(panel_plugin, "alert-box", &object,
@@ -651,6 +654,9 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
       "program_delete_event", G_CALLBACK(program_delete_event),
       "program_runtime_input", G_CALLBACK(time_spin_input),
       "program_runtime_output", G_CALLBACK(time_spin_output),
+      "repeat_count_output", G_CALLBACK(count_spin_output),
+      "repeat_interval_input", G_CALLBACK(time_spin_input),
+      "repeat_interval_output", G_CALLBACK(time_spin_output),
       NULL);
   gtk_builder_connect_signals(alert->builder, alert);
 

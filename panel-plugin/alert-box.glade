@@ -107,7 +107,7 @@
   <object class="GtkAdjustment" id="program-runtime-adjustment">
     <property name="upper">359999</property>
     <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
+    <property name="page_increment">60</property>
   </object>
   <object class="GtkListStore" id="program-store">
     <columns>
@@ -150,44 +150,22 @@
     </data>
   </object>
   <object class="GtkAdjustment" id="repeat-count-adjustment">
-    <property name="lower">2</property>
     <property name="upper">1000</property>
-    <property name="value">2</property>
+    <property name="value">1</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkAdjustment" id="repeat-multiplier-adjustment">
+  <object class="GtkAdjustment" id="repeat-interval-adjustment">
     <property name="lower">1</property>
-    <property name="upper">1000</property>
+    <property name="upper">359999</property>
+    <property name="value">30</property>
     <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
+    <property name="page_increment">60</property>
   </object>
   <object class="GtkFileFilter" id="sound-filefilter">
     <mime-types>
       <mime-type>audio/*</mime-type>
     </mime-types>
-  </object>
-  <object class="GtkListStore" id="time-store">
-    <columns>
-      <!-- column-name COL_DATA -->
-      <column type="guint"/>
-      <!-- column-name COL_NAME -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">0</col>
-        <col id="1" translatable="yes">second(s)</col>
-      </row>
-      <row>
-        <col id="0">1</col>
-        <col id="1" translatable="yes">minute(s)</col>
-      </row>
-      <row>
-        <col id="0">2</col>
-        <col id="1" translatable="yes">hour(s)</col>
-      </row>
-    </data>
   </object>
   <object class="GtkWindow">
     <property name="can_focus">False</property>
@@ -230,7 +208,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">start</property>
-            <property name="label" translatable="yes">Run program</property>
+            <property name="label" translatable="yes">Start program</property>
             <property name="xalign">0</property>
           </object>
           <packing>
@@ -290,78 +268,6 @@
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">4</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="limit-repeats-box">
-            <property name="visible">True</property>
-            <property name="sensitive" bind-source="repeat" bind-property="active" bind-flags="sync-create">False</property>
-            <property name="can_focus">False</property>
-            <property name="spacing">8</property>
-            <child>
-              <object class="GtkSwitch" id="limit-repeats">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="halign">start</property>
-                <property name="valign">center</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label2">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">stop after</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSpinButton" id="repeat-count">
-                <property name="visible">True</property>
-                <property name="sensitive" bind-source="limit-repeats" bind-property="active" bind-flags="sync-create">False</property>
-                <property name="can_focus">True</property>
-                <property name="halign">start</property>
-                <property name="valign">center</property>
-                <property name="text" translatable="yes">2</property>
-                <property name="input_purpose">digits</property>
-                <property name="adjustment">repeat-count-adjustment</property>
-                <property name="climb_rate">1</property>
-                <property name="snap_to_ticks">True</property>
-                <property name="numeric">True</property>
-                <property name="value">2</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label3">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">repeat(s)</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">8</property>
           </packing>
         </child>
         <child>
@@ -516,17 +422,16 @@
               <object class="GtkSpinButton" id="program-runtime">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">when set to ∞ (or 0), program has to be stopped manually once it runs</property>
+                <property name="tooltip_text" translatable="yes">interval in hh:mm:ss format; when set to ∞ (or 0), program has to be stopped manually once it runs</property>
                 <property name="max_length">8</property>
                 <property name="width_chars">8</property>
-                <property name="text" translatable="yes">00:10:00</property>
+                <property name="text" translatable="yes">∞</property>
                 <property name="overwrite_mode">True</property>
                 <property name="input_purpose">number</property>
                 <property name="adjustment">program-runtime-adjustment</property>
                 <property name="climb_rate">1</property>
                 <property name="snap_to_ticks">True</property>
                 <property name="wrap">True</property>
-                <property name="value">10</property>
                 <signal name="input" handler="program_runtime_input" swapped="no"/>
                 <signal name="output" handler="program_runtime_output" swapped="no"/>
               </object>
@@ -548,12 +453,19 @@
             <property name="can_focus">False</property>
             <property name="spacing">8</property>
             <child>
-              <object class="GtkSwitch" id="repeat">
+              <object class="GtkSpinButton" id="repeat-count">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">Repeat alert</property>
                 <property name="halign">start</property>
                 <property name="valign">center</property>
+                <property name="text" translatable="yes">1</property>
+                <property name="input_purpose">number</property>
+                <property name="adjustment">repeat-count-adjustment</property>
+                <property name="climb_rate">1</property>
+                <property name="snap_to_ticks">True</property>
+                <property name="wrap">True</property>
+                <property name="value">1</property>
+                <signal name="output" handler="repeat_count_output" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -562,63 +474,37 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label6">
+              <object class="GtkLabel" id="label3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">every</property>
+                <property name="label" translatable="yes">time(s), every</property>
                 <property name="xalign">0</property>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="repeats-interval-box">
+              <object class="GtkSpinButton" id="repeat-interval">
                 <property name="visible">True</property>
-                <property name="sensitive" bind-source="repeat" bind-property="active" bind-flags="sync-create">False</property>
-                <property name="can_focus">False</property>
-                <property name="spacing">8</property>
-                <child>
-                  <object class="GtkSpinButton" id="repeat-multiplier">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="halign">start</property>
-                    <property name="valign">center</property>
-                    <property name="text" translatable="yes">1</property>
-                    <property name="input_purpose">digits</property>
-                    <property name="adjustment">repeat-count-adjustment</property>
-                    <property name="climb_rate">1</property>
-                    <property name="snap_to_ticks">True</property>
-                    <property name="numeric">True</property>
-                    <property name="value">10</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkComboBox" id="repeat-mode">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="model">time-store</property>
-                    <property name="active">1</property>
-                    <child>
-                      <object class="GtkCellRendererText"/>
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
+                <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">interval in hh:mm:ss format</property>
+                <property name="halign">start</property>
+                <property name="valign">center</property>
+                <property name="max_length">8</property>
+                <property name="width_chars">8</property>
+                <property name="text" translatable="yes">00:00:30</property>
+                <property name="overwrite_mode">True</property>
+                <property name="input_purpose">number</property>
+                <property name="adjustment">repeat-interval-adjustment</property>
+                <property name="climb_rate">1</property>
+                <property name="snap_to_ticks">True</property>
+                <property name="wrap">True</property>
+                <property name="value">30</property>
+                <signal name="input" handler="repeat_interval_input" swapped="no"/>
+                <signal name="output" handler="repeat_interval_output" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -661,9 +547,6 @@
             <property name="left_attach">1</property>
             <property name="top_attach">3</property>
           </packing>
-        </child>
-        <child>
-          <placeholder/>
         </child>
         <child>
           <placeholder/>
