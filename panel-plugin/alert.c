@@ -372,19 +372,15 @@ select_program(GtkBuilder *builder, GtkWidget *parent)
 static void
 sound_chooser_selection_changed(GtkFileChooserButton *button, Alert *alert)
 {
-  GObject *object;
   gchar *filename;
 
   g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(button));
   g_return_if_fail(ALARM_PLUGIN_IS_ALERT(alert));
 
-  object = gtk_builder_get_object(alert->builder, "sound-chooser");
-  g_return_if_fail(GTK_IS_FILE_CHOOSER(object));
-
-  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(object));
+  filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(button));
   g_object_set(G_OBJECT(alert), "sound", filename, NULL);
   if ((filename != NULL) && (alert->sound == NULL))
-    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(object));
+    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(button));
   g_free(filename);
 
   set_sensitive(alert->builder, alert->sound != NULL,
@@ -691,13 +687,10 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
 
   // Set widgets according to alert properties
-  // TODO: remove duplication between this and sound_chooser_selection_changed
   object = gtk_builder_get_object(alert->builder, "sound-chooser");
   g_return_val_if_fail(GTK_IS_FILE_CHOOSER(object), FALSE);
-  if (g_file_test(alert->sound, G_FILE_TEST_IS_REGULAR))
+  if (alert->sound != NULL)
     gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(object), alert->sound);
-  else
-    gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(object));
 
   for (guint i = 0; i < sizeof(alert_bindings)/sizeof(alert_bindings[0]); i++)
   {
