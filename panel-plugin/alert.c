@@ -44,8 +44,8 @@ struct _Alert
   gchar *program;
   gchar *program_options;
   guint program_runtime;
-  guint interval; // 0 (== NO_ALERT_REPEAT) - no repeats; >0 - every N seconds
   guint repeats; // 0 (== REPEAT_UNTIL_ACK) - until acknowledged; >1 - count
+  guint interval; // 0 (== NO_ALERT_REPEAT) - no repeats; >0 - every N seconds
 
   guint repeats_left;
 };
@@ -249,6 +249,14 @@ alert_class_init(AlertClass *klass)
 static void
 alert_init(Alert *alert)
 {
+  alert->notification = TRUE;
+  alert->sound = NULL;
+  alert->sound_loops = 1;
+  alert->program = NULL;
+  alert->program_options = NULL;
+  alert->program_runtime = 0;
+  alert->repeats = 1;
+  alert->interval = 60;
 }
 
 
