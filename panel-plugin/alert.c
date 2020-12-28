@@ -280,89 +280,86 @@ app_order_func(gconstpointer left, gconstpointer right)
                         g_app_info_get_display_name(G_APP_INFO(right)));
 }
 
-static gint
-select_program(GtkBuilder *builder, GtkWidget *parent)
+static gchar*
+show_program_dialog(GtkBuilder *builder, GtkWidget *parent)
 {
-  gint active = PROGRAM_NONE;
-  GObject *dialog, *object;
-  gchar *filename;
-  GAppInfo *appinfo, *tree_appinfo;
-  GError *error = NULL;
-  GtkTreeModel *tree_model;
-  GtkTreeIter tree_iter;
-  GtkTreePath *tree_path;
-  GFile *file;
-  GFileInfo *fileinfo;
-  GIcon *fileicon = NULL;
+  GObject *dialog;
+  gchar *filename = NULL;
 
   dialog = gtk_builder_get_object(builder, "program-dialog");
   g_return_val_if_fail(GTK_IS_FILE_CHOOSER_DIALOG(dialog), PROGRAM_NONE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 
-  object = gtk_builder_get_object(builder, "program-store");
-  g_return_val_if_fail(GTK_IS_LIST_STORE(object), PROGRAM_NONE);
-  tree_model = GTK_TREE_MODEL(object);
-
   if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK)
-  {
     filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-    g_return_val_if_fail(filename != NULL, PROGRAM_NONE);
-
-    appinfo = g_app_info_create_from_commandline(filename, NULL, G_APP_INFO_CREATE_NONE,
-                                                 &error);
-    if (error == NULL)
-    {
-      // Look for existing entry with given commandline and select if already added
-      if (gtk_tree_model_get_iter_first(tree_model, &tree_iter))
-        do
-        {
-          gtk_tree_model_get(tree_model, &tree_iter, PROGRAM_DATA, &tree_appinfo, -1);
-          if (tree_appinfo != NULL &&
-              !g_strcmp0(g_app_info_get_commandline(appinfo),
-                         g_app_info_get_commandline(tree_appinfo)))
-          {
-            tree_path = gtk_tree_model_get_path(tree_model, &tree_iter);
-            active = gtk_tree_path_get_indices(tree_path)[0];
-            gtk_tree_path_free(tree_path);
-
-            g_clear_object(&appinfo);
-            break;
-          }
-        }
-        while (gtk_tree_model_iter_next(tree_model, &tree_iter));
-
-      // Otherwise insert new entry right below 'Choose program file'
-      if (active == PROGRAM_NONE)
-      {
-        active = PROGRAM_CHOOSE_FILE + 1;
-
-        file = g_file_new_for_path(filename);
-        fileinfo = g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_ICON,
-            G_FILE_QUERY_INFO_NONE, NULL, NULL);
-        if (fileinfo != NULL)
-          fileicon = g_file_info_get_icon(fileinfo);
-
-        gtk_list_store_insert_with_values(GTK_LIST_STORE(tree_model), NULL, active,
-                                        PROGRAM_DATA, appinfo,
-                                        PROGRAM_ICON, fileicon,
-                                        PROGRAM_NAME, g_app_info_get_display_name(appinfo),
-                                        PROGRAM_SEPARATOR, FALSE,
-                                        PROGRAM_HAS_ICON, TRUE, -1);
-
-        g_object_unref(fileinfo);
-        g_object_unref(file);
-      }
-    }
-    else
-    {
-      g_warning("Failed to get app info: %s.", error->message);
-      g_error_free(error);
-    }
-
-    g_free(filename);
-  }
 
   gtk_widget_hide(GTK_WIDGET(dialog));
+
+  return filename;
+}
+
+static int
+select_program_by_filename(GtkTreeModel *model, const gchar *filename)
+{
+  gint active = PROGRAM_NONE;
+  GAppInfo *appinfo, *tree_appinfo;
+  GError *error = NULL;
+  GtkTreeIter iter;
+  GtkTreePath *path;
+  GFile *file;
+  GFileInfo *fileinfo;
+  GIcon *fileicon = NULL;
+
+  appinfo = g_app_info_create_from_commandline(filename, NULL, G_APP_INFO_CREATE_NONE,
+                                               &error);
+  if (error == NULL)
+  {
+    // Look for existing entry with given commandline and select if already added
+    if (gtk_tree_model_get_iter_first(model, &iter))
+      do
+      {
+        gtk_tree_model_get(model, &iter, PROGRAM_DATA, &tree_appinfo, -1);
+        if (tree_appinfo != NULL &&
+            !g_strcmp0(g_app_info_get_commandline(appinfo),
+                       g_app_info_get_commandline(tree_appinfo)))
+        {
+          path = gtk_tree_model_get_path(model, &iter);
+          active = gtk_tree_path_get_indices(path)[0];
+          gtk_tree_path_free(path);
+
+          g_clear_object(&appinfo);
+          break;
+        }
+      }
+      while (gtk_tree_model_iter_next(model, &iter));
+
+    // Otherwise insert new entry right below 'Choose program file'
+    if (active == PROGRAM_NONE)
+    {
+      active = PROGRAM_CHOOSE_FILE + 1;
+
+      file = g_file_new_for_path(filename);
+      fileinfo = g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_ICON,
+          G_FILE_QUERY_INFO_NONE, NULL, NULL);
+      if (fileinfo != NULL)
+        fileicon = g_file_info_get_icon(fileinfo);
+
+      gtk_list_store_insert_with_values(GTK_LIST_STORE(model), NULL, active,
+                                      PROGRAM_DATA, appinfo,
+                                      PROGRAM_ICON, fileicon,
+                                      PROGRAM_NAME, g_app_info_get_display_name(appinfo),
+                                      PROGRAM_SEPARATOR, FALSE,
+                                      PROGRAM_HAS_ICON, TRUE, -1);
+
+      g_object_unref(fileinfo);
+      g_object_unref(file);
+    }
+  }
+  else
+  {
+    g_warning("Failed to get app info: %s.", error->message);
+    g_error_free(error);
+  }
 
   return active;
 }
@@ -478,20 +475,41 @@ program_changed(GtkComboBox *widget, Alert *alert)
 {
   GtkWidget *parent;
   gint active;
+  GtkTreeModel *model;
+  GtkTreeIter iter;
+  GAppInfo *app;
+  const gchar *app_name = NULL;
+  gchar *program;
 
   g_return_if_fail(GTK_IS_COMBO_BOX(widget));
   g_return_if_fail(ALARM_PLUGIN_IS_ALERT(alert));
 
   active = gtk_combo_box_get_active(widget);
+  model = gtk_combo_box_get_model(widget);
+
+  if (active == PROGRAM_CHOOSE_FILE)
+  {
+    parent = gtk_widget_get_toplevel(GTK_WIDGET(widget));
+    program = show_program_dialog(alert->builder, parent);
+    gtk_combo_box_set_active(widget, select_program_by_filename(model, program));
+    g_free(program);
+    return;
+  }
 
   set_sensitive(alert->builder, active > PROGRAM_CHOOSE_FILE,
                 "program-options", "program-runtime-box", NULL);
 
-  if (active != PROGRAM_CHOOSE_FILE)
-    return;
+  g_return_if_fail(gtk_combo_box_get_active_iter(widget, &iter));
 
-  parent = gtk_widget_get_toplevel(GTK_WIDGET(widget));
-  gtk_combo_box_set_active(widget, select_program(alert->builder, parent));
+  gtk_tree_model_get(model, &iter, PROGRAM_DATA, &app, -1);
+  if (app != NULL)
+  {
+    app_name = g_app_info_get_id(app);
+    if (app_name == NULL)
+      app_name = g_app_info_get_executable(app);
+  }
+
+  g_object_set(G_OBJECT(alert), "program", app_name, NULL);
 }
 
 static gboolean
@@ -529,7 +547,7 @@ time_spin_input(GtkSpinButton *button, gdouble *new_value, gpointer user_data)
   if (time == NULL)
     return GTK_INPUT_ERROR;
 
-  if (!strcmp(time, UNICODE_INFINITY))
+  if (!g_strcmp0(time, UNICODE_INFINITY))
   {
     *new_value = 0;
     return TRUE;
@@ -567,7 +585,7 @@ time_spin_output(GtkSpinButton *button, gpointer user_data)
   else
     time = g_strdup_printf("%02u:%02u:%02u", value/3600, value%3600/60, value%60);
 
-  if (strcmp(time, gtk_entry_get_text(GTK_ENTRY(button))))
+  if (g_strcmp0(time, gtk_entry_get_text(GTK_ENTRY(button))))
     gtk_entry_set_text(GTK_ENTRY(button), time);
   g_free(time);
 
@@ -609,10 +627,11 @@ alert_new(XfconfChannel *channel)
 gboolean
 show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *container)
 {
-  GObject *object, *target;
+  GObject *object, *target, *program;
   GtkWidget *alert_box;
   GList *apps, *app_iter;
   GAppInfo *app;
+  guint active_program = PROGRAM_NONE;
   PropertyBinding alert_bindings[] =
   {
     {"notification", "active", "notification", NULL, NULL},
@@ -656,6 +675,11 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
       NULL);
   gtk_builder_connect_signals(alert->builder, alert);
 
+  program = gtk_builder_get_object(alert->builder, "program");
+  g_return_val_if_fail(GTK_IS_COMBO_BOX(program), FALSE);
+  gtk_combo_box_set_row_separator_func(GTK_COMBO_BOX(program), program_separator_func, NULL,
+                                       NULL);
+
   /* Fill program list. Positions prefilled from .glade:
    * PROGRAM_NONE:        (None)
    * 1:                   separator
@@ -670,21 +694,24 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   {
     app = app_iter->data;
     if (g_app_info_should_show(app))
+    {
       gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
                                         PROGRAM_DATA, app,
                                         PROGRAM_ICON, g_app_info_get_icon(app),
                                         PROGRAM_NAME, g_app_info_get_display_name(app),
                                         PROGRAM_SEPARATOR, FALSE,
                                         PROGRAM_HAS_ICON, TRUE, -1);
+      if ((alert->program != NULL) && !g_strcmp0(alert->program, g_app_info_get_id(app)))
+        active_program = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(object), NULL) - 1;
+    }
     app_iter = app_iter->next;
   }
   g_list_free(apps);
 
-  object = gtk_builder_get_object(alert->builder, "program");
-  g_return_val_if_fail(GTK_IS_COMBO_BOX(object), FALSE);
-  gtk_combo_box_set_row_separator_func(GTK_COMBO_BOX(object), program_separator_func, NULL,
-                                       NULL);
-  gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
+  if ((alert->program != NULL) && (active_program == PROGRAM_NONE))
+    // Program specified but not found on apps list by ID
+    active_program = select_program_by_filename(GTK_TREE_MODEL(object), alert->program);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(program), active_program);
 
   // Set widgets according to alert properties
   object = gtk_builder_get_object(alert->builder, "sound-chooser");
