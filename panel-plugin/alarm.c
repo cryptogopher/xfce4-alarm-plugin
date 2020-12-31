@@ -183,6 +183,10 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   XfconfChannel *channel;
   gint position;
   gchar *property_base, *value;
+  GParamSpec **specs;
+  guint spec_count, i;
+  gchar *property_name;
+  GValue property_value = G_VALUE_INIT;
 
   g_return_if_fail(alarm != NULL);
 
@@ -233,6 +237,25 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
       g_warn_if_fail(xfconf_channel_set_int(channel, "/rerun-every", alarm->rerun_every));
       if (alarm->rerun_every < RERUN_DOW)
         g_warn_if_fail(xfconf_channel_set_uint(channel, "/rerun-mode", alarm->rerun_mode));
+    }
+  }
+
+  xfconf_channel_reset_property(channel, "/alert", TRUE);
+  if (alarm->alert != NULL)
+  {
+    specs = g_object_class_list_properties(G_OBJECT_GET_CLASS(alarm->alert), &spec_count);
+
+    for (i = 0; i < spec_count; i++)
+    {
+      if ((specs[i]->flags & G_PARAM_READWRITE) == 0)
+        continue;
+
+      property_name = g_strconcat("/alert/", g_param_spec_get_name(specs[i]), NULL);
+      g_object_get_property(G_OBJECT(alarm->alert), g_param_spec_get_name(specs[i]),
+                            &property_value);
+      xfconf_channel_set_property(channel, property_name, &property_value);
+      g_free(property_name);
+      g_value_unset(&property_value);
     }
   }
 
@@ -400,6 +423,8 @@ g_object_copy(GObject *src, GObject *dst)
 
   g_free(specs);
   g_free(names);
+  for (i = 0; i < prop_count; i++)
+    g_value_unset(&values[i]);
   g_free(values);
 
   return;
