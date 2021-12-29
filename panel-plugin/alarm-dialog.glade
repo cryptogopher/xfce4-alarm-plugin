@@ -73,16 +73,6 @@
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
   </object>
-  <object class="GtkListStore" id="timer-store">
-    <columns>
-      <!-- column-name COL_DATA -->
-      <column type="gpointer"/>
-      <!-- column-name COL_NAME -->
-      <column type="gchararray"/>
-      <!-- column-name COL_UUID -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkDialog" id="alarm-dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Alarm</property>
@@ -605,46 +595,19 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkBox">
+                                      <object class="GtkComboBox" id="triggered-timer-combo">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
+                                        <property name="tooltip_text" translatable="yes">Start another timer on timeout</property>
+                                        <property name="valign">center</property>
                                         <property name="hexpand">True</property>
-                                        <property name="spacing">8</property>
+                                        <property name="model">triggered-timer-store</property>
+                                        <property name="id_column">2</property>
                                         <child>
-                                          <object class="GtkSwitch" id="trigger-timer">
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="tooltip_text" translatable="yes">Start another timer on timeout</property>
-                                            <property name="halign">start</property>
-                                            <property name="valign">center</property>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">False</property>
-                                            <property name="fill">False</property>
-                                            <property name="position">0</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkComboBox" id="timer-combo">
-                                            <property name="visible">True</property>
-                                            <property name="sensitive" bind-source="trigger-timer" bind-property="active" bind-flags="sync-create">False</property>
-                                            <property name="can_focus">False</property>
-                                            <property name="tooltip_text" translatable="yes">Start another timer on timeout</property>
-                                            <property name="valign">center</property>
-                                            <property name="model">timer-store</property>
-                                            <property name="id_column">2</property>
-                                            <child>
-                                              <object class="GtkCellRendererText" id="timer-name"/>
-                                              <attributes>
-                                                <attribute name="text">1</attribute>
-                                              </attributes>
-                                            </child>
-                                          </object>
-                                          <packing>
-                                            <property name="expand">True</property>
-                                            <property name="fill">True</property>
-                                            <property name="position">1</property>
-                                          </packing>
+                                          <object class="GtkCellRendererText" id="triggered-timer-name"/>
+                                          <attributes>
+                                            <attribute name="text">1</attribute>
+                                          </attributes>
                                         </child>
                                       </object>
                                       <packing>
@@ -993,5 +956,15 @@
       <widget name="rerun-dow"/>
       <widget name="rerun-ndays"/>
     </widgets>
+  </object>
+  <object class="GtkListStore" id="triggered-timer-store">
+    <columns>
+      <!-- column-name TT_COL_DATA -->
+      <column type="gpointer"/>
+      <!-- column-name TT_COL_NAME -->
+      <column type="gchararray"/>
+      <!-- column-name TT_COL_UUID -->
+      <column type="gchararray"/>
+    </columns>
   </object>
 </interface>

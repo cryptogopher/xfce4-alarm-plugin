@@ -107,11 +107,7 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
 
   if (alarm->triggered_timer != NULL)
   {
-    object = gtk_builder_get_object(builder, "trigger-timer");
-    g_return_if_fail(GTK_IS_SWITCH(object));
-    gtk_switch_set_active(GTK_SWITCH(object), TRUE);
-
-    object = gtk_builder_get_object(builder, "timer-combo");
+    object = gtk_builder_get_object(builder, "triggered-timer-combo");
     g_return_if_fail(GTK_IS_COMBO_BOX(object));
     g_return_if_fail(gtk_combo_box_set_active_id(GTK_COMBO_BOX(object),
                                                  alarm->triggered_timer->uuid));
@@ -170,6 +166,7 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
 {
   GObject *object;
   guint value;
+  gchar *uuid;
   GdkRGBA color;
   GtkTreeModel *tree_model;
   GtkTreeIter tree_iter;
@@ -234,20 +231,14 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
   g_return_val_if_fail(value < TYPE_COUNT, FALSE);
   alarm->type = value;
 
-  object = gtk_builder_get_object(builder, "trigger-timer");
-  g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
-  alarm->triggered_timer = NULL;
-  if (gtk_switch_get_active(GTK_SWITCH(object)))
-  {
-    object = gtk_builder_get_object(builder, "timer-combo");
-    g_return_val_if_fail(GTK_IS_COMBO_BOX(object), FALSE);
-    g_return_val_if_fail(gtk_combo_box_get_active_iter(GTK_COMBO_BOX(object), &tree_iter),
-                         FALSE);
-    gtk_tree_model_get(gtk_combo_box_get_model(GTK_COMBO_BOX(object)), &tree_iter,
-                       COL_DATA, &alarm->triggered_timer, -1);
-    if (alarm->triggered_timer == NULL)
-      alarm->triggered_timer = alarm;
-  }
+  object = gtk_builder_get_object(builder, "triggered-timer-combo");
+  g_return_val_if_fail(GTK_IS_COMBO_BOX(object), FALSE);
+  g_return_val_if_fail(gtk_combo_box_get_active_iter(GTK_COMBO_BOX(object), &tree_iter),
+                       FALSE);
+  gtk_tree_model_get(gtk_combo_box_get_model(GTK_COMBO_BOX(object)), &tree_iter,
+                     TT_COL_DATA, &alarm->triggered_timer, TT_COL_UUID, &uuid, -1);
+  if (g_strcmp0(uuid, "") == 0)
+    alarm->triggered_timer = alarm;
 
   object = gtk_builder_get_object(builder, "rerun-clock");
   g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
@@ -372,26 +363,30 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
                                    NULL);
   gtk_builder_connect_signals(builder, plugin);
 
-  object = gtk_builder_get_object(builder, "timer-combo");
+  object = gtk_builder_get_object(builder, "triggered-timer-combo");
   g_return_if_fail(GTK_IS_COMBO_BOX(object));
-  store = gtk_builder_get_object(builder, "timer-store");
+  store = gtk_builder_get_object(builder, "triggered-timer-store");
   g_return_if_fail(GTK_IS_LIST_STORE(store));
   gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
-                                    0, *alarm,
-                                    1, "self",
-                                    2, *alarm != NULL ? (*alarm)->uuid : "", -1);
-  gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
+                                    TT_COL_DATA, NULL,
+                                    TT_COL_NAME, "",
+                                    TT_COL_UUID, NULL, -1);
+  gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
+                                    TT_COL_DATA, *alarm,
+                                    TT_COL_NAME, "self",
+                                    TT_COL_UUID, *alarm ? (*alarm)->uuid : "", -1);
   alarm_iter = plugin->alarms;
   while (alarm_iter)
   {
     triggered_timer = alarm_iter->data;
     if (triggered_timer->type == TYPE_TIMER && triggered_timer != *alarm)
       gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
-                                        0, triggered_timer,
-                                        1, triggered_timer->name,
-                                        2, triggered_timer->uuid, -1);
+                                        TT_COL_DATA, triggered_timer,
+                                        TT_COL_NAME, triggered_timer->name,
+                                        TT_COL_UUID, triggered_timer->uuid, -1);
     alarm_iter = alarm_iter->next;
   }
+  gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
 
   if (*alarm)
     alarm_to_dialog(*alarm, builder);

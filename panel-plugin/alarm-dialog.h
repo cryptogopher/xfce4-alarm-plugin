@@ -21,6 +21,14 @@
 
 #include "alarm.h"
 
+enum TriggeredTimerColumns
+{
+  TT_COL_DATA,
+  TT_COL_NAME,
+  TT_COL_UUID,
+  TT_COL_COUNT
+};
+
 void show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm);
 
 #endif /* !__ALARM_DIALOG_H__ */
