@@ -505,7 +505,7 @@ program_changed(GtkComboBox *widget, Alert *alert)
   }
 
   set_sensitive(alert->builder, active > PROGRAM_CHOOSE_FILE,
-                "program-options", "program-runtime-box", NULL);
+                "program-params-box", NULL);
 
   g_return_if_fail(gtk_combo_box_get_active_iter(widget, &iter));
 

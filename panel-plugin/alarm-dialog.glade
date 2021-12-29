@@ -73,6 +73,16 @@
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
   </object>
+  <object class="GtkListStore" id="timer-store">
+    <columns>
+      <!-- column-name COL_DATA -->
+      <column type="gpointer"/>
+      <!-- column-name COL_NAME -->
+      <column type="gchararray"/>
+      <!-- column-name COL_UUID -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="alarm-dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Alarm</property>
@@ -145,7 +155,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">12</property>
-            <property name="homogeneous" bind-source="custom-alert" bind-property="active" bind-flags="sync-create"/>
+            <property name="homogeneous" bind-source="custom-alert" bind-property="active" bind-flags="sync-create">False</property>
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
@@ -336,12 +346,12 @@
                             <child>
                               <object class="GtkColorButton" id="color">
                                 <property name="visible">True</property>
+                                <property name="sensitive" bind-source="progress" bind-property="active" bind-flags="sync-create">False</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
                                 <property name="tooltip_text" translatable="yes">Progress bar color</property>
                                 <property name="title" translatable="yes">Pick progress bar color</property>
                                 <property name="rgba">rgb(114,159,207)</property>
-                                <property name="sensitive" bind-source="progress" bind-property="active" bind-flags="sync-create"/>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
@@ -598,6 +608,7 @@
                                       <object class="GtkBox">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
+                                        <property name="hexpand">True</property>
                                         <property name="spacing">8</property>
                                         <child>
                                           <object class="GtkSwitch" id="trigger-timer">
@@ -616,13 +627,12 @@
                                         <child>
                                           <object class="GtkComboBox" id="timer-combo">
                                             <property name="visible">True</property>
+                                            <property name="sensitive" bind-source="trigger-timer" bind-property="active" bind-flags="sync-create">False</property>
                                             <property name="can_focus">False</property>
                                             <property name="tooltip_text" translatable="yes">Start another timer on timeout</property>
-                                            <property name="halign">start</property>
                                             <property name="valign">center</property>
                                             <property name="model">timer-store</property>
                                             <property name="id_column">2</property>
-                                            <property name="sensitive" bind-source="trigger-timer" bind-property="active" bind-flags="sync-create"/>
                                             <child>
                                               <object class="GtkCellRendererText" id="timer-name"/>
                                               <attributes>
@@ -724,7 +734,7 @@
                                     <child>
                                       <object class="GtkBox" id="rerun-dow-box">
                                         <property name="visible">True</property>
-                                        <property name="sensitive" bind-source="rerun-clock" bind-property="active" bind-flags="sync-create"/>
+                                        <property name="sensitive" bind-source="rerun-clock" bind-property="active" bind-flags="sync-create">False</property>
                                         <property name="can_focus">False</property>
                                         <property name="spacing">8</property>
                                         <child>
@@ -746,7 +756,7 @@
                                         <child>
                                           <object class="GtkIconView" id="dow-view">
                                             <property name="visible">True</property>
-                                            <property name="sensitive" bind-source="rerun-dow" bind-property="active" bind-flags="sync-create"/>
+                                            <property name="sensitive" bind-source="rerun-dow" bind-property="active" bind-flags="sync-create">False</property>
                                             <property name="can_focus">True</property>
                                             <property name="tooltip_text" translatable="yes">Repeat alarm on selected days of week (Ctrl-click to select multiple days)</property>
                                             <property name="halign">start</property>
@@ -782,7 +792,7 @@
                                     <child>
                                       <object class="GtkBox" id="rerun-ndays-box">
                                         <property name="visible">True</property>
-                                        <property name="sensitive" bind-source="rerun-clock" bind-property="active" bind-flags="sync-create"/>
+                                        <property name="sensitive" bind-source="rerun-clock" bind-property="active" bind-flags="sync-create">False</property>
                                         <property name="can_focus">False</property>
                                         <property name="spacing">8</property>
                                         <child>
@@ -805,7 +815,7 @@
                                         <child>
                                           <object class="GtkBox" id="ndays-period-box">
                                             <property name="visible">True</property>
-                                            <property name="sensitive" bind-source="rerun-ndays" bind-property="active" bind-flags="sync-create"/>
+                                            <property name="sensitive" bind-source="rerun-ndays" bind-property="active" bind-flags="sync-create">False</property>
                                             <property name="can_focus">False</property>
                                             <property name="tooltip_text" translatable="yes">Repeat alarm every this often</property>
                                             <property name="halign">start</property>
@@ -910,7 +920,7 @@
                 <property name="can_focus">False</property>
                 <property name="margin_top">4</property>
                 <property name="transition_type">none</property>
-                <property name="reveal-child" bind-source="custom-alert" bind-property="active" bind-flags="sync-create"/>
+                <property name="reveal_child" bind-source="custom-alert" bind-property="active" bind-flags="sync-create">False</property>
                 <child>
                   <object class="GtkFrame">
                     <property name="visible">True</property>
@@ -983,15 +993,5 @@
       <widget name="rerun-dow"/>
       <widget name="rerun-ndays"/>
     </widgets>
-  </object>
-  <object class="GtkListStore" id="timer-store">
-    <columns>
-      <!-- column-name COL_DATA -->
-      <column type="gpointer"/>
-      <!-- column-name COL_NAME -->
-      <column type="gchararray"/>
-      <!-- column-name COL_UUID -->
-      <column type="gchararray"/>
-    </columns>
   </object>
 </interface>

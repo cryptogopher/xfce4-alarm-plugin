@@ -174,7 +174,7 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="valign">start</property>
-        <property name="row_spacing">4</property>
+        <property name="row_spacing">8</property>
         <property name="column_spacing">8</property>
         <property name="row_homogeneous">True</property>
         <child>
@@ -257,20 +257,6 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="program-options">
-            <property name="visible">True</property>
-            <property name="sensitive">False</property>
-            <property name="can_focus">True</property>
-            <property name="tooltip_markup" translatable="yes">Optional command line parameters</property>
-            <property name="width_chars">40</property>
-            <property name="placeholder_text" translatable="yes">--command-line options</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">4</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -346,29 +332,16 @@
             <property name="can_focus">False</property>
             <property name="spacing">8</property>
             <child>
-              <object class="GtkLabel" id="label2">
+              <object class="GtkLabel" id="loop-label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="margin_left">16</property>
+                <property name="label" translatable="yes">loop</property>
                 <property name="xalign">0</property>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="pack_type">end</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label5">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">time(s)</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="pack_type">end</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -391,78 +364,27 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="pack_type">end</property>
                 <property name="position">2</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label4">
+              <object class="GtkLabel" id="label5">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">loop</property>
+                <property name="label" translatable="yes">time(s)</property>
                 <property name="xalign">0</property>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="pack_type">end</property>
                 <property name="position">3</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="left_attach">1</property>
+            <property name="left_attach">0</property>
             <property name="top_attach">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="program-runtime-box">
-            <property name="visible">True</property>
-            <property name="sensitive">False</property>
-            <property name="can_focus">False</property>
-            <property name="spacing">8</property>
-            <child>
-              <object class="GtkSpinButton" id="program-runtime">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">interval in hh:mm:ss format; when set to ∞ (or 0), program has to be stopped manually once it runs</property>
-                <property name="max_length">8</property>
-                <property name="width_chars">8</property>
-                <property name="text" translatable="yes">∞</property>
-                <property name="overwrite_mode">True</property>
-                <property name="input_purpose">number</property>
-                <property name="adjustment">program-runtime-adjustment</property>
-                <property name="climb_rate">1</property>
-                <property name="snap_to_ticks">True</property>
-                <property name="wrap">True</property>
-                <signal name="input" handler="program_runtime_input" swapped="no"/>
-                <signal name="output" handler="program_runtime_output" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="pack_type">end</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="label1">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">allow it to run for</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="pack_type">end</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">5</property>
+            <property name="width">2</property>
           </packing>
         </child>
         <child>
@@ -567,13 +489,82 @@
           </packing>
         </child>
         <child>
-          <placeholder/>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
-        <child>
-          <placeholder/>
+          <object class="GtkGrid" id="program-params-box">
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can_focus">False</property>
+            <property name="row_spacing">8</property>
+            <property name="column_spacing">8</property>
+            <property name="row_homogeneous">True</property>
+            <child>
+              <object class="GtkLabel" id="runtime-label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">16</property>
+                <property name="label" translatable="yes">limit runtime to</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="program-runtime">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="tooltip_text" translatable="yes">interval in hh:mm:ss format; when set to ∞ (or 0), program has to be stopped manually once it runs</property>
+                <property name="halign">start</property>
+                <property name="max_length">8</property>
+                <property name="width_chars">8</property>
+                <property name="text" translatable="yes">0</property>
+                <property name="overwrite_mode">True</property>
+                <property name="input_purpose">number</property>
+                <property name="adjustment">program-runtime-adjustment</property>
+                <property name="climb_rate">1</property>
+                <property name="snap_to_ticks">True</property>
+                <property name="wrap">True</property>
+                <signal name="input" handler="program_runtime_input" swapped="no"/>
+                <signal name="output" handler="program_runtime_output" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="program-options">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="tooltip_markup" translatable="yes">optional command line parameters</property>
+                <property name="width_chars">46</property>
+                <property name="placeholder_text" translatable="yes">--command-line options</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="options-label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">16</property>
+                <property name="label" translatable="yes">with options</property>
+                <property name="xalign">0</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">4</property>
+            <property name="width">2</property>
+            <property name="height">2</property>
+          </packing>
         </child>
       </object>
     </child>
@@ -583,8 +574,10 @@
   </object>
   <object class="GtkSizeGroup">
     <widgets>
-      <widget name="sound-play-box"/>
-      <widget name="label2"/>
+      <widget name="notification-label"/>
+      <widget name="loop-label"/>
+      <widget name="runtime-label"/>
+      <widget name="options-label"/>
     </widgets>
   </object>
 </interface>
