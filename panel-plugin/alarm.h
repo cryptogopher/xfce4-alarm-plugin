@@ -41,6 +41,12 @@ struct _AlarmPlugin
   GtkWidget *panel_button;
 };
 
+enum AlarmId
+{
+  ID_UNASSIGNED = 0,
+  ID_INVALID = G_MAXUINT
+};
+
 typedef enum
 {
   TYPE_TIMER,
@@ -75,7 +81,7 @@ typedef enum
 struct _Alarm
 {
   // Persisted settings (between plugin runtimes)
-  gchar *uuid;
+  guint id;
   AlarmType type;
   gchar *name;
   guint h, m, s;

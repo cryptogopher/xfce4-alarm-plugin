@@ -73,6 +73,16 @@
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
   </object>
+  <object class="GtkListStore" id="triggered-timer-store">
+    <columns>
+      <!-- column-name TT_COL_DATA -->
+      <column type="gpointer"/>
+      <!-- column-name TT_COL_NAME -->
+      <column type="gchararray"/>
+      <!-- column-name TT_COL_ID -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="alarm-dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Alarm</property>
@@ -956,15 +966,5 @@
       <widget name="rerun-dow"/>
       <widget name="rerun-ndays"/>
     </widgets>
-  </object>
-  <object class="GtkListStore" id="triggered-timer-store">
-    <columns>
-      <!-- column-name TT_COL_DATA -->
-      <column type="gpointer"/>
-      <!-- column-name TT_COL_NAME -->
-      <column type="gchararray"/>
-      <!-- column-name TT_COL_UUID -->
-      <column type="gchararray"/>
-    </columns>
   </object>
 </interface>

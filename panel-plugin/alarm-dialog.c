@@ -43,6 +43,7 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
   GtkTreeIter tree_iter;
   GtkTreePath *tree_path;
   guint value;
+  gchar *str_value;
 
   /* Code relies on sensivity/activity defaults set in .glade. Whenever defaults
    * are changed in .glade, code has to be updated accordingly. */
@@ -109,8 +110,9 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
   {
     object = gtk_builder_get_object(builder, "triggered-timer-combo");
     g_return_if_fail(GTK_IS_COMBO_BOX(object));
-    g_return_if_fail(gtk_combo_box_set_active_id(GTK_COMBO_BOX(object),
-                                                 alarm->triggered_timer->uuid));
+    str_value = g_strdup_printf("alarm-%u", alarm->triggered_timer->id);
+    g_return_if_fail(gtk_combo_box_set_active_id(GTK_COMBO_BOX(object), str_value));
+    g_clear_pointer(&str_value, g_free);
   }
 
   if (alarm->rerun_every != NO_RERUN)
@@ -166,7 +168,7 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
 {
   GObject *object;
   guint value;
-  gchar *uuid;
+  gchar *alarm_strid;
   GdkRGBA color;
   GtkTreeModel *tree_model;
   GtkTreeIter tree_iter;
@@ -236,8 +238,8 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
   g_return_val_if_fail(gtk_combo_box_get_active_iter(GTK_COMBO_BOX(object), &tree_iter),
                        FALSE);
   gtk_tree_model_get(gtk_combo_box_get_model(GTK_COMBO_BOX(object)), &tree_iter,
-                     TT_COL_DATA, &alarm->triggered_timer, TT_COL_UUID, &uuid, -1);
-  if (g_strcmp0(uuid, "") == 0)
+                     TT_COL_DATA, &alarm->triggered_timer, TT_COL_ID, &alarm_strid, -1);
+  if (alarm_strid == NULL)
     alarm->triggered_timer = alarm;
 
   object = gtk_builder_get_object(builder, "rerun-clock");
@@ -335,7 +337,8 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   GObject *dialog, *object, *store;
   GList *alarm_iter;
   Alarm *triggered_timer;
-  Alert *bound_alert;
+  Alert *bound_alert = NULL;
+  gchar *alarm_strid = NULL;
 
   g_return_if_fail(GTK_IS_WINDOW(parent));
   g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
@@ -346,14 +349,6 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
                               NULL);
   g_return_if_fail(GTK_IS_BUILDER(builder));
   g_return_if_fail(GTK_IS_DIALOG(dialog));
-
-  object = gtk_builder_get_object(builder, "alert-alignment");
-  g_return_if_fail(GTK_IS_CONTAINER(object));
-  bound_alert = g_object_dup(G_OBJECT((*alarm)->alert));
-  if (bound_alert == NULL)
-    bound_alert = alert_new(NULL);
-  g_object_weak_ref(object, (GWeakNotify) G_CALLBACK(g_object_unref), bound_alert);
-  g_return_if_fail(show_alert_box(bound_alert, panel_plugin, GTK_CONTAINER(object)));
 
   xfce_panel_plugin_take_window(panel_plugin, GTK_WINDOW(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
@@ -370,26 +365,43 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
                                     TT_COL_DATA, NULL,
                                     TT_COL_NAME, "",
-                                    TT_COL_UUID, NULL, -1);
+                                    TT_COL_ID, "", -1);
+  if (*alarm)
+    alarm_strid = g_strdup_printf("alarm-%u", (*alarm)->id);
   gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
                                     TT_COL_DATA, *alarm,
                                     TT_COL_NAME, "self",
-                                    TT_COL_UUID, *alarm ? (*alarm)->uuid : "", -1);
+                                    TT_COL_ID, alarm_strid, -1);
+  g_free(alarm_strid);
+
   alarm_iter = plugin->alarms;
   while (alarm_iter)
   {
     triggered_timer = alarm_iter->data;
     if (triggered_timer->type == TYPE_TIMER && triggered_timer != *alarm)
+    {
+      alarm_strid = g_strdup_printf("alarm-%u", triggered_timer->id);
       gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
                                         TT_COL_DATA, triggered_timer,
                                         TT_COL_NAME, triggered_timer->name,
-                                        TT_COL_UUID, triggered_timer->uuid, -1);
+                                        TT_COL_ID, alarm_strid, -1);
+      g_free(alarm_strid);
+    }
     alarm_iter = alarm_iter->next;
   }
   gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
 
+  object = gtk_builder_get_object(builder, "alert-alignment");
+  g_return_if_fail(GTK_IS_CONTAINER(object));
   if (*alarm)
+  {
     alarm_to_dialog(*alarm, builder);
+    bound_alert = g_object_dup(G_OBJECT((*alarm)->alert));
+  }
+  if (bound_alert == NULL)
+    bound_alert = alert_new(NULL);
+  g_object_weak_ref(object, (GWeakNotify) G_CALLBACK(g_object_unref), bound_alert);
+  g_return_if_fail(show_alert_box(bound_alert, panel_plugin, GTK_CONTAINER(object)));
 
   if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_APPLY)
   {

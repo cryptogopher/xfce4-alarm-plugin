@@ -44,7 +44,6 @@ alarm_free(Alarm *alarm)
 {
   g_clear_object(&alarm->alert);
 
-  g_free(alarm->uuid);
   g_free(alarm->name);
   g_date_time_unref(alarm->timeout_at);
   g_slice_free(Alarm, alarm);
@@ -63,12 +62,13 @@ load_alarm_settings(AlarmPlugin *plugin)
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
   const gchar *property_base;
-  guint property_base_length, part_count;
+  guint property_base_length, part_count, alarm_id;
+  gint part_length;
   GHashTable *alarm_properties, *alarms, *positions, *triggered_timers;
   GHashTableIter ht_iter;
   Alarm *alarm;
   GList *alarm_list;
-  gchar *property_path, **parts, *uuid;
+  gchar *property_path, **parts;
   gpointer property_value;
 
   g_return_val_if_fail(XFCE_IS_ALARM_PLUGIN(plugin), NULL);
@@ -80,15 +80,15 @@ load_alarm_settings(AlarmPlugin *plugin)
   alarm_properties = xfconf_channel_get_properties(channel, NULL);
   g_object_unref(channel);
 
-  // alarm->uuid => Alarm*
-  alarms = g_hash_table_new(g_str_hash, g_str_equal);
+  // alarm->id => Alarm*
+  alarms = g_hash_table_new(g_int_hash, g_int_equal);
   // Alarm* => position
   positions = g_hash_table_new(NULL, NULL);
-  // Alarm* => triggered_timer->uuid
-  triggered_timers = g_hash_table_new_full(NULL, NULL, NULL, g_free);
+  // Alarm* => triggered_timer->id
+  triggered_timers = g_hash_table_new(NULL, NULL);
 
   g_hash_table_iter_init(&ht_iter, alarm_properties);
-  // property_path has form: /panel/plugin-ID[[/<alarm UUID>]/<property name>]
+  // property_path has form: /panel/plugin-ID[[/<alarm-ID>]/<property name>]
   while (g_hash_table_iter_next(&ht_iter, (gpointer) &property_path, &property_value))
   {
     if (!g_str_has_prefix(property_path, property_base))
@@ -99,15 +99,17 @@ load_alarm_settings(AlarmPlugin *plugin)
 
     parts = g_strsplit(property_path + property_base_length, "/", 3);
     part_count = g_strv_length(parts);
-    if (part_count < 2 || !g_uuid_string_is_valid(parts[1]))
+    if (part_count < 2 ||
+        sscanf(parts[1], "alarm-%u%n", &alarm_id, &part_length) != 1 ||
+        (guint)part_length < strlen(parts[1]))
       goto free;
 
-    alarm = g_hash_table_lookup(alarms, parts[1]);
+    alarm = g_hash_table_lookup(alarms, &alarm_id);
     if (alarm == NULL)
     {
       alarm = g_slice_new0(Alarm);
-      alarm->uuid = g_strdup(parts[1]);
-      g_hash_table_insert(alarms, alarm->uuid, alarm);
+      alarm->id = alarm_id;
+      g_hash_table_insert(alarms, &alarm->id, alarm);
     }
 
     if (part_count == 2)
@@ -144,7 +146,7 @@ load_alarm_settings(AlarmPlugin *plugin)
 
     else if (!g_strcmp0(parts[2], "triggered-timer"))
       g_hash_table_insert(triggered_timers, alarm,
-                          g_strdup(g_value_get_string(property_value)));
+                          GUINT_TO_POINTER(g_value_get_uint(property_value)));
 
     else if (!g_strcmp0(parts[2], "rerun-every"))
       alarm->rerun_every = g_value_get_int(property_value);
@@ -161,9 +163,9 @@ load_alarm_settings(AlarmPlugin *plugin)
    * e.g. type/triggered-timer, type/rerun-every, rerun-every/rerun-mode */
 
   g_hash_table_iter_init(&ht_iter, triggered_timers);
-  while (g_hash_table_iter_next(&ht_iter, (gpointer) &alarm, (gpointer) &uuid))
+  while (g_hash_table_iter_next(&ht_iter, (gpointer) &alarm, (gpointer) &alarm_id))
   {
-    alarm->triggered_timer = g_hash_table_lookup(alarms, uuid);
+    alarm->triggered_timer = g_hash_table_lookup(alarms, &alarm_id);
     g_warn_if_fail(alarm->triggered_timer != NULL);
   }
   g_hash_table_destroy(triggered_timers);
@@ -181,22 +183,34 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
+  GList *alarm_iter;
   gint position;
   gchar *property_base, *value;
   GParamSpec **specs;
-  guint spec_count, i;
-  gchar *property_name;
+  guint spec_count, i, last_id;
+  gchar *property_name, *alarm_strid;
   GValue property_value = G_VALUE_INIT;
 
   g_return_if_fail(alarm != NULL);
 
-  if (alarm->uuid == NULL)
-    alarm->uuid = g_uuid_string_random();
+  if (alarm->id == ID_UNASSIGNED)
+  {
+    last_id = ID_UNASSIGNED;
+    alarm_iter = plugin->alarms;
+    while (alarm_iter)
+    {
+      last_id = MAX(((Alarm*) alarm_iter->data)->id, last_id);
+      alarm_iter = alarm_iter->next;
+    }
+    alarm->id = last_id + 1;
+  }
 
   g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
 
+  alarm_strid = g_strdup_printf("alarm-%u", alarm->id);
   property_base = g_strconcat(xfce_panel_plugin_get_property_base(panel_plugin), "/",
-                              alarm->uuid, NULL);
+                              alarm_strid, NULL);
+  g_free(alarm_strid);
   channel = xfconf_channel_new_with_property_base(xfce_panel_get_channel_name(),
                                                   property_base);
   g_free(property_base);
@@ -227,8 +241,8 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   if (alarm->type == TYPE_TIMER)
   {
     if (alarm->triggered_timer != NULL)
-      g_warn_if_fail(xfconf_channel_set_string(channel, "/triggered-timer",
-                                               alarm->triggered_timer->uuid));
+      g_warn_if_fail(xfconf_channel_set_uint(channel, "/triggered-timer",
+                                             alarm->triggered_timer->id));
   }
   else 
   {
@@ -267,7 +281,7 @@ save_alarm_positions(AlarmPlugin *plugin, GList *alarm_iter_from, GList *alarm_i
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
-  gchar *property_base;
+  gchar *property_base, *alarm_strid;
   GList *alarm_iter;
   Alarm *alarm;
   gint position;
@@ -288,7 +302,16 @@ save_alarm_positions(AlarmPlugin *plugin, GList *alarm_iter_from, GList *alarm_i
   while (alarm_iter && (alarm_iter != alarm_iter_to))
   {
     alarm = alarm_iter->data;
-    g_warn_if_fail(xfconf_channel_set_uint(channel, alarm->uuid, position));
+
+    if (alarm->id != ID_UNASSIGNED)
+    {
+      alarm_strid = g_strdup_printf("alarm-%u", alarm->id);
+      g_warn_if_fail(xfconf_channel_set_uint(channel, alarm_strid, position));
+      g_free(alarm_strid);
+    }
+    else
+      g_warn_if_reached();
+
     alarm_iter = alarm_iter->next;
     position++;
   }
@@ -302,17 +325,21 @@ reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
 {
   XfcePanelPlugin *panel_plugin = XFCE_PANEL_PLUGIN(plugin);
   XfconfChannel *channel;
-  gchar *property_base;
+  gchar *property_base, *alarm_strid;
 
   g_return_if_fail(XFCE_IS_ALARM_PLUGIN(plugin));
   g_return_if_fail(alarm != NULL);
-  g_return_if_fail(alarm->uuid != NULL);
+  g_return_if_fail(alarm->id != ID_UNASSIGNED);
 
   property_base = g_strconcat(xfce_panel_plugin_get_property_base(panel_plugin), "/", NULL);
   channel = xfconf_channel_new_with_property_base(xfce_panel_get_channel_name(),
                                                   property_base);
   g_free(property_base);
-  xfconf_channel_reset_property(channel, alarm->uuid, TRUE);
+
+  alarm_strid = g_strdup_printf("alarm-%u", alarm->id);
+  xfconf_channel_reset_property(channel, alarm_strid, TRUE);
+  g_free(alarm_strid);
+
   g_object_unref(channel);
 }
 

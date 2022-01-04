@@ -25,7 +25,7 @@ enum TriggeredTimerColumns
 {
   TT_COL_DATA,
   TT_COL_NAME,
-  TT_COL_UUID,
+  TT_COL_ID,
   TT_COL_COUNT
 };
 
