@@ -42,7 +42,7 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
 
   time = g_strdup_printf("<span size=\"large\" weight=\"normal\">%02u:%02u</span>" \
                          "<span size=\"small\" weight=\"normal\">:%02u</span>",
-                         alarm->h, alarm->m, alarm->s);
+                         alarm->time/3600, alarm->time%3600/60, alarm->time%60);
   /* Setting color through markup preserves proper color on item selection (as
    * opposed to setting it through cell renderer background property). */
   if (alarm->color[0] != '\0')
@@ -209,6 +209,7 @@ alarm_selection_changed(GtkTreeSelection *selection, GtkWidget *dialog)
 
   selected = gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), NULL, NULL);
   builder = g_object_get_data(G_OBJECT(dialog), "builder");
+  g_return_if_fail(GTK_IS_BUILDER(builder));
 
   set_sensitive(builder, selected, "edit", "remove", NULL);
 }

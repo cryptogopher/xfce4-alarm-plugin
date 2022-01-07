@@ -20,8 +20,6 @@
 #include <config.h>
 #endif
 
-#include <math.h>
-
 #include <canberra.h>
 #include <libxfce4panel/xfce-panel-plugin.h>
 #include <xfconf/xfconf.h>
@@ -30,8 +28,6 @@
 #include "alarm.h"
 #include "alert-box_ui.h"
 #include "alert.h"
-
-#define UNICODE_INFINITY "\xe2\x88\x9e"
 
 struct _Alert
 {
@@ -456,7 +452,7 @@ playback_finished(gpointer button)
 }
 
 static gboolean
-count_spin_output(GtkSpinButton *button, gpointer user_data)
+count_spin_output(GtkSpinButton *button)
 {
   GtkAdjustment *adjustment;
 
@@ -524,7 +520,7 @@ program_changed(GtkComboBox *widget, Alert *alert)
 }
 
 static gboolean
-program_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
+program_delete_event(GtkWidget *widget, GdkEvent *event)
 {
   GtkTreeModel *model;
   GtkTreeIter iter;
@@ -543,64 +539,6 @@ program_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
     while (gtk_tree_model_iter_next(model, &iter));
 
   return FALSE;
-}
-
-static gint
-time_spin_input(GtkSpinButton *button, gdouble *new_value, gpointer user_data)
-{
-  const gchar *time;
-  gchar *error = NULL, **parts;
-  gint pos = 0;
-
-  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(button), FALSE);
-
-  time = gtk_entry_get_text(GTK_ENTRY(button));
-  if (time == NULL)
-    return GTK_INPUT_ERROR;
-
-  if (!g_strcmp0(time, UNICODE_INFINITY))
-  {
-    *new_value = 0;
-    return TRUE;
-  }
-
-  parts = g_strsplit(time, ":", 3);
-  do {
-    *new_value = 60*(*new_value) + g_strtod(parts[pos], &error);
-    pos++;
-  }
-  while ((parts[pos] != NULL) && (*error == '\0'));
-  g_strfreev(parts);
-
-  *new_value *= pow(60, 3 - pos);
-
-  if (error != NULL)
-    return GTK_INPUT_ERROR;
-  else
-    return TRUE;
-}
-
-static gboolean
-time_spin_output(GtkSpinButton *button, gpointer user_data)
-{
-  GtkAdjustment *adjustment;
-  gint value;
-  gchar *time;
-
-  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(button), FALSE);
-
-  adjustment = gtk_spin_button_get_adjustment(button);
-  value = gtk_adjustment_get_value(adjustment);
-  if (value == 0)
-    time = g_strdup(UNICODE_INFINITY);
-  else
-    time = g_strdup_printf("%02u:%02u:%02u", value/3600, value%3600/60, value%60);
-
-  if (g_strcmp0(time, gtk_entry_get_text(GTK_ENTRY(button))))
-    gtk_entry_set_text(GTK_ENTRY(button), time);
-  g_free(time);
-
-  return TRUE;
 }
 
 static gboolean
@@ -670,6 +608,11 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   // Create libcanberra context for playing sounds
   ca_context_create(&alert->context);
   g_object_weak_ref(G_OBJECT(alert_box), (GWeakNotify) G_CALLBACK(clear_context), alert);
+
+  // Seems to be no other way to add this parameter to widget through Glade
+  object = gtk_builder_get_object(alert->builder, "program-runtime");
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
+  g_object_set_data(object, "zero-is-infinity", GINT_TO_POINTER(TRUE));
 
   gtk_builder_add_callback_symbols(alert->builder,
       "sound_chooser_selection_changed", G_CALLBACK(sound_chooser_selection_changed),

@@ -19,7 +19,6 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-
 #ifdef HAVE_LIBINTL_H
 #include <libintl.h>
 #endif
@@ -55,17 +54,9 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
   g_return_if_fail(GTK_IS_ENTRY(object));
   gtk_entry_set_text(GTK_ENTRY(object), alarm->name);
 
-  object = gtk_builder_get_object(builder, "hours");
+  object = gtk_builder_get_object(builder, "time");
   g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), alarm->h);
-
-  object = gtk_builder_get_object(builder, "minutes");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), alarm->m);
-
-  object = gtk_builder_get_object(builder, "seconds");
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), alarm->s);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), alarm->time);
 
   if (alarm->color[0] == '\0')
   {
@@ -182,17 +173,9 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
   g_free(alarm->name);
   alarm->name = g_strdup(gtk_entry_get_text(GTK_ENTRY(object)));
 
-  object = gtk_builder_get_object(builder, "hours");
+  object = gtk_builder_get_object(builder, "time");
   g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
-  alarm->h = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
-
-  object = gtk_builder_get_object(builder, "minutes");
-  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
-  alarm->m = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
-
-  object = gtk_builder_get_object(builder, "seconds");
-  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(object), FALSE);
-  alarm->s = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
+  alarm->time = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(object));
 
   object = gtk_builder_get_object(builder, "progress");
   g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
@@ -309,20 +292,29 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
 
 // Callbacks
 static void
-time_wrapped(GtkSpinButton *wrapped_spin, GtkSpinButton *higher_spin)
+recurrence_visible_child_notify(GtkWidget *widget, GParamSpec *child_property,
+                                GtkWidget *dialog)
 {
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(wrapped_spin));
-  g_return_if_fail(GTK_IS_SPIN_BUTTON(higher_spin));
+  guint position;
+  GtkBuilder *builder;
+  GObject *time_spin;
 
-  switch (gtk_spin_button_get_value_as_int(wrapped_spin))
-  {
-    case 0:
-      gtk_spin_button_spin(higher_spin, GTK_SPIN_STEP_FORWARD, 1);
-      break;
-    case 59:
-      gtk_spin_button_spin(higher_spin, GTK_SPIN_STEP_BACKWARD, 1);
-      break;
-  }
+  g_return_if_fail(GTK_IS_STACK(widget));
+  g_return_if_fail(GTK_IS_DIALOG(dialog));
+
+  gtk_container_child_get(GTK_CONTAINER(widget),
+                          gtk_stack_get_visible_child(GTK_STACK(widget)),
+                          "position", &position,
+                          NULL);
+  g_return_if_fail(position < TYPE_COUNT);
+
+  builder = g_object_get_data(G_OBJECT(dialog), "builder");
+  g_return_if_fail(GTK_IS_BUILDER(builder));
+
+  time_spin = gtk_builder_get_object(builder, "time");
+  g_return_if_fail(GTK_IS_SPIN_BUTTON(time_spin));
+  gtk_spin_button_set_range(GTK_SPIN_BUTTON(time_spin),
+                            TIME_LIMITS[2*position], TIME_LIMITS[2*position+1]);
 }
 
 
@@ -354,8 +346,10 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
 
   gtk_builder_add_callback_symbols(builder,
-                                   "time_wrapped", G_CALLBACK(time_wrapped),
-                                   NULL);
+      "time_input", G_CALLBACK(time_spin_input),
+      "time_output", G_CALLBACK(time_spin_output),
+      "recurrence_visible_child_notify", G_CALLBACK(recurrence_visible_child_notify),
+      NULL);
   gtk_builder_connect_signals(builder, plugin);
 
   object = gtk_builder_get_object(builder, "triggered-timer-combo");

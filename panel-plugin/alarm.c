@@ -19,6 +19,9 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#ifdef HAVE_MATH_H
+#include <math.h>
+#endif
 
 #include <libxfce4panel/xfce-panel-plugin.h>
 #include <libxfce4ui/libxfce4ui.h>
@@ -126,8 +129,7 @@ load_alarm_settings(AlarmPlugin *plugin)
       alarm->name = g_strdup(g_value_get_string(property_value));
 
     else if (!g_strcmp0(parts[2], "time"))
-      sscanf(g_value_get_string(property_value), "%02u:%02u:%02u",
-             &alarm->h, &alarm->m, &alarm->s);
+      alarm->time = g_value_get_uint(property_value);
 
     else if (!g_strcmp0(parts[2], "color"))
       g_strlcpy(alarm->color, g_value_get_string(property_value), sizeof(alarm->color));
@@ -185,7 +187,7 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   XfconfChannel *channel;
   GList *alarm_iter;
   gint position;
-  gchar *property_base, *value;
+  gchar *property_base;
   GParamSpec **specs;
   guint spec_count, i, last_id;
   gchar *property_name, *alarm_strid;
@@ -224,9 +226,7 @@ save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm)
   g_warn_if_fail(xfconf_channel_set_uint(channel, "", position));
   g_warn_if_fail(xfconf_channel_set_uint(channel, "/type", alarm->type));
   g_warn_if_fail(xfconf_channel_set_string(channel, "/name", alarm->name));
-  value = g_strdup_printf("%02u:%02u:%02u", alarm->h, alarm->m, alarm->s);
-  g_warn_if_fail(xfconf_channel_set_string(channel, "/time", value));
-  g_free(value);
+  g_warn_if_fail(xfconf_channel_set_uint(channel, "/time", alarm->time));
   g_warn_if_fail(xfconf_channel_set_string(channel, "/color", alarm->color));
   g_warn_if_fail(xfconf_channel_set_bool(channel, "/autostart", alarm->autostart));
   g_warn_if_fail(xfconf_channel_set_bool(channel, "/autostop", alarm->autostop));
@@ -417,6 +417,67 @@ set_sensitive(GtkBuilder *builder, gboolean sensitive, const gchar *first_widget
     widget_id = va_arg(var_args, gchar*);
   }
   va_end(var_args);
+}
+
+gint
+time_spin_input(GtkSpinButton *button, gdouble *new_value)
+{
+  const gchar *time;
+  gchar *error = NULL, **parts;
+  gint pos = 0;
+  gboolean zero_inf;
+
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(button), FALSE);
+
+  time = gtk_entry_get_text(GTK_ENTRY(button));
+  if (time == NULL)
+    return GTK_INPUT_ERROR;
+
+  zero_inf = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "zero-is-infinity"));
+  if (zero_inf && !g_strcmp0(time, UNICODE_INFINITY))
+  {
+    *new_value = 0;
+    return TRUE;
+  }
+
+  parts = g_strsplit_set(time, ":,.;- ", 3);
+  do
+  {
+    *new_value = 60*(*new_value) + g_strtod(parts[pos], &error);
+    pos++;
+  }
+  while ((parts[pos] != NULL) && (*error == '\0'));
+  g_strfreev(parts);
+
+  *new_value *= pow(60, 3 - pos);
+
+  if (error != NULL)
+    return GTK_INPUT_ERROR;
+  else
+    return TRUE;
+}
+
+gboolean
+time_spin_output(GtkSpinButton *button)
+{
+  gint value;
+  gchar *time;
+  gboolean zero_inf;
+
+  g_return_val_if_fail(GTK_IS_SPIN_BUTTON(button), FALSE);
+
+  value = gtk_spin_button_get_value(button);
+  zero_inf = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "zero-is-infinity"));
+  if (zero_inf && value == 0)
+    time = g_strdup(UNICODE_INFINITY);
+  else
+    time = g_strdup_printf("%02u:%02u:%02u", value/3600, value%3600/60, value%60);
+
+  if (g_strcmp0(time, gtk_entry_get_text(GTK_ENTRY(button))))
+    gtk_entry_set_text(GTK_ENTRY(button), time);
+  g_free(time);
+
+  return TRUE;
 }
 
 void

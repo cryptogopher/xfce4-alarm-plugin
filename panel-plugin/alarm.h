@@ -21,6 +21,8 @@
 
 G_BEGIN_DECLS
 
+#define UNICODE_INFINITY "\xe2\x88\x9e"
+
 typedef struct _AlarmPluginClass AlarmPluginClass;
 typedef struct _AlarmPlugin AlarmPlugin;
 typedef struct _Alert Alert;
@@ -54,6 +56,11 @@ typedef enum
   TYPE_COUNT
 } AlarmType;
 
+static const guint TIME_LIMITS[2*TYPE_COUNT] = {
+  1, 31622400, // Timer: 1 second to 1 year
+  0, 86399 // Clock 00:00:00 to 23:59:59
+};
+
 enum RerunEvery
 {
   NO_RERUN        = 0,
@@ -84,7 +91,7 @@ struct _Alarm
   guint id;
   AlarmType type;
   gchar *name;
-  guint h, m, s;
+  guint time;
   gchar color[8];
   gboolean autostart, autostop;
   gboolean autostart_on_resume, autostop_on_suspend;
@@ -144,6 +151,8 @@ GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
                               const gchar* first_buffer, gsize first_buffer_length, ...);
 void set_sensitive(GtkBuilder *builder, gboolean sensitive,
                    const gchar *first_widget_id, ...);
+gint time_spin_input(GtkSpinButton *button, gdouble *new_value);
+gboolean time_spin_output(GtkSpinButton *button);
 void g_object_copy(GObject *src, GObject *dst);
 gpointer g_object_dup(GObject *src);
 
