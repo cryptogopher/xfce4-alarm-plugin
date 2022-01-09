@@ -41,11 +41,11 @@ typedef struct
 
 enum ProgramColumns
 {
-  PROGRAM_DATA,
-  PROGRAM_ICON,
-  PROGRAM_NAME,
-  PROGRAM_SEPARATOR,
-  PROGRAM_HAS_ICON
+  PR_COL_DATA,
+  PR_COL_ICON,
+  PR_COL_NAME,
+  PR_COL_SEPARATOR,
+  PR_COL_HAS_ICON
 };
 
 enum ProgramEntries
@@ -129,7 +129,7 @@ select_program_by_cmdline(GtkTreeModel *model, const gchar *filename)
   if (gtk_tree_model_get_iter_first(model, &iter))
     do
     {
-      gtk_tree_model_get(model, &iter, PROGRAM_DATA, &tree_appinfo, -1);
+      gtk_tree_model_get(model, &iter, PR_COL_DATA, &tree_appinfo, -1);
       if (tree_appinfo != NULL &&
           !g_strcmp0(g_app_info_get_commandline(appinfo),
                      g_app_info_get_commandline(tree_appinfo)))
@@ -156,11 +156,11 @@ select_program_by_cmdline(GtkTreeModel *model, const gchar *filename)
       fileicon = g_file_info_get_icon(fileinfo);
 
     gtk_list_store_insert_with_values(GTK_LIST_STORE(model), NULL, active,
-                                    PROGRAM_DATA, appinfo,
-                                    PROGRAM_ICON, fileicon,
-                                    PROGRAM_NAME, g_app_info_get_display_name(appinfo),
-                                    PROGRAM_SEPARATOR, FALSE,
-                                    PROGRAM_HAS_ICON, TRUE, -1);
+                                    PR_COL_DATA, appinfo,
+                                    PR_COL_ICON, fileicon,
+                                    PR_COL_NAME, g_app_info_get_display_name(appinfo),
+                                    PR_COL_SEPARATOR, FALSE,
+                                    PR_COL_HAS_ICON, TRUE, -1);
 
     g_object_unref(fileinfo);
     g_object_unref(file);
@@ -306,7 +306,7 @@ program_changed(GtkComboBox *widget, Alert *alert)
 
   g_return_if_fail(gtk_combo_box_get_active_iter(widget, &iter));
 
-  gtk_tree_model_get(model, &iter, PROGRAM_DATA, &app, -1);
+  gtk_tree_model_get(model, &iter, PR_COL_DATA, &app, -1);
   if (app != NULL)
   {
     app_name = g_app_info_get_id(app);
@@ -330,7 +330,7 @@ program_delete_event(GtkWidget *widget, GdkEvent *event)
   if (gtk_tree_model_get_iter_first(model, &iter))
     do
     {
-      gtk_tree_model_get(model, &iter, PROGRAM_DATA, &appinfo, -1);
+      gtk_tree_model_get(model, &iter, PR_COL_DATA, &appinfo, -1);
       if (appinfo != NULL)
         g_object_unref(appinfo);
     }
@@ -426,11 +426,11 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
     if (g_app_info_should_show(app))
     {
       gtk_list_store_insert_with_values(GTK_LIST_STORE(object), NULL, -1,
-                                        PROGRAM_DATA, app,
-                                        PROGRAM_ICON, g_app_info_get_icon(app),
-                                        PROGRAM_NAME, g_app_info_get_display_name(app),
-                                        PROGRAM_SEPARATOR, FALSE,
-                                        PROGRAM_HAS_ICON, TRUE, -1);
+                                        PR_COL_DATA, app,
+                                        PR_COL_ICON, g_app_info_get_icon(app),
+                                        PR_COL_NAME, g_app_info_get_display_name(app),
+                                        PR_COL_SEPARATOR, FALSE,
+                                        PR_COL_HAS_ICON, TRUE, -1);
       if ((alert->program != NULL) && !g_strcmp0(alert->program, g_app_info_get_id(app)))
         active_program = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(object), NULL) - 1;
     }

@@ -34,6 +34,18 @@
 
 #define UNICODE_BLOCK "\xe2\x96\x8a"
 
+// Column numbers are used in .glade - update if changed
+enum AlarmColumns
+{
+  AM_COL_DATA,
+  AM_COL_ICON_NAME,
+  AM_COL_TIME,
+  AM_COL_COLOR,
+  AM_COL_NAME,
+  AM_COL_COUNT
+};
+
+
 // Utilities
 static void
 alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
@@ -54,11 +66,11 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
                             "</span>", alarm->color);
 
   gtk_list_store_set(store, iter,
-                     COL_DATA, alarm,
-                     COL_ICON_NAME, alarm_type_icons[alarm->type],
-                     COL_TIME, time,
-                     COL_COLOR, color,
-                     COL_NAME, alarm->name,
+                     AM_COL_DATA, alarm,
+                     AM_COL_ICON_NAME, alarm_type_icons[alarm->type],
+                     AM_COL_TIME, time,
+                     AM_COL_COLOR, color,
+                     AM_COL_NAME, alarm->name,
                      -1);
 
   g_free(time);
@@ -74,7 +86,7 @@ get_selected_alarm(GtkBuilder *builder, GtkTreeModel **model, GtkTreeIter *iter)
   selection = gtk_builder_get_object(builder, "alarm-selection");
   g_return_val_if_fail(GTK_IS_TREE_SELECTION(selection), NULL);
   if (gtk_tree_selection_get_selected(GTK_TREE_SELECTION(selection), model, iter))
-    gtk_tree_model_get(*model, iter, COL_DATA, &alarm, -1);
+    gtk_tree_model_get(*model, iter, AM_COL_DATA, &alarm, -1);
 
   return alarm;
 }
@@ -236,7 +248,7 @@ alarm_store_row_changed(GtkTreeModel *store, GtkTreePath *path, GtkTreeIter *ite
   /* After DND reordering of store item, positions of some Alarms on plugin->alarms
    * list will be different than positions in store. plugin->alarms has to be reordered
    * accordingly and updated positions saved. */
-  gtk_tree_model_get(store, iter, COL_DATA, &alarm, -1);
+  gtk_tree_model_get(store, iter, AM_COL_DATA, &alarm, -1);
   g_return_if_fail(alarm != NULL);
   list_position = g_list_index(plugin->alarms, alarm);
   g_return_if_fail(list_position != -1);

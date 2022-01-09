@@ -111,15 +111,15 @@
   </object>
   <object class="GtkListStore" id="program-store">
     <columns>
-      <!-- column-name COL_DATA -->
+      <!-- column-name PR_COL_DATA -->
       <column type="gpointer"/>
-      <!-- column-name COL_ICON -->
+      <!-- column-name PR_COL_ICON -->
       <column type="GIcon"/>
-      <!-- column-name COL_NAME -->
+      <!-- column-name PR_COL_NAME -->
       <column type="gchararray"/>
-      <!-- column-name COL_SEPARATOR -->
+      <!-- column-name PR_COL_SEPARATOR -->
       <column type="gboolean"/>
-      <!-- column-name COL_HAS_ICON -->
+      <!-- column-name PR_COL_HAS_ICON -->
       <column type="gboolean"/>
     </columns>
     <data>

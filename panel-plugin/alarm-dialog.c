@@ -34,6 +34,13 @@
 #include "alarm-dialog_ui.h"
 #include "alert-box.h"
 
+enum DoWColumns
+{
+  DOW_COL_DATA,
+  DOW_COL_NAME,
+  DOW_COL_COUNT
+};
+
 
 // Utilities
 static void
@@ -131,7 +138,7 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
       if (gtk_tree_model_get_iter_first(tree_model, &tree_iter))
         do
         {
-          gtk_tree_model_get(tree_model, &tree_iter, COL_DATA, &value, -1);
+          gtk_tree_model_get(tree_model, &tree_iter, DOW_COL_DATA, &value, -1);
           if (alarm->rerun_every & (1 << value))
           {
             tree_path = gtk_tree_model_get_path(tree_model, &tree_iter);
@@ -251,7 +258,7 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
       {
         if (gtk_tree_model_get_iter(tree_model, &tree_iter, (GtkTreePath*) item_iter->data))
         {
-          gtk_tree_model_get(tree_model, &tree_iter, COL_DATA, &value, -1);
+          gtk_tree_model_get(tree_model, &tree_iter, DOW_COL_DATA, &value, -1);
           alarm->rerun_every |= (1 << value);
         }
         item_iter = item_iter->next;

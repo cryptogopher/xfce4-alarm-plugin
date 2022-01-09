@@ -5,15 +5,15 @@
   <requires lib="libxfce4ui-2" version="4.12"/>
   <object class="GtkListStore" id="alarm-store">
     <columns>
-      <!-- column-name COL_DATA -->
+      <!-- column-name AM_COL_DATA -->
       <column type="gpointer"/>
-      <!-- column-name COL_ICON_NAME -->
+      <!-- column-name AM_COL_ICON_NAME -->
       <column type="gchararray"/>
-      <!-- column-name COL_TIME -->
+      <!-- column-name AM_COL_TIME -->
       <column type="gchararray"/>
-      <!-- column-name COL_COLOR -->
+      <!-- column-name AM_COL_COLOR -->
       <column type="gchararray"/>
-      <!-- column-name COL_NAME -->
+      <!-- column-name AM_COL_NAME -->
       <column type="gchararray"/>
     </columns>
     <signal name="row-changed" handler="alarm_store_row_changed" swapped="no"/>

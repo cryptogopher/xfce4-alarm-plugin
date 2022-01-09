@@ -34,6 +34,7 @@ typedef enum
   TYPE_COUNT
 } AlarmType;
 
+const gchar *alarm_type_icons[TYPE_COUNT];
 const guint TIME_LIMITS[2*TYPE_COUNT];
 
 enum RerunEvery
@@ -83,18 +84,6 @@ struct _Alarm
   // Runtime settings
 };
 
-// Column numbers are used in .glade - update if changed
-enum AlarmColumns
-{
-  COL_DATA,
-  COL_ICON_NAME,
-  COL_TIME,
-  COL_COLOR,
-  COL_NAME,
-  COL_COUNT
-};
-
-const gchar *alarm_type_icons[TYPE_COUNT];
 
 void alarm_free(Alarm *alarm);
 GList* load_alarm_settings(AlarmPlugin *plugin);
