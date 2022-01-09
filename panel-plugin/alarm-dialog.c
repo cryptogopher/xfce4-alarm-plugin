@@ -26,9 +26,13 @@
 #include <libxfce4panel/xfce-panel-plugin.h>
 #include <xfconf/xfconf.h>
 
+#include "common.h"
+#include "alert.h"
+#include "alarm-plugin.h"
+#include "alarm.h"
 #include "alarm-dialog.h"
 #include "alarm-dialog_ui.h"
-#include "alert.h"
+#include "alert-box.h"
 
 
 // Utilities

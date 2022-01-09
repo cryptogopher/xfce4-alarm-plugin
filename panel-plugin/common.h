@@ -16,17 +16,20 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __ALARM_PLUGIN_ALARM_DIALOG_H__
-#define __ALARM_PLUGIN_ALARM_DIALOG_H__
+#ifndef __ALARM_PLUGIN_COMMON_H__
+#define __ALARM_PLUGIN_COMMON_H__
 
-enum TriggeredTimerColumns
-{
-  TT_COL_DATA,
-  TT_COL_NAME,
-  TT_COL_ID,
-  TT_COL_COUNT
-};
+#define UNICODE_INFINITY "\xe2\x88\x9e"
 
-void show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm);
+GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
+                              const gchar *weak_ref_id, GObject **weak_ref_obj,
+                              const gchar* first_buffer, gsize first_buffer_length, ...);
+void set_sensitive(GtkBuilder *builder, gboolean sensitive,
+                   const gchar *first_widget_id, ...);
+gint time_spin_input(GtkSpinButton *button, gdouble *new_value);
+gboolean time_spin_output(GtkSpinButton *button);
 
-#endif /* !__ALARM_PLUGIN_ALARM_DIALOG_H__ */
+void g_object_copy(GObject *src, GObject *dst);
+gpointer g_object_dup(GObject *src);
+
+#endif /* !__ALARM_PLUGIN_COMMON_H__ */

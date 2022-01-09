@@ -21,12 +21,36 @@
 
 G_BEGIN_DECLS
 
+enum AlertRepeats
+{
+  NO_ALERT_REPEAT = 0, // Alert.interval
+  REPEAT_UNTIL_ACK = 0 // Alert.repeats
+};
+
+typedef struct ca_context ca_context;
+struct _Alert
+{
+  GObject parent;
+  GtkBuilder *builder;
+  ca_context *context;
+
+  gboolean notification;
+  gchar *sound;
+  guint sound_loops;
+  gchar *program;
+  gchar *program_options;
+  guint program_runtime;
+  guint repeats; // 0 (== REPEAT_UNTIL_ACK) - until acknowledged; >1 - count
+  guint interval; // 0 (== NO_ALERT_REPEAT) - no repeats; >0 - every N seconds
+
+  guint repeats_left;
+};
+
+
 #define ALARM_PLUGIN_TYPE_ALERT (alert_get_type())
 G_DECLARE_FINAL_TYPE(Alert, alert, ALARM_PLUGIN, ALERT, GObject)
 
 Alert* alert_new(XfconfChannel *channel);
-gboolean show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin,
-                        GtkContainer *container);
 
 G_END_DECLS
 

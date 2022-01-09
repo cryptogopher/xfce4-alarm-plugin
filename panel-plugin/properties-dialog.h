@@ -16,11 +16,9 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __PROPERTIES_DIALOG_H__
-#define __PROPERTIES_DIALOG_H__
-
-#include "alarm.h"
+#ifndef __ALARM_PLUGIN_PROPERTIES_DIALOG_H__
+#define __ALARM_PLUGIN_PROPERTIES_DIALOG_H__
 
 void show_properties_dialog(XfcePanelPlugin *panel_plugin);
 
-#endif /* !__PROPERTIES_DIALOG_H__ */
+#endif /* !__ALARM_PLUGIN_PROPERTIES_DIALOG_H__ */

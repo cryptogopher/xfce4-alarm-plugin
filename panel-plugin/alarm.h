@@ -16,32 +16,10 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __ALARM_PLUGIN_H__
-#define __ALARM_PLUGIN_H__
+#ifndef __ALARM_PLUGIN_ALARM_H__
+#define __ALARM_PLUGIN_ALARM_H__
 
 G_BEGIN_DECLS
-
-#define UNICODE_INFINITY "\xe2\x88\x9e"
-
-typedef struct _AlarmPluginClass AlarmPluginClass;
-typedef struct _AlarmPlugin AlarmPlugin;
-typedef struct _Alert Alert;
-typedef struct _Alarm Alarm;
-
-struct _AlarmPluginClass
-{
-  XfcePanelPluginClass parent;
-};
-
-// Only store things that have lifetime of the plugin here
-struct _AlarmPlugin
-{
-  XfcePanelPlugin parent;
-
-  GList *alarms;
-  Alert *alert;
-  GtkWidget *panel_button;
-};
 
 enum AlarmId
 {
@@ -56,10 +34,7 @@ typedef enum
   TYPE_COUNT
 } AlarmType;
 
-static const guint TIME_LIMITS[2*TYPE_COUNT] = {
-  1, 31622400, // Timer: 1 second to 1 year
-  0, 86399 // Clock 00:00:00 to 23:59:59
-};
+const guint TIME_LIMITS[2*TYPE_COUNT];
 
 enum RerunEvery
 {
@@ -85,6 +60,7 @@ typedef enum
   RERUN_MODE_COUNT
 } RerunMode;
 
+typedef struct _Alarm Alarm;
 struct _Alarm
 {
   // Persisted settings (between plugin runtimes)
@@ -101,9 +77,8 @@ struct _Alarm
   RerunMode rerun_mode;
   Alarm *triggered_timer;
 
-  Alert *alert; // Set to NULL for plugin default alert
-  GDateTime *timeout_at;
-  GTimer *alert_timer;
+  Alert *alert; // NULL for plugin default alert
+  GDateTime *timeout_at, *started_at;
 
   // Runtime settings
 };
@@ -121,41 +96,13 @@ enum AlarmColumns
 
 const gchar *alarm_type_icons[TYPE_COUNT];
 
-typedef struct
-{
-  const gchar *widget_id;
-  const gchar *widget_prop;
-  const gchar *object_prop;
-  GBindingTransformFunc transform_to;
-  GBindingTransformFunc transform_from;
-} PropertyBinding;
-
-
-#define XFCE_TYPE_ALARM_PLUGIN (alarm_plugin_get_type ())
-#define XFCE_ALARM_PLUGIN(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XFCE_TYPE_ALARM_PLUGIN, AlarmPlugin))
-#define XFCE_ALARM_PLUGIN_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), XFCE_TYPE_ALARM_PLUGIN, AlarmPluginClass))
-#define XFCE_IS_ALARM_PLUGIN(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XFCE_TYPE_ALARM_PLUGIN))
-#define XFCE_IS_ALARM_PLUGIN_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), XFCE_TYPE_ALARM_PLUGIN))
-#define XFCE_ALARM_PLUGIN_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), XFCE_TYPE_ALARM_PLUGIN, AlarmPluginClass))
-
-GType alarm_plugin_get_type(void) G_GNUC_CONST;
-void alarm_plugin_register_type(XfcePanelTypeModule *type_module);
-
 void alarm_free(Alarm *alarm);
+GList* load_alarm_settings(AlarmPlugin *plugin);
 void save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
 void save_alarm_positions(AlarmPlugin *plugin,
                           GList *alarm_iter_from, GList *alarm_iter_to);
 void reset_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
-GtkBuilder* alarm_builder_new(XfcePanelPlugin *panel_plugin,
-                              const gchar *weak_ref_id, GObject **weak_ref_obj,
-                              const gchar* first_buffer, gsize first_buffer_length, ...);
-void set_sensitive(GtkBuilder *builder, gboolean sensitive,
-                   const gchar *first_widget_id, ...);
-gint time_spin_input(GtkSpinButton *button, gdouble *new_value);
-gboolean time_spin_output(GtkSpinButton *button);
-void g_object_copy(GObject *src, GObject *dst);
-gpointer g_object_dup(GObject *src);
 
 G_END_DECLS
 
-#endif /* !__ALARM_PLUGIN_H__ */
+#endif /* !__ALARM_PLUGIN_ALARM_H__ */

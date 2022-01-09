@@ -23,10 +23,14 @@
 #include <libxfce4panel/xfce-panel-plugin.h>
 #include <xfconf/xfconf.h>
 
+#include "common.h"
+#include "alert.h"
+#include "alarm-plugin.h"
+#include "alarm.h"
 #include "properties-dialog.h"
 #include "properties-dialog_ui.h"
 #include "alarm-dialog.h"
-#include "alert.h"
+#include "alert-box.h"
 
 #define UNICODE_BLOCK "\xe2\x96\x8a"
 

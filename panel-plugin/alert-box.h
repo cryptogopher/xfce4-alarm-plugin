@@ -16,17 +16,10 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __ALARM_PLUGIN_ALARM_DIALOG_H__
-#define __ALARM_PLUGIN_ALARM_DIALOG_H__
+#ifndef __ALARM_PLUGIN_ALERT_BOX_H__
+#define __ALARM_PLUGIN_ALERT_BOX_H__
 
-enum TriggeredTimerColumns
-{
-  TT_COL_DATA,
-  TT_COL_NAME,
-  TT_COL_ID,
-  TT_COL_COUNT
-};
+gboolean show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin,
+                        GtkContainer *container);
 
-void show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm);
-
-#endif /* !__ALARM_PLUGIN_ALARM_DIALOG_H__ */
+#endif /* !__ALARM_PLUGIN_ALERT_BOX_H__ */

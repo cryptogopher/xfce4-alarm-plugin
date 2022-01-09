@@ -16,6 +16,10 @@ libalarm_built_sources = \
 
 libalarm_la_SOURCES = \
 	$(libalarm_built_sources) \
+	alarm-plugin.c \
+	alarm-plugin.h \
+	common.c \
+	common.h \
 	alarm.c \
 	alarm.h \
 	alert.c \
@@ -23,7 +27,9 @@ libalarm_la_SOURCES = \
 	properties-dialog.c \
 	properties-dialog.h \
 	alarm-dialog.c \
-	alarm-dialog.h
+	alarm-dialog.h \
+	alert-box.c \
+	alert-box.h
 
 libalarm_la_CFLAGS = \
 	$(LIBXFCE4UTIL_CFLAGS) \
