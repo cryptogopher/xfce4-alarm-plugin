@@ -23,19 +23,19 @@ G_BEGIN_DECLS
 
 enum AlarmId
 {
-  ID_UNASSIGNED = 0,
-  ID_INVALID = G_MAXUINT
+  ALARM_ID_UNASSIGNED = 0,
+  ALARM_ID_INVALID = G_MAXUINT
 };
 
 typedef enum
 {
-  TYPE_TIMER,
-  TYPE_CLOCK,
-  TYPE_COUNT
+  ALARM_TYPE_TIMER,
+  ALARM_TYPE_CLOCK,
+  ALARM_TYPE_COUNT
 } AlarmType;
 
-const gchar *alarm_type_icons[TYPE_COUNT];
-const guint TIME_LIMITS[2*TYPE_COUNT];
+const gchar *alarm_type_icons[ALARM_TYPE_COUNT];
+const guint TIME_LIMITS[2*ALARM_TYPE_COUNT];
 
 enum RerunEvery
 {
@@ -64,12 +64,14 @@ typedef enum
 typedef struct _Alarm Alarm;
 struct _Alarm
 {
+  GObject parent;
+
   // Persisted settings (between plugin runtimes)
   guint id;
   AlarmType type;
   gchar *name;
   guint time;
-  gchar color[8];
+  GdkRGBA *color;
   gboolean autostart, autostop;
   gboolean autostart_on_resume, autostop_on_suspend;
 
@@ -79,13 +81,20 @@ struct _Alarm
   Alarm *triggered_timer;
 
   Alert *alert; // NULL for plugin default alert
-  GDateTime *timeout_at, *started_at;
+  /* Time tracking value has to have following properties:
+   * a) enable alarm persistence between program invocations
+   * b) calculate progress */
+  GDateTime *started_at;
 
   // Runtime settings
 };
 
 
-void alarm_free(Alarm *alarm);
+#define ALARM_PLUGIN_TYPE_ALARM (alarm_get_type())
+G_DECLARE_FINAL_TYPE(Alarm, alarm, ALARM_PLUGIN, ALARM, GObject)
+
+Alarm* alarm_new(XfconfChannel *channel);
+
 GList* load_alarm_settings(AlarmPlugin *plugin);
 void save_alarm_settings(AlarmPlugin *plugin, Alarm *alarm);
 void save_alarm_positions(AlarmPlugin *plugin,

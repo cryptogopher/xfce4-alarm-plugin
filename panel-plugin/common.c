@@ -25,6 +25,7 @@
 
 #include <libxfce4panel/xfce-panel-plugin.h>
 #include <libxfce4ui/libxfce4ui.h>
+#include <xfconf/xfconf.h>
 
 #include "common.h"
 
@@ -176,6 +177,8 @@ g_object_copy(GObject *src, GObject *dst)
   const gchar **names;
   GValue *values;
 
+  if (!src) return;
+
   g_return_if_fail(G_IS_OBJECT(src));
   g_return_if_fail(G_IS_OBJECT(dst));
   g_return_if_fail(G_TYPE_FROM_INSTANCE(src) == G_TYPE_FROM_INSTANCE(dst));
@@ -211,12 +214,38 @@ g_object_dup(GObject *src)
 {
   GObject *dst;
 
-  if (src == NULL)
-    return NULL;
+  if (!src) return NULL;
 
   g_return_val_if_fail(G_IS_OBJECT(src), NULL);
 
   dst = g_object_new(G_TYPE_FROM_INSTANCE(src), NULL);
   g_object_copy(src, dst);
   return (gpointer) dst;
+}
+
+
+// Xfconf
+void
+xfconf_channel_set_object(XfconfChannel *channel, const gchar *prefix, GObject *object)
+{
+  GParamSpec **specs;
+  guint spec_count, i;
+  gchar *property_name;
+  GValue property_value = G_VALUE_INIT;
+
+  g_return_if_fail(object != NULL);
+
+  specs = g_object_class_list_properties(G_OBJECT_GET_CLASS(object), &spec_count);
+
+  for (i = 0; i < spec_count; i++)
+  {
+    if ((specs[i]->flags & G_PARAM_READWRITE) == 0)
+      continue;
+
+    property_name = g_strdup_printf("%s/%s", prefix, g_param_spec_get_name(specs[i]));
+    g_object_get_property(object, g_param_spec_get_name(specs[i]), &property_value);
+    g_warn_if_fail(xfconf_channel_set_property(channel, property_name, &property_value));
+    g_free(property_name);
+    g_value_unset(&property_value);
+  }
 }

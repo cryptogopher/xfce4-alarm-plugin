@@ -31,8 +31,6 @@ typedef struct ca_context ca_context;
 struct _Alert
 {
   GObject parent;
-  GtkBuilder *builder;
-  ca_context *context;
 
   gboolean notification;
   gchar *sound;

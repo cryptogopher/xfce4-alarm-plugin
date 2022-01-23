@@ -60,15 +60,6 @@ static gboolean playback_finished(gpointer button);
 static void ca_playback_finished(ca_context *c, uint32_t id, int error_code, void *button);
 
 static void
-clear_context(Alert *alert)
-{
-  g_return_if_fail(alert->context != NULL);
-
-  ca_context_destroy(alert->context);
-  alert->context = NULL;
-}
-
-static void
 ca_playback_finished(ca_context *c, uint32_t id, int error_code, void *button)
 {
   if (error_code != CA_ERROR_CANCELED)
@@ -175,6 +166,8 @@ static void
 sound_chooser_selection_changed(GtkFileChooserButton *button, Alert *alert)
 {
   gchar *filename;
+  GObject = object;
+  GtkBuilder *builder;
 
   g_return_if_fail(GTK_IS_FILE_CHOOSER_BUTTON(button));
   g_return_if_fail(ALARM_PLUGIN_IS_ALERT(alert));
@@ -185,7 +178,10 @@ sound_chooser_selection_changed(GtkFileChooserButton *button, Alert *alert)
     gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(button));
   g_free(filename);
 
-  set_sensitive(alert->builder, alert->sound != NULL,
+  object = G_OBJECT(gtk_widget_get_ancestor(GTK_WIDGET(button), GTK_TYPE_FRAME));
+  builder = g_object_get_data(object, "builder");
+  g_return_if_fail(GTK_IS_BUILDER(builder));
+  set_sensitive(builder, alert->sound != NULL,
                 "sound-play-box", "sound-loop-box", NULL);
 }
 
@@ -354,6 +350,7 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
 {
   GObject *object, *target, *program;
   GtkWidget *alert_box;
+  ca_context *sound_context;
   GList *apps, *app_iter;
   GAppInfo *app;
   guint active_program = PROGRAM_NONE;
@@ -368,10 +365,15 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
     {"repeat-interval", "sensitive", "repeats", repeats_to_interval_sensitivity, NULL},
   };
 
+  // FIXME: save builder as gobject data of alert_box and send alert-box as
+  // user_data to handlers using builder (as in other dialogs)
+  // remove alert->builder afterwards
   alert->builder = alarm_builder_new(panel_plugin, "alert-box", &object,
                                      alert_box_ui, alert_box_ui_length,
                                      NULL);
   g_return_val_if_fail(GTK_IS_BUILDER(alert->builder), FALSE);
+  g_return_val_if_fail(GTK_IS_WIDGET(object), FALSE);
+  // TODO: remove weak_ref after builder removed from Alert
   g_object_weak_ref(object, (GWeakNotify) G_CALLBACK(g_steal_pointer), &alert->builder);
   alert_box = GTK_WIDGET(object);
 
@@ -382,8 +384,11 @@ show_alert_box(Alert *alert, XfcePanelPlugin *panel_plugin, GtkContainer *contai
   g_object_unref(alert_box);
 
   // Create libcanberra context for playing sounds
-  ca_context_create(&alert->context);
-  g_object_weak_ref(G_OBJECT(alert_box), (GWeakNotify) G_CALLBACK(clear_context), alert);
+  if (!ca_context_create(&sound_context))
+    g_object_weak_ref(G_OBJECT(alert_box), (GWeakNotify) G_CALLBACK(ca_context_destroy),
+                      sound_context);
+  else
+    g_warn_if_reached();
 
   // Seems to be no other way to add this parameter to widget through Glade
   object = gtk_builder_get_object(alert->builder, "program-runtime");
