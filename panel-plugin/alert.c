@@ -20,26 +20,26 @@
 #include <config.h>
 #endif
 
-#include <libxfce4panel/xfce-panel-plugin.h>
+#include <libxfce4panel/libxfce4panel.h>
 #include <xfconf/xfconf.h>
 
 #include "alert.h"
 
 enum AlertProperties
 {
-  PROP_0,
-  PROP_ALERT_NOTIFICATION,
-  PROP_ALERT_SOUND,
-  PROP_ALERT_SOUND_LOOPS,
-  PROP_ALERT_PROGRAM,
-  PROP_ALERT_PROGRAM_OPTIONS,
-  PROP_ALERT_PROGRAM_RUNTIME,
-  PROP_ALERT_REPEATS,
-  PROP_ALERT_INTERVAL,
-  PROP_COUNT,
+  ALERT_PROP_0,
+  ALERT_PROP_NOTIFICATION,
+  ALERT_PROP_SOUND,
+  ALERT_PROP_SOUND_LOOPS,
+  ALERT_PROP_PROGRAM,
+  ALERT_PROP_PROGRAM_OPTIONS,
+  ALERT_PROP_PROGRAM_RUNTIME,
+  ALERT_PROP_REPEATS,
+  ALERT_PROP_INTERVAL,
+  ALERT_PROP_COUNT,
 };
 
-static GParamSpec *alert_class_props[PROP_COUNT] = {NULL, };
+static GParamSpec *alert_class_props[ALERT_PROP_COUNT] = {NULL, };
 
 G_DEFINE_TYPE(Alert, alert, G_TYPE_OBJECT)
 
@@ -52,35 +52,35 @@ alert_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *ps
 
   switch (prop_id)
   {
-    case PROP_ALERT_NOTIFICATION:
+    case ALERT_PROP_NOTIFICATION:
       g_value_set_boolean(value, self->notification);
       break;
 
-    case PROP_ALERT_SOUND:
+    case ALERT_PROP_SOUND:
       g_value_set_string(value, self->sound);
       break;
 
-    case PROP_ALERT_SOUND_LOOPS:
+    case ALERT_PROP_SOUND_LOOPS:
       g_value_set_uint(value, self->sound_loops);
       break;
 
-    case PROP_ALERT_PROGRAM:
+    case ALERT_PROP_PROGRAM:
       g_value_set_string(value, self->program);
       break;
 
-    case PROP_ALERT_PROGRAM_OPTIONS:
+    case ALERT_PROP_PROGRAM_OPTIONS:
       g_value_set_string(value, self->program_options);
       break;
 
-    case PROP_ALERT_PROGRAM_RUNTIME:
+    case ALERT_PROP_PROGRAM_RUNTIME:
       g_value_set_uint(value, self->program_runtime);
       break;
 
-    case PROP_ALERT_REPEATS:
+    case ALERT_PROP_REPEATS:
       g_value_set_uint(value, self->repeats);
       break;
 
-    case PROP_ALERT_INTERVAL:
+    case ALERT_PROP_INTERVAL:
       g_value_set_uint(value, self->interval);
       break;
 
@@ -91,17 +91,17 @@ alert_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *ps
 
 static void
 alert_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
-{ 
+{
   Alert *self = ALARM_PLUGIN_ALERT(object);
   const gchar *filename;
 
   switch (prop_id)
   {
-    case PROP_ALERT_NOTIFICATION:
+    case ALERT_PROP_NOTIFICATION:
       self->notification = g_value_get_boolean(value);
       break;
 
-    case PROP_ALERT_SOUND:
+    case ALERT_PROP_SOUND:
       g_clear_pointer(&self->sound, g_free);
 
       filename = g_value_get_string(value);
@@ -109,29 +109,29 @@ alert_set_property(GObject *object, guint prop_id, const GValue *value, GParamSp
         self->sound = g_value_dup_string(value);
       break;
 
-    case PROP_ALERT_SOUND_LOOPS:
+    case ALERT_PROP_SOUND_LOOPS:
       self->sound_loops = g_value_get_uint(value);
       break;
 
-    case PROP_ALERT_PROGRAM:
+    case ALERT_PROP_PROGRAM:
       g_free(self->program);
       self->program = g_value_dup_string(value);
       break;
 
-    case PROP_ALERT_PROGRAM_OPTIONS:
+    case ALERT_PROP_PROGRAM_OPTIONS:
       g_free(self->program_options);
       self->program_options = g_value_dup_string(value);
       break;
 
-    case PROP_ALERT_PROGRAM_RUNTIME:
+    case ALERT_PROP_PROGRAM_RUNTIME:
       self->program_runtime = g_value_get_uint(value);
       break;
 
-    case PROP_ALERT_REPEATS:
+    case ALERT_PROP_REPEATS:
       self->repeats = g_value_get_uint(value);
       break;
 
-    case PROP_ALERT_INTERVAL:
+    case ALERT_PROP_INTERVAL:
       self->interval = g_value_get_uint(value);
       break;
 
@@ -144,7 +144,6 @@ alert_set_property(GObject *object, guint prop_id, const GValue *value, GParamSp
 static void
 alert_dispose(GObject *object)
 {
-  // unref
   G_OBJECT_CLASS(alert_parent_class)->dispose(object);
 }
 
@@ -166,34 +165,34 @@ alert_class_init(AlertClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
 
-  alert_class_props[PROP_ALERT_NOTIFICATION] =
+  alert_class_props[ALERT_PROP_NOTIFICATION] =
     g_param_spec_boolean("notification", NULL, NULL, TRUE,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  alert_class_props[PROP_ALERT_SOUND] =
-    g_param_spec_string("sound", NULL, NULL, "",
+  alert_class_props[ALERT_PROP_SOUND] =
+    g_param_spec_string("sound", NULL, NULL, NULL,
                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  alert_class_props[PROP_ALERT_SOUND_LOOPS] =
-    g_param_spec_uint("sound-loops", NULL, NULL, 0, 1000, 0,
+  alert_class_props[ALERT_PROP_SOUND_LOOPS] =
+    g_param_spec_uint("sound-loops", NULL, NULL, 0, 1000, 1,
                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  alert_class_props[PROP_ALERT_PROGRAM] =
-    g_param_spec_string("program", NULL, NULL, "",
+  alert_class_props[ALERT_PROP_PROGRAM] =
+    g_param_spec_string("program", NULL, NULL, NULL,
                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  alert_class_props[PROP_ALERT_PROGRAM_OPTIONS] =
-    g_param_spec_string("program-options", NULL, NULL, "",
+  alert_class_props[ALERT_PROP_PROGRAM_OPTIONS] =
+    g_param_spec_string("program-options", NULL, NULL, NULL,
                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  alert_class_props[PROP_ALERT_PROGRAM_RUNTIME] =
+  alert_class_props[ALERT_PROP_PROGRAM_RUNTIME] =
     g_param_spec_uint("program-runtime", NULL, NULL, 0, 359999, 0,
                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  alert_class_props[PROP_ALERT_REPEATS] =
-    g_param_spec_uint("repeats", NULL, NULL, 0, 1000, 0,
+  alert_class_props[ALERT_PROP_REPEATS] =
+    g_param_spec_uint("repeats", NULL, NULL, 0, 1000, 1,
                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  alert_class_props[PROP_ALERT_INTERVAL] =
-    g_param_spec_uint("interval", NULL, NULL, 0, 359999, 0,
+  alert_class_props[ALERT_PROP_INTERVAL] =
+    g_param_spec_uint("interval", NULL, NULL, 0, 359999, 60,
                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   gobject_class->get_property = alert_get_property;
   gobject_class->set_property = alert_set_property;
-  g_object_class_install_properties(gobject_class, PROP_COUNT, alert_class_props);
+  g_object_class_install_properties(gobject_class, ALERT_PROP_COUNT, alert_class_props);
 
   gobject_class->dispose = alert_dispose;
   gobject_class->finalize = alert_finalize;
@@ -202,14 +201,7 @@ alert_class_init(AlertClass *klass)
 static void
 alert_init(Alert *alert)
 {
-  alert->notification = TRUE;
-  alert->sound = NULL;
-  alert->sound_loops = 1;
-  alert->program = NULL;
-  alert->program_options = NULL;
-  alert->program_runtime = 0;
-  alert->repeats = 1;
-  alert->interval = 60;
+  // Defaults set in alert_class_init param specs
 }
 
 
@@ -225,7 +217,7 @@ alert_new(XfconfChannel *channel)
   if (channel == NULL)
     return alert;
 
-  for (prop_id = 1; prop_id < PROP_COUNT; prop_id++)
+  for (prop_id = 1; prop_id < ALERT_PROP_COUNT; prop_id++)
   {
     pspec = alert_class_props[prop_id];
     xfconf_prop = g_strconcat("/", pspec->name, NULL);

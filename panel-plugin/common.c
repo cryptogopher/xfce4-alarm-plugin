@@ -23,10 +23,14 @@
 #include <math.h>
 #endif
 
-#include <libxfce4panel/xfce-panel-plugin.h>
+#include <libxfce4panel/libxfce4panel.h>
 #include <libxfce4ui/libxfce4ui.h>
+#include <xfconf/xfconf.h>
 
 #include "common.h"
+#include "alert.h"
+#include "alarm-plugin.h"
+#include "alarm.h"
 
 // GTK
 GtkBuilder*
@@ -73,10 +77,7 @@ alarm_builder_new(XfcePanelPlugin *panel_plugin,
 
   *weak_ref_obj = gtk_builder_get_object(builder, weak_ref_id);
   if (GTK_IS_WIDGET(*weak_ref_obj))
-    // TODO: builder should be saved in structure Plugin/Alarm like in Alert and
-    // destroyed from there instead of by data binding here (or builder pointer
-    // can be passed as argument and weak_ref clearing it set here)
-    g_object_set_data_full(*weak_ref_obj, "builder", builder, g_object_unref);
+    g_object_weak_ref(*weak_ref_obj, (GWeakNotify) G_CALLBACK(g_object_unref), builder);
   else
     g_clear_object(&builder);
 
@@ -176,6 +177,8 @@ g_object_copy(GObject *src, GObject *dst)
   const gchar **names;
   GValue *values;
 
+  if (!src) return;
+
   g_return_if_fail(G_IS_OBJECT(src));
   g_return_if_fail(G_IS_OBJECT(dst));
   g_return_if_fail(G_TYPE_FROM_INSTANCE(src) == G_TYPE_FROM_INSTANCE(dst));
@@ -211,12 +214,47 @@ g_object_dup(GObject *src)
 {
   GObject *dst;
 
-  if (src == NULL)
-    return NULL;
+  if (!src) return NULL;
 
   g_return_val_if_fail(G_IS_OBJECT(src), NULL);
 
   dst = g_object_new(G_TYPE_FROM_INSTANCE(src), NULL);
   g_object_copy(src, dst);
   return (gpointer) dst;
+}
+
+
+// Xfconf
+void
+xfconf_channel_set_object(XfconfChannel *channel, const gchar *prefix, GObject *object)
+{
+  GParamSpec **specs;
+  guint spec_count, i;
+  gchar *prop_name;
+  GValue prop_value = G_VALUE_INIT;
+
+  g_return_if_fail(object != NULL);
+
+  specs = g_object_class_list_properties(G_OBJECT_GET_CLASS(object), &spec_count);
+
+  for (i = 0; i < spec_count; i++)
+  {
+    if ((specs[i]->flags & G_PARAM_READWRITE) == 0)
+      continue;
+
+    prop_name = g_strdup_printf("%s/%s", prefix, g_param_spec_get_name(specs[i]));
+    g_object_get_property(object, g_param_spec_get_name(specs[i]), &prop_value);
+
+    if (specs[i]->value_type == ALARM_PLUGIN_TYPE_ALARM)
+      ;
+    else if (specs[i]->value_type == ALARM_PLUGIN_TYPE_ALERT)
+      xfconf_channel_set_object(channel, "/alert", g_value_get_object(&prop_value));
+    else
+      g_warn_if_fail(xfconf_channel_set_property(channel, prop_name, &prop_value));
+
+    g_free(prop_name);
+    g_value_unset(&prop_value);
+  }
+
+  g_free(specs);
 }

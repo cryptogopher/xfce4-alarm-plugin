@@ -32,4 +32,7 @@ gboolean time_spin_output(GtkSpinButton *button);
 void g_object_copy(GObject *src, GObject *dst);
 gpointer g_object_dup(GObject *src);
 
+void xfconf_channel_set_object(XfconfChannel *channel, const gchar *prefix,
+                               GObject *object);
+
 #endif /* !__ALARM_PLUGIN_COMMON_H__ */

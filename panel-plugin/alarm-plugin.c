@@ -20,7 +20,7 @@
 #include <config.h>
 #endif
 
-#include <libxfce4panel/xfce-panel-plugin.h>
+#include <libxfce4panel/libxfce4panel.h>
 #include <libxfce4util/libxfce4util.h>
 #include <xfconf/xfconf.h>
 
@@ -108,8 +108,9 @@ plugin_construct(XfcePanelPlugin *panel_plugin)
   channel = xfconf_channel_new_with_property_base(xfce_panel_get_channel_name(),
                                                   property_base);
   g_free(property_base);
-  g_object_weak_ref(G_OBJECT(plugin), (GWeakNotify) G_CALLBACK(g_object_unref), channel);
   plugin->alert = alert_new(channel);
+  g_object_weak_ref(G_OBJECT(plugin->alert), (GWeakNotify) G_CALLBACK(g_object_unref),
+                    channel);
 
   // Panel toggle button
   plugin->panel_button = xfce_panel_create_toggle_button();
@@ -137,7 +138,7 @@ plugin_free_data(XfcePanelPlugin *panel_plugin)
 {
   AlarmPlugin *plugin = XFCE_ALARM_PLUGIN(panel_plugin);
 
-  g_list_free_full(g_steal_pointer(&plugin->alarms), (GDestroyNotify) alarm_free);
+  g_list_free_full(g_steal_pointer(&plugin->alarms), (GDestroyNotify) g_object_unref);
   g_clear_object(&plugin->alert);
 }
 

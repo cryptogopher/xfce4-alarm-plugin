@@ -23,7 +23,7 @@
 #include <libintl.h>
 #endif
 
-#include <libxfce4panel/xfce-panel-plugin.h>
+#include <libxfce4panel/libxfce4panel.h>
 #include <xfconf/xfconf.h>
 
 #include "common.h"
@@ -33,6 +33,12 @@
 #include "alarm-dialog.h"
 #include "alarm-dialog_ui.h"
 #include "alert-box.h"
+
+typedef struct _CallbackData
+ {
+  Alarm *alarm;
+  GtkBuilder *builder;
+} CallbackData;
 
 enum DoWColumns
 {
@@ -47,7 +53,6 @@ static void
 alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
 {
   GObject *object;
-  GdkRGBA color;
   GList *objects;
   GtkTreeModel *tree_model;
   GtkTreeIter tree_iter;
@@ -69,17 +74,14 @@ alarm_to_dialog(Alarm *alarm, GtkBuilder *builder)
   g_return_if_fail(GTK_IS_SPIN_BUTTON(object));
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(object), alarm->time);
 
-  if (alarm->color[0] == '\0')
-  {
-    object = gtk_builder_get_object(builder, "progress");
-    g_return_if_fail(GTK_IS_SWITCH(object));
-    gtk_switch_set_active(GTK_SWITCH(object), FALSE);
-  }
-  else if (gdk_rgba_parse(&color, alarm->color))
+  object = gtk_builder_get_object(builder, "progress");
+  g_return_if_fail(GTK_IS_SWITCH(object));
+  gtk_switch_set_active(GTK_SWITCH(object), GPOINTER_TO_INT(alarm->color));
+  if (alarm->color)
   {
     object = gtk_builder_get_object(builder, "color");
     g_return_if_fail(GTK_IS_COLOR_BUTTON(object));
-    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(object), &color);
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(object), alarm->color);
   }
 
   object = gtk_builder_get_object(builder, "autostart");
@@ -190,16 +192,13 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
 
   object = gtk_builder_get_object(builder, "progress");
   g_return_val_if_fail(GTK_IS_SWITCH(object), FALSE);
-  alarm->color[0] = '\0';
+  gdk_rgba_free(g_steal_pointer(&alarm->color));
   if (gtk_switch_get_active(GTK_SWITCH(object)))
   {
     object = gtk_builder_get_object(builder, "color");
     g_return_val_if_fail(GTK_IS_COLOR_BUTTON(object), FALSE);
     gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(object), &color);
-    g_snprintf(alarm->color, sizeof(alarm->color),  "#%02x%02x%02x",
-               (uint) (0.5 + color.red*255),
-               (uint) (0.5 + color.green*255),
-               (uint) (0.5 + color.blue*255));
+    alarm->color = gdk_rgba_copy(&color);
   }
 
   object = gtk_builder_get_object(builder, "autostart");
@@ -224,7 +223,7 @@ alarm_from_dialog(Alarm *alarm, Alert *bound_alert, GtkBuilder *builder)
                           gtk_stack_get_visible_child(GTK_STACK(object)),
                           "position", &value,
                           NULL);
-  g_return_val_if_fail(value < TYPE_COUNT, FALSE);
+  g_return_val_if_fail(value < ALARM_TYPE_COUNT, FALSE);
   alarm->type = value;
 
   object = gtk_builder_get_object(builder, "triggered-timer-combo");
@@ -317,7 +316,7 @@ recurrence_visible_child_notify(GtkWidget *widget, GParamSpec *child_property,
                           gtk_stack_get_visible_child(GTK_STACK(widget)),
                           "position", &position,
                           NULL);
-  g_return_if_fail(position < TYPE_COUNT);
+  g_return_if_fail(position < ALARM_TYPE_COUNT);
 
   builder = g_object_get_data(G_OBJECT(dialog), "builder");
   g_return_if_fail(GTK_IS_BUILDER(builder));
@@ -328,10 +327,27 @@ recurrence_visible_child_notify(GtkWidget *widget, GParamSpec *child_property,
                             TIME_LIMITS[2*position], TIME_LIMITS[2*position+1]);
 }
 
+static void
+custom_alert_active_notify(GtkWidget *widget, GParamSpec *child_property,
+                           GtkWidget *dialog)
+{
+  GtkBuilder *builder;
+  GObject *object;
+
+  g_return_if_fail(GTK_IS_SWITCH(widget));
+  g_return_if_fail(GTK_IS_DIALOG(dialog));
+
+  builder = g_object_get_data(G_OBJECT(dialog), "builder");
+  g_return_if_fail(GTK_IS_BUILDER(builder));
+
+  object = gtk_builder_get_object(builder, "alert-alignment");
+  g_return_if_fail(GTK_IS_CONTAINER(object));
+  //g_return_if_fail(show_alert_box(alarm_copy->alert, panel_plugin, GTK_CONTAINER(object)));
+}
 
 // External interface
 // TODO: return GtkDialog which will be destroyed by caller (because it's not
-// destroyed in case of error?)
+// destroyed in case of error)
 void
 show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alarm)
 {
@@ -339,13 +355,13 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   GtkBuilder *builder;
   GObject *dialog, *object, *store;
   GList *alarm_iter;
-  Alarm *triggered_timer;
-  Alert *bound_alert = NULL;
+  Alarm *triggered_timer, *alarm_copy = NULL;
   gchar *alarm_strid = NULL;
 
   g_return_if_fail(GTK_IS_WINDOW(parent));
   g_return_if_fail(XFCE_IS_PANEL_PLUGIN(panel_plugin));
-  g_return_if_fail(alarm != NULL);
+  g_return_if_fail(alarm);
+  g_return_if_fail(!(*alarm) || ALARM_PLUGIN_IS_ALARM(*alarm));
 
   builder = alarm_builder_new(panel_plugin, "alarm-dialog", &dialog,
                               alarm_dialog_ui, alarm_dialog_ui_length,
@@ -361,7 +377,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
       "time_output", G_CALLBACK(time_spin_output),
       "recurrence_visible_child_notify", G_CALLBACK(recurrence_visible_child_notify),
       NULL);
-  gtk_builder_connect_signals(builder, plugin);
+  gtk_builder_connect_signals(builder, NULL);
 
   object = gtk_builder_get_object(builder, "triggered-timer-combo");
   g_return_if_fail(GTK_IS_COMBO_BOX(object));
@@ -383,7 +399,7 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   while (alarm_iter)
   {
     triggered_timer = alarm_iter->data;
-    if (triggered_timer->type == TYPE_TIMER && triggered_timer != *alarm)
+    if (triggered_timer->type == ALARM_TYPE_TIMER && triggered_timer != *alarm)
     {
       alarm_strid = g_strdup_printf("alarm-%u", triggered_timer->id);
       gtk_list_store_insert_with_values(GTK_LIST_STORE(store), NULL, -1,
@@ -396,24 +412,29 @@ show_alarm_dialog(GtkWidget *parent, XfcePanelPlugin *panel_plugin, Alarm **alar
   }
   gtk_combo_box_set_active(GTK_COMBO_BOX(object), 0);
 
-  object = gtk_builder_get_object(builder, "alert-alignment");
-  g_return_if_fail(GTK_IS_CONTAINER(object));
-  if (*alarm)
-  {
-    alarm_to_dialog(*alarm, builder);
-    bound_alert = g_object_dup(G_OBJECT((*alarm)->alert));
+  alarm_copy = alarm_new(NULL);
+  g_object_weak_ref(dialog, (GWeakNotify) G_CALLBACK(g_object_unref), alarm_copy);
+  if (*alarm) {
+    g_object_copy(G_OBJECT(*alarm), G_OBJECT(alarm_copy));
+    if ((*alarm)->alert) {
+      alarm_copy->alert = alert_new(NULL);
+      g_object_copy(G_OBJECT((*alarm)->alert), G_OBJECT(alarm_copy->alert));
+    }
   }
-  if (bound_alert == NULL)
-    bound_alert = alert_new(NULL);
-  g_object_weak_ref(object, (GWeakNotify) G_CALLBACK(g_object_unref), bound_alert);
-  g_return_if_fail(show_alert_box(bound_alert, panel_plugin, GTK_CONTAINER(object)));
+
+  // TODO: replace with Alarm<=>dialog bindings
+  alarm_to_dialog(*alarm, builder);
 
   if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_APPLY)
   {
     if (*alarm == NULL)
-      *alarm = g_slice_new0(Alarm);
-
-    g_warn_if_fail(alarm_from_dialog(*alarm, bound_alert, builder));
+      *alarm = g_object_ref(alarm_copy);
+    else
+    {
+      g_object_copy(G_OBJECT(alarm_copy), G_OBJECT(*alarm));
+      // FIXME: copy alert only if set
+      g_object_copy(G_OBJECT(alarm_copy->alert), G_OBJECT((*alarm)->alert));
+    }
   }
 
   gtk_widget_destroy(GTK_WIDGET(dialog));

@@ -20,7 +20,7 @@
 #include <config.h>
 #endif
 
-#include <libxfce4panel/xfce-panel-plugin.h>
+#include <libxfce4panel/libxfce4panel.h>
 #include <xfconf/xfconf.h>
 
 #include "common.h"
@@ -61,9 +61,13 @@ alarm_to_tree_iter(Alarm *alarm, GtkListStore *store, GtkTreeIter *iter)
                          alarm->time/3600, alarm->time%3600/60, alarm->time%60);
   /* Setting color through markup preserves proper color on item selection (as
    * opposed to setting it through cell renderer background property). */
-  if (alarm->color[0] != '\0')
-    color = g_strdup_printf("<span size=\"x-large\" foreground=\"%s\">" UNICODE_BLOCK
-                            "</span>", alarm->color);
+  if (alarm->color)
+    // NOTE: send PR with proper double->int conversion to gdk_rgba_to_string
+    color = g_strdup_printf("<span size=\"x-large\" foreground=\"#%02x%02x%02x\">"
+                            UNICODE_BLOCK "</span>",
+                            CLAMP((gint) alarm->color->red*256, 0, 255),
+                            CLAMP((gint) alarm->color->green*256, 0, 255),
+                            CLAMP((gint) alarm->color->blue*256, 0, 255));
 
   gtk_list_store_set(store, iter,
                      AM_COL_DATA, alarm,
@@ -152,10 +156,10 @@ remove_alarm(AlarmPlugin *plugin, GtkWidget *dialog)
 
   alarm_iter = g_list_find(plugin->alarms, alarm);
   next_iter = alarm_iter->next;
-  plugin->alarms = g_list_delete_link(plugin->alarms, alarm_iter);
+  plugin->alarms = g_list_remove_link(plugin->alarms, alarm_iter);
   save_alarm_positions(plugin, next_iter, NULL);
 
-  g_clear_pointer(&alarm, alarm_free);
+  g_object_unref(alarm);
 }
 
 
